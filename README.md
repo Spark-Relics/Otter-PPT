@@ -171,7 +171,7 @@ AI Agent 可调用的全部工具：
 | `add_image` | 添加图片 |
 | `add_shape` | 添加形状（矩形/椭圆/箭头/星形等14种） |
 | `add_table` | 添加表格 |
-| `add_chart` | 添加图表（柱状/折线/饼图等） |
+| `add_chart` | 添加原生可编辑 DrawingML 图表（柱状/条形/折线/饼图/面积图/圆环图） |
 | `add_connector` | 添加连接线/箭头 |
 
 ### 元素操作

@@ -225,6 +225,9 @@ func (b *Builder) writeSlideRels(zw *zip.Writer, slideNum int, slide *model.Slid
 		if asset := b.mediaByElement[elem]; asset != nil {
 			fmt.Fprintf(&mediaRels, `<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/%s"/>`, asset.relID, asset.fileName)
 		}
+		if asset := b.chartByElement[elem]; asset != nil {
+			fmt.Fprintf(&mediaRels, `<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../charts/chart%d.xml"/>`, asset.relID, asset.index)
+		}
 	}
 	xml := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">

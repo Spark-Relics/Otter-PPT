@@ -43,10 +43,18 @@ type mediaAsset struct {
 	ext      string
 }
 
+type chartAsset struct {
+	index int
+	relID string
+	data  *model.ChartData
+}
+
 type Builder struct {
 	pres           *model.Presentation
 	mediaByElement map[*model.Element]*mediaAsset
 	mediaAssets    []*mediaAsset
+	chartByElement map[*model.Element]*chartAsset
+	chartAssets    []*chartAsset
 }
 
 // New creates a builder for the given presentation.
@@ -54,7 +62,11 @@ func New(pres *model.Presentation) *Builder {
 	if pres.SlideWidth == 0 || pres.SlideHeight == 0 {
 		pres.SlideWidth, pres.SlideHeight = model.DefaultSlideSize()
 	}
-	return &Builder{pres: pres, mediaByElement: make(map[*model.Element]*mediaAsset)}
+	return &Builder{
+		pres:           pres,
+		mediaByElement: make(map[*model.Element]*mediaAsset),
+		chartByElement: make(map[*model.Element]*chartAsset),
+	}
 }
 
 // Save writes the presentation to a .pptx file.
@@ -70,7 +82,7 @@ func (b *Builder) Save(path string) error {
 
 // Write writes the PPTX to an io.Writer.
 func (b *Builder) Write(w io.Writer) error {
-	if err := b.prepareMedia(); err != nil {
+	if err := b.prepareAssets(); err != nil {
 		return err
 	}
 	zw := zip.NewWriter(w)
@@ -113,17 +125,33 @@ func (b *Builder) Write(w io.Writer) error {
 			return err
 		}
 	}
+	for _, asset := range b.chartAssets {
+		if err := b.writeChartPart(zw, asset); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
-func (b *Builder) prepareMedia() error {
+func (b *Builder) prepareAssets() error {
 	b.mediaAssets = nil
 	b.mediaByElement = make(map[*model.Element]*mediaAsset)
-	index := 1
+	b.chartAssets = nil
+	b.chartByElement = make(map[*model.Element]*chartAsset)
+	mediaIndex := 1
+	chartIndex := 1
 	for _, slide := range b.pres.Slides {
 		relIndex := 2
 		for _, elem := range slide.Elements {
+			if elem.Type == model.ElementChart && elem.Chart != nil {
+				asset := &chartAsset{index: chartIndex, relID: fmt.Sprintf("rId%d", relIndex), data: elem.Chart}
+				b.chartAssets = append(b.chartAssets, asset)
+				b.chartByElement[elem] = asset
+				chartIndex++
+				relIndex++
+				continue
+			}
 			if elem.Type != model.ElementImage || elem.ImagePath == "" {
 				continue
 			}
@@ -141,10 +169,10 @@ func (b *Builder) prepareMedia() error {
 			if ext != ".png" && ext != ".jpg" && ext != ".gif" {
 				return fmt.Errorf("unsupported image format %q", ext)
 			}
-			asset := &mediaAsset{data: data, fileName: fmt.Sprintf("image%d%s", index, ext), relID: fmt.Sprintf("rId%d", relIndex), ext: strings.TrimPrefix(ext, ".")}
+			asset := &mediaAsset{data: data, fileName: fmt.Sprintf("image%d%s", mediaIndex, ext), relID: fmt.Sprintf("rId%d", relIndex), ext: strings.TrimPrefix(ext, ".")}
 			b.mediaAssets = append(b.mediaAssets, asset)
 			b.mediaByElement[elem] = asset
-			index++
+			mediaIndex++
 			relIndex++
 		}
 	}

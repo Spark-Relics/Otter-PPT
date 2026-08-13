@@ -18,6 +18,10 @@ func (b *Builder) writeContentTypes(zw *zip.Writer) error {
 			`<Override PartName="/ppt/slides/slide%d.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`,
 			i+1)
 	}
+	chartOverrides := ""
+	for _, asset := range b.chartAssets {
+		chartOverrides += fmt.Sprintf(`<Override PartName="/ppt/charts/chart%d.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>`, asset.index)
+	}
 	mediaDefaults := ""
 	seen := make(map[string]bool)
 	for _, asset := range b.mediaAssets {
@@ -35,7 +39,7 @@ func (b *Builder) writeContentTypes(zw *zip.Writer) error {
 <Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>
 <Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>
 <Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>` +
-		slideOverrides +
+		slideOverrides + chartOverrides +
 		`</Types>`
 
 	_, err = w.Write([]byte(xml))

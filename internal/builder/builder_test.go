@@ -60,6 +60,41 @@ func TestEmbeddedImageCreatesMediaAndRelationship(t *testing.T) {
 	}
 }
 
+func TestNativeChartCreatesEditableChartPart(t *testing.T) {
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "chart-1", Type: model.ElementChart, Rect: model.Rect{X: 10, Y: 10, W: 70, H: 60},
+		Chart: &model.ChartData{ChartType: model.ChartColumn, Categories: []string{"Q1", "Q2"}, Title: "Revenue", ShowLegend: true, Series: []model.ChartSeries{{Name: "2026", Values: []float64{12.5, 18}, Color: "#4472C4"}}},
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	if !strings.Contains(parts["ppt/slides/slide1.xml"], `<c:chart`) || !strings.Contains(parts["ppt/slides/slide1.xml"], `r:id="rId2"`) {
+		t.Fatal("native chart graphic frame reference missing")
+	}
+	chartXML := parts["ppt/charts/chart1.xml"]
+	if !strings.Contains(chartXML, `<c:barChart>`) || !strings.Contains(chartXML, `<c:v>Q1</c:v>`) || !strings.Contains(chartXML, `<c:v>12.5</c:v>`) {
+		t.Fatalf("native chart data missing: %s", chartXML)
+	}
+	if !strings.Contains(parts["ppt/slides/_rels/slide1.xml.rels"], `relationships/chart`) || !strings.Contains(parts["ppt/slides/_rels/slide1.xml.rels"], `../charts/chart1.xml`) {
+		t.Fatal("chart relationship missing")
+	}
+	if !strings.Contains(parts["[Content_Types].xml"], `drawingml.chart+xml`) {
+		t.Fatal("chart content type missing")
+	}
+}
+
 func TestGeneratedPartsAreWellFormedXML(t *testing.T) {
 	pres := &model.Presentation{
 		Title: "OOXML validation",

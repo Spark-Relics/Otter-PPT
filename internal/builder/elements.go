@@ -273,48 +273,19 @@ func (b *Builder) writeTable(buf *strings.Builder, elem *model.Element) {
 	buf.WriteString(`</a:tbl></a:graphicData></a:graphic></p:graphicFrame>`)
 }
 
-// writeChart writes a chart placeholder (simplified — renders as text summary).
+// writeChart writes an editable native DrawingML chart reference.
 func (b *Builder) writeChart(buf *strings.Builder, elem *model.Element) {
-	if elem.Chart == nil {
+	asset := b.chartByElement[elem]
+	if elem.Chart == nil || asset == nil {
 		return
 	}
 	transform := b.transform(elem)
-	cd := elem.Chart
-
-	// Render chart as a styled card with data summary.
-	// Full chart embedding requires chart XML parts + embedded xlsx data.
 	fmt.Fprintf(buf,
-		`<p:sp><p:nvSpPr><p:cNvPr id="%d" name="Chart"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>`,
-		ooxmlObjectID(elem.ID))
-	shapeProperties{
-		transform: transform,
-		geometry:  presetGeometryXML("round2SameRect", ""),
-		fill:      solidFillXML(b.pres.Theme.PrimaryColor),
-		line:      solidLineXML("#FFFFFF", 12700),
-	}.writeTo(buf)
-
-	buf.WriteString(`<p:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>`)
-	if cd.Title != "" {
-		fmt.Fprintf(buf,
-			`<a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-CN" sz="2000" b="1">`+
-				`<a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:rPr>`+
-				`<a:t>%s</a:t></a:r></a:p>`, xmlEscape(cd.Title))
-	}
-	// Data rows as text
-	for _, s := range cd.Series {
-		vals := ""
-		for i, v := range s.Values {
-			if i > 0 {
-				vals += " | "
-			}
-			vals += fmt.Sprintf("%.0f", v)
-		}
-		fmt.Fprintf(buf,
-			`<a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-CN" sz="1400">`+
-				`<a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:rPr>`+
-				`<a:t>%s: %s</a:t></a:r></a:p>`, xmlEscape(s.Name), vals)
-	}
-	buf.WriteString(`</p:txBody></p:sp>`)
+		`<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="%d" name="Chart %d"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>%s`,
+		ooxmlObjectID(elem.ID), asset.index, transform.graphicFrameXML())
+	fmt.Fprintf(buf,
+		`<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="%s"/></a:graphicData></a:graphic></p:graphicFrame>`,
+		asset.relID)
 }
 
 // writeConnector writes a connector line/arrow (cxnSp).
