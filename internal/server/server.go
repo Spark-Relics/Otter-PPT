@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +14,7 @@ import (
 	"github.com/otter-ppt/otter-ppt/internal/agent"
 	"github.com/otter-ppt/otter-ppt/internal/ai"
 	"github.com/otter-ppt/otter-ppt/internal/builder"
+	"github.com/otter-ppt/otter-ppt/internal/fonts"
 	"github.com/otter-ppt/otter-ppt/internal/model"
 	"github.com/otter-ppt/otter-ppt/internal/pptoolkit"
 )
@@ -56,6 +59,9 @@ func (s *Server) setupRoutes() {
 		api.POST("/execute", s.handleExecute)
 		api.POST("/build", s.handleBuild)
 		api.GET("/tools", s.handleListTools)
+		api.GET("/fonts", s.handleListFonts)
+		api.POST("/fonts/scan", s.handleScanFonts)
+		api.POST("/fonts/install", s.handleInstallFont)
 		api.GET("/download", s.handleDownload)
 	}
 }
@@ -204,6 +210,87 @@ func (s *Server) handleListTools(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"tools":      tools,
 		"tool_count": len(tools),
+	})
+}
+
+// handleListFonts returns all available fonts (installed in assets/fonts + built-in catalog).
+func (s *Server) handleListFonts(c *gin.Context) {
+	registry := fonts.GetRegistry()
+
+	// Try to scan if directory exists
+	installed, _ := registry.Scan()
+	catalog := registry.Catalog()
+
+	c.JSON(http.StatusOK, gin.H{
+		"installed": installed,
+		"catalog":   catalog,
+		"count":     len(installed),
+		"builtin":   fonts.BuiltInFonts,
+		"fonts_dir": registry.FontsDir(),
+	})
+}
+
+// handleScanFonts rescans the fonts directory for new files.
+func (s *Server) handleScanFonts(c *gin.Context) {
+	registry := fonts.GetRegistry()
+	entries, err := registry.Scan()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "scanned",
+		"count":   len(entries),
+		"fonts":   entries,
+	})
+}
+
+// handleInstallFont accepts a font file upload and saves it to the fonts directory.
+func (s *Server) handleInstallFont(c *gin.Context) {
+	file, err := c.FormFile("font")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no file uploaded: " + err.Error()})
+		return
+	}
+
+	registry := fonts.GetRegistry()
+	fontsDir := registry.FontsDir()
+	if err := os.MkdirAll(fontsDir, 0755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "create fonts dir: " + err.Error()})
+		return
+	}
+
+	// Sanitize filename
+	safeName := filepath.Base(file.Filename)
+	ext := strings.ToLower(filepath.Ext(safeName))
+	if ext != ".ttf" && ext != ".otf" && ext != ".ttc" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "only .ttf, .otf, .ttc files are supported"})
+		return
+	}
+
+	destPath := filepath.Join(fontsDir, safeName)
+	if err := c.SaveUploadedFile(file, destPath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "save font: " + err.Error()})
+		return
+	}
+
+	// Re-scan to include the new font
+	entries, _ := registry.Scan()
+
+	// Find the just-installed font
+	var installed *fonts.FontEntry
+	for i := range entries {
+		if filepath.Base(entries[i].Path) == safeName {
+			installed = &entries[i]
+			break
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "installed",
+		"file":    safeName,
+		"font":    installed,
+		"total":   len(entries),
 	})
 }
 

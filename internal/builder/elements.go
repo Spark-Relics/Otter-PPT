@@ -259,13 +259,35 @@ func (b *Builder) writeTable(buf *strings.Builder, elem *model.Element) {
 				ar, ag, ab := hexToRGB(td.AltRowColor)
 				bgXML = fmt.Sprintf(`<a:solidFill><a:srgbClr val="%02X%02X%02X"/></a:solidFill>`, ar, ag, ab)
 			}
+
+			// Determine text color: use cell style color, or default to a light color for dark themes
+			textColor := cell.Style.Color
+			if textColor == "" {
+				textColor = "E2E8F0"
+			}
+			// Determine alignment: use cell style align, or default center
+			cellAlign := alignXML(cell.Style.Align)
+			if cellAlign == "" {
+				cellAlign = "ctr"
+			}
+			// Determine bold
+			boldAttr := ""
+			if cell.Style.Bold {
+				boldAttr = ` b="1"`
+			}
+			// Determine font size override
+			cellFontSize := fontSize
+			if cell.Style.FontSize > 0 {
+				cellFontSize = cell.Style.FontSize
+			}
+
 			fmt.Fprintf(buf,
 				`<a:tc><a:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>`+
-					`<a:p><a:pPr algn="l"/><a:r><a:rPr lang="zh-CN" sz="%d">`+
-					`<a:solidFill><a:srgbClr val="333333"/></a:solidFill></a:rPr>`+
+					`<a:p><a:pPr algn="%s"/><a:r><a:rPr lang="zh-CN" sz="%d"%s>`+
+					`<a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:rPr>`+
 					`<a:t>%s</a:t></a:r></a:p></a:txBody>`+
 					`<a:tcPr>%s</a:tcPr></a:tc>`,
-				fontSize*100, xmlEscape(cell.Text), bgXML)
+				cellAlign, cellFontSize*100, boldAttr, textColor, xmlEscape(cell.Text), bgXML)
 		}
 		buf.WriteString(`</a:tr>`)
 	}

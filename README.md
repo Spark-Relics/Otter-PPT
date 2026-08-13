@@ -48,6 +48,7 @@ Presentation Object → PPTX Builder → Editable .pptx File
 | ✨ **Animations & Transitions** | Element animations, slide transition effects |
 | 📐 **Precise Positioning** | Percentage-based coordinate system, resolution-independent |
 | 🏗️ **Native PPTX** | Direct OOXML generation, fully editable |
+| 🔤 **Font embedding** | Curated Google Fonts + CJK system fonts, embeddable into PPTX |
 | 🌐 **HTTP API** | Built-in Gin server with REST API support |
 | 🔌 **Multi-Protocol Integration** | MCP, STDIO JSON-RPC, OpenAPI — works with Claude Code, Cursor, Codex, and custom software |
 | 📦 **Python SDK** | Lightweight Python client for automation |
@@ -227,8 +228,10 @@ All positions use **percentage coordinates** (0–100), relative to slide dimens
 ```
 otter-ppt/
 ├── cmd/
-│   └── otter-ppt/
-│       └── main.go           # CLI entry point (serve / gen)
+│   ├── otter-ppt/
+│   │   └── main.go           # CLI entry point (serve / gen)
+│   └── fontdl/
+│       └── main.go           # Font download tool (Google Fonts + sysfonts)
 ├── internal/
 │   ├── model/                # Data models
 │   │   ├── presentation.go   # Presentation, Slide, Element
@@ -247,11 +250,16 @@ otter-ppt/
 │   │   ├── builder.go        # Main entry + helper functions
 │   │   ├── content_types.go  # [Content_Types].xml
 │   │   ├── presentation.go   # presentation.xml
+│   │   ├── font_embed.go     # Font embedding (fntdata parts)
 │   │   ├── theme_master.go   # theme + slideMaster + slideLayout
 │   │   ├── slide.go          # Slide XML generation
 │   │   └── elements.go       # Element XML (text/shape/table/chart/connector)
+│   ├── fonts/                # ★ Font management
+│   │   ├── registry.go       # Font discovery, metadata, catalog
+│   │   ├── ttf.go            # TTF/OTF name table parser
+│   │   └── builtin.go        # Built-in font recommendations
 │   ├── server/               # HTTP API server
-│   │   └── server.go         # Gin routes
+│   │   └── server.go         # Gin routes (incl. font endpoints)
 │   ├── ai/                   # Legacy one-shot generation mode
 │   │   └── generator.go
 │   └── imageutil/            # Image utilities
@@ -281,6 +289,82 @@ export OPENAI_MODEL="deepseek-chat"
 # Other compatible services
 export OPENAI_BASE_URL="https://your-api.com/v1"
 ```
+
+## 🔤 Font System
+
+Otter PPT includes a built-in font management system that discovers, catalogues, and embeds fonts into PPTX output.
+
+### Features
+
+- **Font Registry**: Automatically scans `assets/fonts/` for `.ttf`, `.otf`, and `.ttc` files
+- **Metadata Parsing**: Extracts font family name, PostScript name, weight, and subfamily from font files
+- **PPTX Embedding**: Fonts used in the presentation are embedded into the PPTX for cross-platform consistency
+- **CJK Support**: Detects and tags CJK fonts (Microsoft YaHei, SimSun, SimHei, KaiTi)
+- **Built-in Catalog**: 35+ recommended fonts (system, Google Fonts, open-source) as a reference
+- **Custom Installation**: Upload your own fonts via API or manually drop files in `assets/fonts/`
+
+### Downloading Curated Fonts
+
+The `cmd/fontdl` tool downloads open-source fonts from Google Fonts and copies select Windows system CJK fonts:
+
+```bash
+# Download Google Fonts (20 Latin fonts) + Windows system CJK fonts
+go run ./cmd/fontdl -dir assets/fonts -sysfonts
+
+# Only Google Fonts
+go run ./cmd/fontdl -dir assets/fonts
+
+# Only system fonts (CJK)
+go run ./cmd/fontdl -dir assets/fonts -no-gstatic -sysfonts
+```
+
+**Downloaded Google Fonts**: Inter, Montserrat, Roboto, Open Sans, Lato, Poppins, Raleway, Playfair Display, Merriweather, Lora, JetBrains Mono, Source Code Pro, Bebas Neue, Oswald, Dancing Script, Caveat
+
+**Copied System Fonts** (Windows only): Microsoft YaHei, SimHei (黑体), SimSun (宋体), KaiTi (楷体)
+
+### Font API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/fonts` | GET | List all installed fonts + built-in catalog |
+| `/api/v1/fonts/scan` | POST | Re-scan fonts directory |
+| `/api/v1/fonts/install` | POST | Upload and install a font file (`.ttf`, `.otf`, `.ttc`) |
+
+#### Install a Custom Font
+
+```bash
+curl -X POST http://localhost:8080/api/v1/fonts/install \
+  -F "font=@MyCustomFont.ttf"
+```
+
+#### List Available Fonts
+
+```bash
+curl http://localhost:8080/api/v1/fonts
+```
+
+### Adding Fonts Manually
+
+Simply drop `.ttf`, `.otf`, or `.ttc` files into the `assets/fonts/` directory and re-scan:
+
+```bash
+# Copy your font file
+cp MyFont.ttf assets/fonts/
+
+# Trigger a re-scan via API
+curl -X POST http://localhost:8080/api/v1/fonts/scan
+```
+
+### Font Categories
+
+| Category | Examples | Use Case |
+|----------|----------|----------|
+| **Sans-serif** | Inter, Montserrat, Roboto, Open Sans | Modern UI, tech presentations |
+| **Serif** | Playfair Display, Lora, Merriweather | Elegant, editorial, formal |
+| **Display** | Bebas Neue, Oswald | Headlines, posters |
+| **Script** | Dancing Script, Caveat | Decorative, creative |
+| **Mono** | JetBrains Mono, Source Code Pro | Code snippets, technical |
+| **CJK** | Microsoft YaHei, SimSun, SimHei, KaiTi | Chinese, Japanese, Korean |
 
 ## 📄 License
 

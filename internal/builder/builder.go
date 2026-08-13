@@ -55,6 +55,7 @@ type Builder struct {
 	mediaAssets    []*mediaAsset
 	chartByElement map[*model.Element]*chartAsset
 	chartAssets    []*chartAsset
+	embeddedFonts  []embeddedFont
 }
 
 // New creates a builder for the given presentation.
@@ -62,11 +63,13 @@ func New(pres *model.Presentation) *Builder {
 	if pres.SlideWidth == 0 || pres.SlideHeight == 0 {
 		pres.SlideWidth, pres.SlideHeight = model.DefaultSlideSize()
 	}
-	return &Builder{
+	b := &Builder{
 		pres:           pres,
 		mediaByElement: make(map[*model.Element]*mediaAsset),
 		chartByElement: make(map[*model.Element]*chartAsset),
 	}
+	b.embeddedFonts = b.prepareEmbeddedFonts()
+	return b
 }
 
 // Save writes the presentation to a .pptx file.
@@ -127,6 +130,13 @@ func (b *Builder) Write(w io.Writer) error {
 	}
 	for _, asset := range b.chartAssets {
 		if err := b.writeChartPart(zw, asset); err != nil {
+			return err
+		}
+	}
+
+	// Write embedded fonts
+	if len(b.embeddedFonts) > 0 {
+		if err := b.writeEmbeddedFonts(zw, b.embeddedFonts); err != nil {
 			return err
 		}
 	}
