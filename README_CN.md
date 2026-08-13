@@ -141,28 +141,42 @@ go mod tidy
 go build -o bin/otter-ppt ./cmd/otter-ppt
 ```
 
+### 生成模式
+
+| 模式 | 速度 | 质量 | 工作流程 |
+|------|------|------|---------|
+| `simple` | ⚡ 快（~1 分钟/页） | 良好 | 提示词 → Agent 工具调用 → 自动修复 → PPTX |
+| `workflow`（默认） | 🐢 较慢（~3 分钟/页） | 最佳 | 规划 → 构建 → **渲染截图 → AI 视觉评审 → 修复** → PPTX |
+
 ### 命令行使用
 
 ```bash
 # 设置环境变量
-export OPENAI_API_KEY="sk-..."
-export OPENAI_BASE_URL="https://api.openai.com/v1"  # 可选，用于自定义端点
-export OPENAI_MODEL="gpt-4o"                         # 可选，默认 gpt-4o
+export TEXT_MODEL_API_KEY="sk-..."
+export TEXT_MODEL_BASE_URL="https://api.openai.com/v1"  # 可选，用于自定义端点
+export TEXT_MODEL_NAME="gpt-4o"                         # 可选，默认 gpt-4o
 
-# 生成演示文稿
+# Simple 模式：快速生成，不走视觉评审
 ./bin/otter-ppt gen \
   --topic "人工智能的发展趋势" \
   --slides 10 \
   --style "科技感、深色主题" \
   --language zh \
+  --mode simple \
+  --output 我的演示文稿.pptx
+
+# Workflow 模式：规划 → 构建 → AI 视觉评审 → 修复（默认）
+./bin/otter-ppt gen \
+  --topic "人工智能的发展趋势" \
+  --slides 10 \
+  --mode workflow \
   --output 我的演示文稿.pptx
 ```
 
 ### HTTP 服务模式
 
 ```bash
-export OPENAI_API_KEY="sk-..."
-
+export TEXT_MODEL_API_KEY="sk-..."
 ./bin/otter-ppt serve --port 8080
 ```
 
@@ -215,8 +229,11 @@ otter-ppt/
 │   │   ├── tools.go             # OpenAI 工具定义（30+ 个）
 │   │   ├── handlers.go          # 工具分发 + map→struct 转换
 │   │   └── schema.go            # JSON schema 构建辅助
-│   ├── agent/                   # AI Agent 循环
-│   │   └── agent.go             # LLM ↔ 工具调用编排
+│   ├── agent/                   # AI Agent + 多阶段工作流
+│   │   ├── agent.go             # LLM ↔ 工具调用编排
+│   │   ├── workflow.go          # 多阶段：规划 → 构建 → 评审 → 修复
+│   │   ├── planner.go           # 第 1 阶段：LLM 设计规划
+│   │   └── vision.go            # 第 4 阶段：多模态视觉评审
 │   ├── builder/                 # PPTX 渲染器（原生 OOXML）
 │   │   ├── builder.go           # ZIP 包写入器 + 辅助函数
 │   │   ├── content_types.go     # [Content_Types].xml + .rels
@@ -228,8 +245,10 @@ otter-ppt/
 │   │   └── server.go
 │   ├── ai/                      # 旧版一次性生成器（已弃用）
 │   │   └── generator.go
-│   └── imageutil/               # 图片工具
-│       └── image.go
+│   ├── imageutil/               # 图片工具
+│   │   └── image.go
+│   ├── renderer/                # 幻灯片渲染（视觉评审用）
+│   │   └── renderer.go          # LibreOffice → PDF → PNG（三级降级）
 ├── go.mod
 └── Makefile
 ```
@@ -284,9 +303,12 @@ builder.New(session.Presentation()).Save("output.pptx")
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `OPENAI_API_KEY` | *（必填）* | LLM API 密钥 |
-| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | 自定义端点（DeepSeek、Moonshot 等） |
-| `OPENAI_MODEL` | `gpt-4o` | 模型名称 |
+| `TEXT_MODEL_API_KEY` | 回退到 `OPENAI_API_KEY` | LLM API 密钥（必填） |
+| `TEXT_MODEL_BASE_URL` | 回退到 `OPENAI_BASE_URL` | LLM API 端点 |
+| `TEXT_MODEL_NAME` | 回退到 `OPENAI_MODEL`，再回退 `gpt-4o` | 文本模型名称 |
+| `IMAGE_MODEL_API_KEY` | — | 图片生成 API 密钥（可选） |
+| `IMAGE_MODEL_BASE_URL` | — | 图片生成端点 |
+| `IMAGE_MODEL_NAME` | — | 图片模型名称 |
 
 ### 自定义 LLM 服务商
 
@@ -313,6 +335,84 @@ export OPENAI_MODEL="moonshot-v1-32k"
 - [ ] 智能布局自动排列
 - [ ] 模板系统
 - [ ] Web UI 实时预览
+
+---
+
+## 🔬 视觉评审架构
+
+Otter PPT 支持**多阶段工作流**（`--mode workflow`），在初始构建后加入 AI 视觉评审环节：
+
+```
+第 1 阶段: 规划 (PLAN)     → LLM 创建幻灯片大纲 + 设计策略
+第 2 阶段: 收集 (GATHER)   → 并行预生成所需图片（可选）
+第 3 阶段: 构建 (BUILD)    → Agent 工具调用循环（与 simple 模式相同）
+第 4 阶段: 评审 (REVIEW)   → 渲染幻灯片 → 发送给视觉 AI → 获取设计反馈
+第 5 阶段: 修复 (REFINE)   → Agent 根据反馈修复问题
+第 6 阶段: 抛光 (POLISH)   → 最终自动修复 + 布局校验
+```
+
+### 渲染后端（三级降级）
+
+渲染器将 PPTX 幻灯片转换为图片，供视觉模型评审。自动选择最佳可用后端：
+
+| 层级 | 后端 | 输出质量 | 依赖 | 适用场景 |
+|------|------|---------|------|---------|
+| **1** | LibreOffice 无头模式 | ⭐⭐⭐ 完美（真实 PPTX 渲染） | `soffice` + `pdftoppm` 在 PATH 中 | 已安装 LibreOffice 的服务器/桌面 |
+| **2** | Go 原生渲染器 | ⭐⭐ 良好（形状 + 文字 + 渐变） | 无（使用内置 TTF 字体） | 任何环境，零安装 |
+| **3** | 结构化文本描述 | ⭐ 可用（类 JSON 元素信息） | 无 | 视觉模型不支持图片时的兜底 |
+
+**自动检测**：渲染器在启动时探测 `soffice`/`libreoffice` 和 `pdftoppm`。找到则使用 Tier 1；否则降级到 Tier 2（Go 原生渲染，使用 `golang.org/x/image/font`）；如果视觉模型不支持图片输入，则降级到 Tier 3 发送结构化文本。
+
+#### 安装 LibreOffice（可选，获得最佳质量）
+
+<details>
+<summary>Windows</summary>
+
+从 https://www.libreoffice.org/download/ 下载安装。`soffice.exe` 会被自动检测：
+- `C:\Program Files\LibreOffice\program\soffice.exe`
+- `C:\Program Files (x86)\LibreOffice\program\soffice.exe`
+
+`pdftoppm` 需安装 [Poppler for Windows](https://github.com/oschwartz10612/poppler-windows/releases) 并加入 PATH。
+</details>
+
+<details>
+<summary>Linux / Docker</summary>
+
+```bash
+# Debian/Ubuntu
+apt-get install -y libreoffice poppler-utils
+
+# Alpine
+apk add libreoffice poppler-utils
+
+# Docker（加入 Dockerfile）
+RUN apt-get update && apt-get install -y libreoffice poppler-utils && rm -rf /var/lib/apt/lists/*
+```
+</details>
+
+<details>
+<summary>macOS</summary>
+
+```bash
+brew install --cask libreoffice
+brew install poppler
+```
+</details>
+
+### 视觉评审流程
+
+```
+PPTX → 最佳可用渲染器 → 幻灯片图片（PNG, base64）
+                              ↓
+                    视觉 LLM（多模态）
+                              ↓
+             { design_score, content_score,
+               issues[], suggestions[] }
+                              ↓
+          Agent.Refine() → update_position, update_style 等
+```
+
+如果视觉模型总分 ≥ 阈值（默认 75），则接受演示文稿。否则将反馈送回 Agent，最多迭代 `MaxRefineRounds` 轮（默认 2 轮）。
 
 ---
 

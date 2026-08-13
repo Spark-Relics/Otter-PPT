@@ -98,21 +98,35 @@ make build
 
 ```bash
 # Set API Key
-export OPENAI_API_KEY="sk-your-key-here"
+export TEXT_MODEL_API_KEY="sk-your-key-here"
 
-# Generate PPT
+# Simple mode: fast, direct agent loop (no vision review)
 ./bin/otter-ppt gen \
   --topic "Future Trends of Artificial Intelligence" \
   --slides 10 \
   --style "tech, dark theme" \
   --language en \
+  --mode simple \
   --output my_presentation.pptx
+
+# Workflow mode: plan → build → AI visual review → refine (default)
+./bin/otter-ppt gen \
+  --topic "Future Trends of Artificial Intelligence" \
+  --slides 10 \
+  --mode workflow \
+  --output my_presentation.pptx
+```
+
+| Mode | Speed | Quality | How It Works |
+|------|-------|---------|-------------|
+| `simple` | ⚡ Fast (~1 min/slide) | Good | Prompt → Agent tools → Auto-fix → PPTX |
+| `workflow` | 🐢 Slower (~3 min/slide) | Best | Plan → Build → **Render → AI Vision Review → Refine** → PPTX |
 ```
 
 ### Start HTTP Server
 
 ```bash
-export OPENAI_API_KEY="sk-your-key-here"
+export TEXT_MODEL_API_KEY="sk-your-key-here"
 ./bin/otter-ppt serve --port 8080
 ```
 
@@ -244,8 +258,11 @@ otter-ppt/
 │   │   ├── tools.go          # OpenAI tool definitions (30+)
 │   │   ├── handlers.go       # Tool dispatch and execution
 │   │   └── schema.go         # JSON Schema build helpers
-│   ├── agent/                # AI Agent loop
-│   │   └── agent.go          # LLM ↔ tool call orchestration
+│   ├── agent/                # AI Agent + Workflow pipeline
+│   │   ├── agent.go          # LLM ↔ tool call orchestration
+│   │   ├── workflow.go       # Multi-phase: plan → build → review → refine
+│   │   ├── planner.go        # Phase 1: LLM design planning
+│   │   └── vision.go         # Phase 4: Multimodal visual evaluation
 │   ├── builder/              # PPTX builder
 │   │   ├── builder.go        # Main entry + helper functions
 │   │   ├── content_types.go  # [Content_Types].xml
@@ -262,8 +279,10 @@ otter-ppt/
 │   │   └── server.go         # Gin routes (incl. font endpoints)
 │   ├── ai/                   # Legacy one-shot generation mode
 │   │   └── generator.go
-│   └── imageutil/            # Image utilities
-│       └── image.go
+│   ├── imageutil/            # Image utilities
+│   │   └── image.go
+│   ├── renderer/             # Slide rendering for visual review
+│   │   └── renderer.go       # LibreOffice → PDF → PNG (3-tier fallback)
 ├── go.mod
 ├── Makefile
 └── README.md
@@ -273,9 +292,12 @@ otter-ppt/
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OPENAI_API_KEY` | API key (required) | - |
-| `OPENAI_BASE_URL` | Custom API endpoint | Official OpenAI |
-| `OPENAI_MODEL` | Model name | `gpt-4o` |
+| `TEXT_MODEL_API_KEY` | LLM API key (required) | Falls back to `OPENAI_API_KEY` |
+| `TEXT_MODEL_BASE_URL` | LLM API endpoint | Falls back to `OPENAI_BASE_URL` |
+| `TEXT_MODEL_NAME` | Text model name | Falls back to `OPENAI_MODEL`, then `gpt-4o` |
+| `IMAGE_MODEL_API_KEY` | Image generation API key (optional) | - |
+| `IMAGE_MODEL_BASE_URL` | Image generation endpoint | - |
+| `IMAGE_MODEL_NAME` | Image model name | - |
 
 ### Compatible LLM Services
 
@@ -365,6 +387,82 @@ curl -X POST http://localhost:8080/api/v1/fonts/scan
 | **Script** | Dancing Script, Caveat | Decorative, creative |
 | **Mono** | JetBrains Mono, Source Code Pro | Code snippets, technical |
 | **CJK** | Microsoft YaHei, SimSun, SimHei, KaiTi | Chinese, Japanese, Korean |
+
+## 🔬 Visual Review Architecture
+
+Otter PPT supports a **multi-phase workflow** (`--mode workflow`) that adds AI visual evaluation after the initial build:
+
+```
+Phase 1: PLAN     → LLM creates slide outline + design strategy
+Phase 2: GATHER   → Pre-generate images in parallel (optional)
+Phase 3: BUILD    → Agent tool-calling loop (same as simple mode)
+Phase 4: REVIEW   → Render slides → send to vision AI → get design feedback
+Phase 5: REFINE   → Agent fixes issues based on AI feedback
+Phase 6: POLISH   → Final auto-fix + layout validation
+```
+
+### Rendering Backends (3-tier fallback)
+
+The renderer converts PPTX slides into images for the vision model to evaluate. It automatically selects the best available backend:
+
+| Tier | Backend | Output Quality | Dependencies | When to Use |
+|------|---------|---------------|-------------|-------------|
+| **1** | LibreOffice headless | ⭐⭐⭐ Perfect (true PPTX render) | `soffice` + `pdftoppm` in PATH | Server/Desktop with LibreOffice |
+| **2** | Native Go renderer | ⭐⭐ Good (shapes + text + gradients) | None (uses bundled TTF fonts) | Any environment, zero install |
+| **3** | Structural text description | ⭐ Functional (JSON-like element dump) | None | Fallback when image API unsupported |
+
+**Auto-detection**: The renderer probes for `soffice`/`libreoffice` and `pdftoppm` at startup. If found, Tier 1 is used. If not, it falls back to Tier 2 (Go native rendering with `golang.org/x/image/font`). If the vision model rejects images, Tier 3 sends structured text.
+
+#### Installing LibreOffice (optional, for best quality)
+
+<details>
+<summary>Windows</summary>
+
+Download from https://www.libreoffice.org/download/ and install. The `soffice.exe` will be auto-detected at:
+- `C:\Program Files\LibreOffice\program\soffice.exe`
+- `C:\Program Files (x86)\LibreOffice\program\soffice.exe`
+
+For `pdftoppm`, install [Poppler for Windows](https://github.com/oschwartz10612/poppler-windows/releases) and add to PATH.
+</details>
+
+<details>
+<summary>Linux / Docker</summary>
+
+```bash
+# Debian/Ubuntu
+apt-get install -y libreoffice poppler-utils
+
+# Alpine
+apk add libreoffice poppler-utils
+
+# Docker (add to Dockerfile)
+RUN apt-get update && apt-get install -y libreoffice poppler-utils && rm -rf /var/lib/apt/lists/*
+```
+</details>
+
+<details>
+<summary>macOS</summary>
+
+```bash
+brew install --cask libreoffice
+brew install poppler
+```
+</details>
+
+### Vision Evaluation Flow
+
+```
+PPTX → Best available renderer → Slide images (PNG, base64)
+                                        ↓
+                              Vision LLM (multimodal)
+                                        ↓
+                         { design_score, content_score,
+                           issues[], suggestions[] }
+                                        ↓
+                    Agent.Refine() → update_position, update_style, etc.
+```
+
+If the vision model's overall score ≥ threshold (default 75), the presentation is accepted. Otherwise, feedback is fed back to the agent for up to `MaxRefineRounds` (default 2) iterations.
 
 ## 📄 License
 
