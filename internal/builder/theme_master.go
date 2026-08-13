@@ -221,6 +221,17 @@ func (b *Builder) writeSlideRels(zw *zip.Writer, slideNum int, slide *model.Slid
 	}
 
 	var mediaRels strings.Builder
+
+	// Background image relationship (if any)
+	if bgAsset := b.bgImageBySlide[slideNum-1]; bgAsset != nil {
+		fmt.Fprintf(&mediaRels, `<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/%s"/>`, bgAsset.relID, bgAsset.fileName)
+	}
+
+	// Notes slide relationship
+	if slide.Notes != "" {
+		fmt.Fprintf(&mediaRels, `<Relationship Id="rIdNotes%d" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide" Target="../notesSlides/notesSlide%d.xml"/>`, slideNum, slideNum)
+	}
+
 	for _, elem := range slide.Elements {
 		if asset := b.mediaByElement[elem]; asset != nil {
 			fmt.Fprintf(&mediaRels, `<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/%s"/>`, asset.relID, asset.fileName)

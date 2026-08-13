@@ -103,10 +103,11 @@ type Element struct {
 	Paragraphs []Paragraph `json:"paragraphs,omitempty"` // for rich text
 
 	// Image path (for image elements). Can be local path or URL.
-	ImagePath string     `json:"image_path,omitempty"`
-	ImageFit  string     `json:"image_fit,omitempty"` // contain, cover, stretch
-	ImageAlt  string     `json:"image_alt,omitempty"`
-	ImageCrop *ImageCrop `json:"image_crop,omitempty"`
+	ImagePath   string     `json:"image_path,omitempty"`
+	ImageFit    string     `json:"image_fit,omitempty"`      // contain, cover, stretch
+	ImageAlt    string     `json:"image_alt,omitempty"`
+	ImageCrop   *ImageCrop `json:"image_crop,omitempty"`
+	ImageRadius float64    `json:"image_radius,omitempty"` // rounded corner radius (relative 0-1)
 
 	// For bullet lists, each item is a separate string.
 	Items []string `json:"items,omitempty"`

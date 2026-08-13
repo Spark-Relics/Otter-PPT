@@ -28,6 +28,20 @@ type ShadowStyle struct {
 	Angle    float64 `json:"angle,omitempty"`    // degrees
 }
 
+// GlowStyle defines a glow effect around a shape.
+type GlowStyle struct {
+	Color   string  `json:"color,omitempty"`
+	Opacity float64 `json:"opacity,omitempty"` // 0-1
+	Radius  float64 `json:"radius,omitempty"`  // pt
+}
+
+// ReflectionStyle defines a reflection effect.
+type ReflectionStyle struct {
+	Opacity float64 `json:"opacity,omitempty"` // 0-1
+	Blur    float64 `json:"blur,omitempty"`    // pt
+	Distance float64 `json:"distance,omitempty"` // pt
+}
+
 // ShapeData holds shape-specific properties.
 type ShapeData struct {
 	ShapeType    ShapeType    `json:"shape_type"`
@@ -36,8 +50,10 @@ type ShapeData struct {
 	BorderWidth  float64      `json:"border_width,omitempty"` // legacy line width, pt
 	Fill         *FillStyle   `json:"fill,omitempty"`
 	Line         *LineStyle   `json:"line,omitempty"`
-	Shadow       *ShadowStyle `json:"shadow,omitempty"`
-	Text         string       `json:"text,omitempty"`
+	Shadow       *ShadowStyle    `json:"shadow,omitempty"`
+	Glow         *GlowStyle      `json:"glow,omitempty"`
+	Reflection   *ReflectionStyle `json:"reflection,omitempty"`
+	Text         string           `json:"text,omitempty"`
 	Style        TextStyle    `json:"style,omitempty"`
 	CornerRadius float64      `json:"corner_radius,omitempty"`
 }
@@ -78,11 +94,12 @@ type ChartSeries struct {
 
 // ChartData holds chart-specific properties.
 type ChartData struct {
-	ChartType  ChartType     `json:"chart_type"`
-	Categories []string      `json:"categories"`
-	Series     []ChartSeries `json:"series"`
-	Title      string        `json:"title,omitempty"`
-	ShowLegend bool          `json:"show_legend,omitempty"`
+	ChartType      ChartType     `json:"chart_type"`
+	Categories     []string      `json:"categories"`
+	Series         []ChartSeries `json:"series"`
+	Title          string        `json:"title,omitempty"`
+	ShowLegend     bool          `json:"show_legend,omitempty"`
+	ShowDataLabels bool          `json:"show_data_labels,omitempty"`
 }
 
 // ConnectorData defines a line/arrow connecting two points.

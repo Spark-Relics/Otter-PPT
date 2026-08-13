@@ -44,6 +44,14 @@ func (b *Builder) chartXML(chart *model.ChartData, chartIndex int) string {
 	if chart.ChartType == model.ChartDoughnut {
 		plot.WriteString(`<c:holeSize val="50"/>`)
 	}
+	if chart.ShowDataLabels {
+		// For pie/doughnut, show percentage instead of value
+		if chart.ChartType == model.ChartPie || chart.ChartType == model.ChartDoughnut {
+			fmt.Fprintf(&plot, `<c:dLbls><c:showLegendKey val="0"/><c:showVal val="0"/><c:showCatName val="1"/><c:showSerName val="0"/><c:showPercent val="1"/><c:showBubbleSize val="0"/></c:dLbls>`)
+		} else {
+			fmt.Fprintf(&plot, `<c:dLbls><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls>`)
+		}
+	}
 	if chart.ChartType != model.ChartPie && chart.ChartType != model.ChartDoughnut {
 		fmt.Fprintf(&plot, `<c:axId val="%d"/><c:axId val="%d"/>`, chartIndex*2+100000, chartIndex*2+100001)
 	}
@@ -96,5 +104,10 @@ func chartSeriesXML(chart *model.ChartData, series model.ChartSeries, index int)
 	for i, value := range series.Values {
 		fmt.Fprintf(&values, `<c:pt idx="%d"><c:v>%s</c:v></c:pt>`, i, fmtFloat(value))
 	}
-	return fmt.Sprintf(`<c:ser><c:idx val="%d"/><c:order val="%d"/><c:tx><c:v>%s</c:v></c:tx><c:spPr><a:solidFill><a:srgbClr val="%s"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:ln></c:spPr><c:cat><c:strLit><c:ptCount val="%d"/>%s</c:strLit></c:cat><c:val><c:numLit><c:formatCode>General</c:formatCode><c:ptCount val="%d"/>%s</c:numLit></c:val></c:ser>`, index, index, xmlEscape(series.Name), color, color, len(chart.Categories), categories.String(), len(series.Values), values.String())
+	// Data labels per-series if ShowDataLabels is enabled
+	dLbls := ""
+	if chart.ShowDataLabels {
+		dLbls = `<c:dLbls><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls>`
+	}
+	return fmt.Sprintf(`<c:ser><c:idx val="%d"/><c:order val="%d"/><c:tx><c:v>%s</c:v></c:tx><c:spPr><a:solidFill><a:srgbClr val="%s"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:ln></c:spPr>%s<c:cat><c:strLit><c:ptCount val="%d"/>%s</c:strLit></c:cat><c:val><c:numLit><c:formatCode>General</c:formatCode><c:ptCount val="%d"/>%s</c:numLit></c:val></c:ser>`, index, index, xmlEscape(series.Name), color, color, dLbls, len(chart.Categories), categories.String(), len(series.Values), values.String())
 }

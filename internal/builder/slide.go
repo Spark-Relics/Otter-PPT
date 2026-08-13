@@ -19,7 +19,7 @@ func (b *Builder) writeSlide(zw *zip.Writer, slideNum int, slide *model.Slide) e
 	var body strings.Builder
 
 	// Background
-	b.writeBackground(&body, slide)
+	b.writeBackground(&body, slideNum, slide)
 
 	// Elements sorted by z-order
 	elements := sortedElements(slide.Elements)
@@ -39,31 +39,17 @@ func (b *Builder) writeSlide(zw *zip.Writer, slideNum int, slide *model.Slide) e
 		transitionXML = b.buildTransition(slide.Transition)
 	}
 
-	// Notes
-	notesXML := ""
-	if slide.Notes != "" {
-		notesXML = fmt.Sprintf(`<p:notes>`+
-			`<p:cSld><p:spTree>`+
-			`<p:sp><p:nvSpPr><p:cNvPr id="2" name="Notes"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>`+
-			`<p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/>`+
-			`<a:p><a:r><a:rPr lang="zh-CN"/><a:t>%s</a:t></a:r></a:p>`+
-			`</p:txBody></p:sp>`+
-			`</p:spTree></p:cSld></p:notes>`, xmlEscape(slide.Notes))
-	}
-
 	xml := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
-<p:cSld>%s</p:cSld>%s%s
-</p:sld>`, body.String(), transitionXML, "")
-
-	_ = notesXML // notes need separate notesSlide parts; left for future enhancement
+<p:cSld>%s</p:cSld>%s
+</p:sld>`, body.String(), transitionXML)
 
 	_, err = w.Write([]byte(xml))
 	return err
 }
 
 // writeBackground writes the slide background XML.
-func (b *Builder) writeBackground(buf *strings.Builder, slide *model.Slide) {
+func (b *Builder) writeBackground(buf *strings.Builder, slideNum int, slide *model.Slide) {
 	if slide.Background == nil {
 		return
 	}
@@ -84,8 +70,13 @@ func (b *Builder) writeBackground(buf *strings.Builder, slide *model.Slide) {
 		}
 
 	case model.BgImage:
-		// Image backgrounds require relationship parts; using solid fallback for now
-		// Future: embed image and add blipFill reference
+		// Look up the pre-loaded background image asset for this slide
+		if asset := b.bgImageBySlide[slideNum-1]; asset != nil {
+			fmt.Fprintf(buf,
+				`<p:bg><p:bgPr><a:blipFill><a:blip r:embed="%s"/>`+
+					`<a:stretch><a:fillRect/></a:stretch></a:blipFill>`+
+					`<a:effectLst/></p:bgPr></p:bg>`, asset.relID)
+		}
 	}
 }
 
@@ -151,4 +142,49 @@ func (b *Builder) buildTransition(t *model.Transition) string {
 	}
 
 	return fmt.Sprintf(`<p:transition xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" spd="med">%s</p:transition>`, inner)
+}
+
+// writeNotesSlide writes ppt/notesSlides/notesSlideN.xml for speaker notes.
+func (b *Builder) writeNotesSlide(zw *zip.Writer, slideNum int, slide *model.Slide) error {
+	if slide.Notes == "" {
+		return nil
+	}
+
+	path := fmt.Sprintf("ppt/notesSlides/notesSlide%d.xml", slideNum)
+	w, err := zw.Create(path)
+	if err != nil {
+		return err
+	}
+
+	xml := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:notes xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+<p:cSld><p:spTree>
+<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+<p:sp><p:nvSpPr><p:cNvPr id="2" name="Notes Placeholder"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="body" idx="1"/></p:nvPr/></p:nvSpPr>
+<p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/>
+<a:p><a:r><a:rPr lang="zh-CN" sz="1400"/><a:t>%s</a:t></a:r></a:p>
+</p:txBody></p:sp>
+</p:spTree></p:cSld>
+<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
+</p:notes>`, xmlEscape(slide.Notes))
+
+	_, err = w.Write([]byte(xml))
+	return err
+}
+
+// writeNotesSlideRels writes ppt/notesSlides/_rels/notesSlideN.xml.rels.
+func (b *Builder) writeNotesSlideRels(zw *zip.Writer, slideNum int) error {
+	path := fmt.Sprintf("ppt/notesSlides/_rels/notesSlide%d.xml.rels", slideNum)
+	w, err := zw.Create(path)
+	if err != nil {
+		return err
+	}
+
+	xml := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="../slides/slide%d.xml"/>
+</Relationships>`, slideNum)
+
+	_, err = w.Write([]byte(xml))
+	return err
 }

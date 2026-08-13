@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/otter-ppt/otter-ppt/internal/layout"
 	"github.com/otter-ppt/otter-ppt/internal/model"
 )
 
@@ -299,6 +300,65 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 		}
 		return ok("Animation set")
 
+	// ──────── Layout Intelligence ────────
+	case "validate_layout":
+		slideID, _ := args["slide_id"].(string)
+		pres := s.Presentation()
+		if slideID != "" {
+			sl := pres.FindSlide(slideID)
+			if sl == nil {
+				return fail(fmt.Sprintf("slide not found: %s", slideID))
+			}
+			for i, s := range pres.Slides {
+				if s.ID == slideID {
+					report := layout.ValidateSlide(sl, i+1)
+					return ok(fmt.Sprintf("Layout validation for slide %d (score: %.0f/100, %d issues)", i+1, report.Score, len(report.Issues)), report)
+				}
+			}
+		}
+		report := layout.ValidatePresentation(pres)
+		return ok(fmt.Sprintf("Layout validation: overall score %.0f/100, %d slides analyzed", report.Score, len(report.Slides)), report)
+
+	case "auto_fix_layout":
+		slideID, _ := args["slide_id"].(string)
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if slideID != "" {
+			sl := s.pres.FindSlide(slideID)
+			if sl == nil {
+				return fail(fmt.Sprintf("slide not found: %s", slideID))
+			}
+			n := layout.AutoFixSlide(sl)
+			return ok(fmt.Sprintf("Auto-fixed %d layout issues on slide %s", n, slideID))
+		}
+		n := layout.AutoFixPresentation(s.pres)
+		return ok(fmt.Sprintf("Auto-fixed %d layout issues across all slides", n))
+
+	case "apply_smart_layout":
+		slideID, _ := args["slide_id"].(string)
+		tpl, _ := args["template"].(string)
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		sl := s.pres.FindSlide(slideID)
+		if sl == nil {
+			return fail(fmt.Sprintf("slide not found: %s", slideID))
+		}
+		msg, err := layout.ApplyTemplate(sl, layout.TemplateID(tpl))
+		if err != nil {
+			return fail(err.Error())
+		}
+		return ok(msg)
+
+	// ──────── AI Image Generation ────────
+	case "generate_image":
+		// The agent resolves image_prompt into image_path before calling ExecuteTool.
+		// If we get here, just return the resolved path or an error.
+		imgPath, _ := args["image_path"].(string)
+		if imgPath == "" {
+			return fail("generate_image requires the agent to resolve image_prompt to image_path first")
+		}
+		return ok(fmt.Sprintf("Image generated successfully (path=%s)", imgPath), map[string]string{"image_path": imgPath})
+
 	// ──────── State / Export ────────
 	case "get_state":
 		return ok("Current state", s.Presentation())
@@ -459,10 +519,11 @@ func mapToTable(args map[string]any) *model.TableData {
 
 func mapToChart(args map[string]any) *model.ChartData {
 	cd := &model.ChartData{
-		ChartType:  model.ChartType(strOr(args, "chart_type", "column")),
-		Categories: toStrSlice(args["categories"]),
-		Title:      strOr(args, "title", ""),
-		ShowLegend: true,
+		ChartType:      model.ChartType(strOr(args, "chart_type", "column")),
+		Categories:     toStrSlice(args["categories"]),
+		Title:          strOr(args, "title", ""),
+		ShowLegend:     true,
+		ShowDataLabels: boolOr(args, "show_data_labels"),
 	}
 	if v, ok := args["show_legend"]; ok {
 		cd.ShowLegend = v.(bool)

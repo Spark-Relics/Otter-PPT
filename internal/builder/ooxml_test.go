@@ -34,8 +34,11 @@ func TestAdvancedShapeStyles(t *testing.T) {
 	if !strings.Contains(line, `<a:prstDash val="dash"/>`) || !strings.Contains(line, `<a:tailEnd type="triangle"/>`) {
 		t.Fatalf("advanced line missing expected OOXML: %s", line)
 	}
-	if shadow := shadowXML(&model.ShadowStyle{Color: "#000000", Opacity: 0.25, Blur: 4, Distance: 2, Angle: 45}); !strings.Contains(shadow, `<a:outerShdw`) {
-		t.Fatalf("shadow missing expected OOXML: %s", shadow)
+	if eff := effectsXML(&model.ShadowStyle{Color: "#000000", Opacity: 0.25, Blur: 4, Distance: 2, Angle: 45}, nil, nil); !strings.Contains(eff, `<a:outerShdw`) {
+		t.Fatalf("shadow missing expected OOXML: %s", eff)
+	}
+	if eff := effectsXML(nil, &model.GlowStyle{Color: "#6366F1", Opacity: 0.5, Radius: 5}, nil); !strings.Contains(eff, `<a:glow`) {
+		t.Fatalf("glow missing expected OOXML: %s", eff)
 	}
 }
 

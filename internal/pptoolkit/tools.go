@@ -204,7 +204,8 @@ func ToolDefinitions() []openai.Tool {
 				"categories":  {typ: "array", desc: "Category labels (x-axis)", req: true},
 				"series":      {typ: "array", desc: "Series [{name, values:[num], color}]", req: true},
 				"title":       {typ: "string", desc: "Chart title"},
-				"show_legend": {typ: "boolean", desc: "Show legend (default true)"},
+				"show_legend":       {typ: "boolean", desc: "Show legend (default true)"},
+				"show_data_labels":  {typ: "boolean", desc: "Show data labels on chart"},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
@@ -314,6 +315,39 @@ func ToolDefinitions() []openai.Tool {
 				"direction":  {typ: "string", desc: "left, right, top, bottom, center"},
 				"duration":   {typ: "number", desc: "Duration in seconds"},
 				"delay":      {typ: "number", desc: "Delay in seconds"},
+			}),
+		}},
+
+		// ────────── Layout Intelligence ──────────
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "validate_layout",
+			Description: "Validate the layout quality of a specific slide or all slides. Returns issues (overlaps, out-of-bounds, title placement) and a quality score 0-100. Call this after adding elements to check for problems.",
+			Parameters: params(map[string]prop{
+				"slide_id": {typ: "string", desc: "Slide ID to validate. If empty, validates all slides."},
+			}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "auto_fix_layout",
+			Description: "Automatically fix layout issues on a slide: clamps out-of-bounds elements, resolves overlaps by repositioning, and ensures titles are in the top portion. Returns the number of fixes applied.",
+			Parameters: params(map[string]prop{
+				"slide_id": {typ: "string", desc: "Slide ID to fix. If empty, fixes all slides."},
+			}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "apply_smart_layout",
+			Description: "Apply a predefined smart layout template to a slide. Repositions existing elements to match professional spacing. Templates: title, title_content, two_column, image_left, image_right, image_full, section, bullets, quote, three_cards, four_cards, timeline, comparison, stats, chart, agenda, thank_you, contact.",
+			Parameters: params(map[string]prop{
+				"slide_id":  {typ: "string", desc: "Slide ID", req: true},
+				"template":  {typ: "string", desc: "Template ID (e.g. three_cards, two_column, image_left)", req: true},
+			}),
+		}},
+
+		// ────────── AI Image Generation ──────────
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "generate_image",
+			Description: "Generate a professional AI image from a text prompt and return the local path. Use this to create backgrounds, illustrations, and visual assets before adding them to slides.",
+			Parameters: params(map[string]prop{
+				"image_prompt": {typ: "string", desc: "Detailed English prompt for image generation (describe style, mood, composition, colors)", req: true},
 			}),
 		}},
 

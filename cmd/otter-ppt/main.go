@@ -12,6 +12,7 @@ import (
 	"github.com/otter-ppt/otter-ppt/internal/ai"
 	"github.com/otter-ppt/otter-ppt/internal/builder"
 	"github.com/otter-ppt/otter-ppt/internal/integration"
+	"github.com/otter-ppt/otter-ppt/internal/model"
 	"github.com/otter-ppt/otter-ppt/internal/server"
 )
 
@@ -38,7 +39,7 @@ func main() {
 		}
 	case "version":
 		fmt.Printf("otter-ppt v%s\n", version)
-	case "help", "-h", "--help":
+	case "help", "-h", "----help":
 		printUsage()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", os.Args[1])
@@ -64,6 +65,7 @@ Commands:
 Examples:
   otter-ppt serve --port 8080
   otter-ppt gen --topic "AI的未来" --slides 8 --style 科技感 --output my.pptx
+  otter-ppt gen --topic "AI未来" --mode simple  # disable planning/vision
 
 Environment:
   TEXT_MODEL_API_KEY / OPENAI_API_KEY       Text model API key (required for gen)
@@ -74,25 +76,20 @@ Environment:
   IMAGE_MODEL_NAME                          Optional image model name`)
 }
 
-// ────────── serve command ──────────
+// ──────────────────────────────────────────────────────────────
+// serve
+// ──────────────────────────────────────────────────────────────
 
 func cmdServe(args []string) {
 	fs := flag.NewFlagSet("serve", flag.ExitOnError)
 	port := fs.String("port", "8080", "HTTP server port")
 	fs.Parse(args)
 
-	apiKey := envOr("TEXT_MODEL_API_KEY", "OPENAI_API_KEY")
-	baseURL := envOr("TEXT_MODEL_BASE_URL", "OPENAI_BASE_URL")
-	model := envOr("TEXT_MODEL_NAME", "OPENAI_MODEL")
-	if model == "" {
-		model = "gpt-4o"
-	}
-
 	srv := server.New(server.Config{
 		Port:         *port,
-		APIKey:       apiKey,
-		BaseURL:      baseURL,
-		Model:        model,
+		APIKey:       envOr("TEXT_MODEL_API_KEY", "OPENAI_API_KEY"),
+		BaseURL:      envOr("TEXT_MODEL_BASE_URL", "OPENAI_BASE_URL"),
+		Model:        envOr("TEXT_MODEL_NAME", "OPENAI_MODEL"),
 		ImageAPIKey:  os.Getenv("IMAGE_MODEL_API_KEY"),
 		ImageBaseURL: os.Getenv("IMAGE_MODEL_BASE_URL"),
 		ImageModel:   os.Getenv("IMAGE_MODEL_NAME"),
@@ -107,7 +104,9 @@ func cmdServe(args []string) {
 	}
 }
 
-// ────────── gen command ──────────
+// ──────────────────────────────────────────────────────────────
+// gen
+// ──────────────────────────────────────────────────────────────
 
 func cmdGen(args []string) {
 	fs := flag.NewFlagSet("gen", flag.ExitOnError)
@@ -119,6 +118,7 @@ func cmdGen(args []string) {
 	baseURL := fs.String("base-url", "", "Custom LLM API endpoint")
 	modelName := fs.String("model", "", "Model name (default: gpt-4o)")
 	maxSteps := fs.Int("max-steps", 60, "Maximum agent steps")
+	mode := fs.String("mode", "workflow", "Generation mode: 'workflow' (plan+vision+refine) or 'simple' (direct agent loop)")
 	fs.Parse(args)
 
 	if *topic == "" {
@@ -137,51 +137,107 @@ func cmdGen(args []string) {
 		*baseURL = envOr("TEXT_MODEL_BASE_URL", "OPENAI_BASE_URL")
 	}
 	if *modelName == "" {
-		*modelName = envOr("TEXT_MODEL_NAME", "OPENAI_MODEL")
-		if *modelName == "" {
-			*modelName = "gpt-4o"
-		}
+		*modelName = firstNonEmpty(envOr("TEXT_MODEL_NAME", "OPENAI_MODEL"), "gpt-4o")
 	}
 
-	log.Printf("Generating presentation: %s (%d slides, style=%s, lang=%s)",
-		*topic, *slides, *style, *language)
+	log.Printf("Generating: %s (%d slides, style=%s, lang=%s, mode=%s)",
+		*topic, *slides, *style, *language, *mode)
 
-	agentConfig := agent.AgentConfig{
-		APIKey: apiKey, BaseURL: *baseURL, Model: *modelName, Language: *language, MaxSteps: *maxSteps,
-	}
-	if imageAPIKey := os.Getenv("IMAGE_MODEL_API_KEY"); imageAPIKey != "" {
-		agentConfig.ImageGenerator = ai.NewImageGenerator(ai.ImageConfig{
-			APIKey: imageAPIKey, BaseURL: os.Getenv("IMAGE_MODEL_BASE_URL"), Model: os.Getenv("IMAGE_MODEL_NAME"),
-		})
-	}
-	ag := agent.NewAgent(agentConfig)
+	ag := agent.NewAgent(agent.AgentConfig{
+		APIKey:         apiKey,
+		BaseURL:        *baseURL,
+		Model:          *modelName,
+		Language:       *language,
+		MaxSteps:       *maxSteps,
+		ImageGenerator: makeImageGenerator(),
+	})
 
-	prompt := agent.SplitPrompt(*topic, *slides, *style)
-	result, err := ag.Run(context.Background(), prompt)
+	switch *mode {
+	case "workflow":
+		runGenWorkflow(ag, topic, slides, style, language, output)
+	default:
+		runGenSimple(ag, topic, slides, style, output)
+	}
+}
+
+func runGenWorkflow(ag *agent.Agent, topic *string, slides *int, style, language, output *string) {
+	log.Printf("Mode: workflow (plan → gather → build → review → refine → polish)")
+
+	wfCfg := agent.DefaultWorkflowConfig()
+	wfCfg.Topic = *topic
+	wfCfg.SlideCount = *slides
+	wfCfg.Style = *style
+	wfCfg.Language = *language
+
+	wfResult, err := agent.NewWorkflow(ag, wfCfg).Run(context.Background())
+	if err != nil {
+		log.Fatalf("Workflow failed: %v", err)
+	}
+
+	pres := ag.Session().Presentation()
+	saveOutput(pres, *output)
+
+	log.Printf("✅ Generated %d slides (%d agent steps, %d refine rounds) → %s",
+		len(pres.Slides), wfResult.AgentResult.TotalSteps, wfResult.RefineRounds, *output)
+	if wfResult.VisionReport != nil {
+		log.Printf("   Vision score: %.0f/100", wfResult.VisionReport.OverallScore)
+	}
+	if wfResult.LayoutReport != nil {
+		log.Printf("   Layout score: %.0f/100", wfResult.LayoutReport.Score)
+	}
+}
+
+func runGenSimple(ag *agent.Agent, topic *string, slides *int, style, output *string) {
+	log.Printf("Mode: simple (direct agent loop)")
+
+	result, err := ag.Run(context.Background(), agent.SplitPrompt(*topic, *slides, *style))
 	if err != nil {
 		log.Fatalf("Generation failed: %v", err)
 	}
 
 	pres := ag.Session().Presentation()
-
-	// Ensure output directory exists
-	outDir := filepath.Dir(*output)
-	if outDir != "" && outDir != "." {
-		os.MkdirAll(outDir, 0755)
-	}
-
-	b := builder.New(pres)
-	if err := b.Save(*output); err != nil {
-		log.Fatalf("Failed to save PPTX: %v", err)
-	}
+	saveOutput(pres, *output)
 
 	log.Printf("✅ Generated %d slides in %d steps → %s",
 		len(pres.Slides), result.TotalSteps, *output)
 }
 
+// ──────────────────────────────────────────────────────────────
+// Shared helpers
+// ──────────────────────────────────────────────────────────────
+
+// saveOutput writes the presentation to the given path, creating parent dirs.
+func saveOutput(pres *model.Presentation, output string) {
+	if dir := filepath.Dir(output); dir != "" && dir != "." {
+		os.MkdirAll(dir, 0755)
+	}
+	if err := builder.New(pres).Save(output); err != nil {
+		log.Fatalf("Failed to save PPTX: %v", err)
+	}
+}
+
+// makeImageGenerator returns an image generator from env vars, or nil if not configured.
+func makeImageGenerator() ai.ImageGenerator {
+	if key := os.Getenv("IMAGE_MODEL_API_KEY"); key != "" {
+		return ai.NewImageGenerator(ai.ImageConfig{
+			APIKey:  key,
+			BaseURL: os.Getenv("IMAGE_MODEL_BASE_URL"),
+			Model:   os.Getenv("IMAGE_MODEL_NAME"),
+		})
+	}
+	return nil
+}
+
 func envOr(primary, fallback string) string {
-	if value := os.Getenv(primary); value != "" {
-		return value
+	if v := os.Getenv(primary); v != "" {
+		return v
 	}
 	return os.Getenv(fallback)
+}
+
+func firstNonEmpty(a, b string) string {
+	if a != "" {
+		return a
+	}
+	return b
 }

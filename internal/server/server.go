@@ -19,15 +19,19 @@ import (
 	"github.com/otter-ppt/otter-ppt/internal/pptoolkit"
 )
 
+// ──────────────────────────────────────────────────────────────
+// Server setup
+// ──────────────────────────────────────────────────────────────
+
 // Config holds server configuration.
 type Config struct {
-	Port          string
-	APIKey        string
-	BaseURL       string
-	Model         string
-	ImageAPIKey   string
-	ImageBaseURL  string
-	ImageModel    string
+	Port         string
+	APIKey       string
+	BaseURL      string
+	Model        string
+	ImageAPIKey  string
+	ImageBaseURL string
+	ImageModel   string
 }
 
 // Server is the HTTP server.
@@ -40,10 +44,7 @@ type Server struct {
 // New creates a new server.
 func New(cfg Config) *Server {
 	gin.SetMode(gin.ReleaseMode)
-	s := &Server{
-		cfg:    cfg,
-		router: gin.New(),
-	}
+	s := &Server{cfg: cfg, router: gin.New()}
 	s.setupRoutes()
 	return s
 }
@@ -71,40 +72,140 @@ func (s *Server) Run() error {
 	return s.router.Run(":" + s.cfg.Port)
 }
 
-// generateRequest is the request body for POST /generate.
+// ──────────────────────────────────────────────────────────────
+// Shared helpers (used by all generate handlers)
+// ──────────────────────────────────────────────────────────────
+
+// generateRequest is shared by all generation modes.
 type generateRequest struct {
 	Topic    string `json:"topic" binding:"required"`
 	Language string `json:"language"`
 	Slides   int    `json:"slides"`
 	Style    string `json:"style"`
+	Mode     string `json:"mode"` // "simple" | "workflow" (default: "workflow")
 }
 
-// handleGenerate runs the AI agent to create a PPT, returns the JSON + PPTX.
+// makeAgentConfig builds an AgentConfig from server config + request params.
+func (s *Server) makeAgentConfig(lang string) agent.AgentConfig {
+	cfg := agent.AgentConfig{
+		APIKey:   s.cfg.APIKey,
+		BaseURL:  s.cfg.BaseURL,
+		Model:    s.cfg.Model,
+		Language: lang,
+	}
+	if s.cfg.ImageAPIKey != "" {
+		cfg.ImageGenerator = ai.NewImageGenerator(ai.ImageConfig{
+			APIKey: s.cfg.ImageAPIKey, BaseURL: s.cfg.ImageBaseURL, Model: s.cfg.ImageModel,
+		})
+	}
+	return cfg
+}
+
+// buildAndStorePPTX builds a PPTX from the presentation, stores it for download,
+// and returns the download URL. On failure it writes an HTTP error and returns "".
+func (s *Server) buildAndStorePPTX(c *gin.Context, pres *model.Presentation) string {
+	tmpFile, err := os.CreateTemp("", "otter-ppt-*.pptx")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create temp file"})
+		return ""
+	}
+	tmpPath := tmpFile.Name()
+	tmpFile.Close()
+
+	if err := builder.New(pres).Save(tmpPath); err != nil {
+		os.Remove(tmpPath)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build PPTX: " + err.Error()})
+		return ""
+	}
+
+	id := uuid.NewString()
+	s.downloads.Store(id, tmpPath)
+	return "/api/v1/download?id=" + id
+}
+
+// requireAPIKey writes a 401 error if no text-model API key is configured.
+// Returns true if OK to proceed.
+func (s *Server) requireAPIKey(c *gin.Context) bool {
+	if s.cfg.APIKey == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "text model API key not configured; use /api/v1/execute or /api/v1/build for external AI mode",
+		})
+		return false
+	}
+	return true
+}
+
+// ──────────────────────────────────────────────────────────────
+// POST /generate  (also serves /generate-v2 via alias)
+// ──────────────────────────────────────────────────────────────
+
 func (s *Server) handleGenerate(c *gin.Context) {
 	var req generateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	if s.cfg.APIKey == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "text model API key not configured; use /api/v1/execute or /api/v1/build for external AI mode"})
+	if !s.requireAPIKey(c) {
 		return
 	}
 
-	agentConfig := agent.AgentConfig{
-		APIKey:   s.cfg.APIKey,
-		BaseURL:  s.cfg.BaseURL,
-		Model:    s.cfg.Model,
-		Language: req.Language,
+	mode := req.Mode
+	if mode == "" {
+		mode = "workflow"
 	}
-	if s.cfg.ImageAPIKey != "" {
-		agentConfig.ImageGenerator = ai.NewImageGenerator(ai.ImageConfig{
-			APIKey: s.cfg.ImageAPIKey, BaseURL: s.cfg.ImageBaseURL, Model: s.cfg.ImageModel,
-		})
-	}
-	ag := agent.NewAgent(agentConfig)
 
+	ag := agent.NewAgent(s.makeAgentConfig(req.Language))
+
+	if mode == "workflow" {
+		s.runWorkflowMode(c, ag, &req)
+	} else {
+		s.runSimpleMode(c, ag, &req)
+	}
+}
+
+// runWorkflowMode executes the multi-phase pipeline (plan → gather → build → review → refine → polish).
+func (s *Server) runWorkflowMode(c *gin.Context, ag *agent.Agent, req *generateRequest) {
+	wfCfg := agent.DefaultWorkflowConfig()
+	wfCfg.Topic = req.Topic
+	wfCfg.SlideCount = req.Slides
+	wfCfg.Style = req.Style
+	wfCfg.Language = req.Language
+
+	wfResult, err := agent.NewWorkflow(ag, wfCfg).Run(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	pres := ag.Session().Presentation()
+	dlURL := s.buildAndStorePPTX(c, pres)
+	if dlURL == "" {
+		return
+	}
+
+	resp := gin.H{
+		"presentation":  pres,
+		"done":          wfResult.AgentResult.Done,
+		"total_steps":   wfResult.AgentResult.TotalSteps,
+		"refine_rounds": wfResult.RefineRounds,
+		"mode":          "workflow",
+		"download_url":  dlURL,
+	}
+	if wfResult.Plan != nil {
+		resp["plan"] = wfResult.Plan
+	}
+	if wfResult.VisionReport != nil {
+		resp["vision_score"] = wfResult.VisionReport.OverallScore
+		resp["vision_report"] = wfResult.VisionReport
+	}
+	if wfResult.LayoutReport != nil {
+		resp["layout_score"] = wfResult.LayoutReport.Score
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+// runSimpleMode executes the direct agent loop (no planning/vision).
+func (s *Server) runSimpleMode(c *gin.Context, ag *agent.Agent, req *generateRequest) {
 	prompt := agent.SplitPrompt(req.Topic, req.Slides, req.Style)
 	result, err := ag.Run(c.Request.Context(), prompt)
 	if err != nil {
@@ -113,33 +214,24 @@ func (s *Server) handleGenerate(c *gin.Context) {
 	}
 
 	pres := ag.Session().Presentation()
-
-	// Build PPTX to temp file
-	tmpFile, err := os.CreateTemp("", "otter-ppt-*.pptx")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create temp file"})
+	dlURL := s.buildAndStorePPTX(c, pres)
+	if dlURL == "" {
 		return
 	}
-	tmpPath := tmpFile.Name()
-	tmpFile.Close()
-
-	b := builder.New(pres)
-	if err := b.Save(tmpPath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build PPTX: " + err.Error()})
-		return
-	}
-
-	downloadID := uuid.NewString()
-	s.downloads.Store(downloadID, tmpPath)
 
 	c.JSON(http.StatusOK, gin.H{
 		"presentation": pres,
 		"steps":        result.Steps,
 		"total_steps":  result.TotalSteps,
 		"done":         result.Done,
-		"download_url": "/api/v1/download?id=" + downloadID,
+		"mode":         "simple",
+		"download_url": dlURL,
 	})
 }
+
+// ──────────────────────────────────────────────────────────────
+// POST /execute — apply pre-generated tool calls (no AI model)
+// ──────────────────────────────────────────────────────────────
 
 type externalToolCall struct {
 	Name      string         `json:"name" binding:"required"`
@@ -151,7 +243,6 @@ type executeRequest struct {
 	Calls        []externalToolCall  `json:"calls" binding:"required,min=1"`
 }
 
-// handleExecute applies externally generated tool calls without invoking any AI model.
 func (s *Server) handleExecute(c *gin.Context) {
 	var req executeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -169,17 +260,25 @@ func (s *Server) handleExecute(c *gin.Context) {
 		results = append(results, result)
 		if !result.Success {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{
-				"error": result.Message, "failed_call_index": index, "results": results,
-				"presentation": session.Presentation(),
+				"error":              result.Message,
+				"failed_call_index":  index,
+				"results":            results,
+				"presentation":       session.Presentation(),
 			})
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"presentation": session.Presentation(), "results": results})
+	c.JSON(http.StatusOK, gin.H{
+		"presentation": session.Presentation(),
+		"results":      results,
+	})
 }
 
-// handleBuild builds a PPTX from a pre-made presentation JSON.
+// ──────────────────────────────────────────────────────────────
+// POST /build — build PPTX from presentation JSON
+// ──────────────────────────────────────────────────────────────
+
 func (s *Server) handleBuild(c *gin.Context) {
 	raw, err := c.GetRawData()
 	if err != nil {
@@ -193,18 +292,18 @@ func (s *Server) handleBuild(c *gin.Context) {
 		return
 	}
 
-	b := builder.New(&pres)
-
 	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.presentationml.presentation")
 	c.Header("Content-Disposition", "attachment; filename=presentation.pptx")
 
-	if err := b.Write(c.Writer); err != nil {
+	if err := builder.New(&pres).Write(c.Writer); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
 	}
 }
 
-// handleListTools returns the available tool definitions.
+// ──────────────────────────────────────────────────────────────
+// GET /tools — list available agent tools
+// ──────────────────────────────────────────────────────────────
+
 func (s *Server) handleListTools(c *gin.Context) {
 	tools := pptoolkit.ToolDefinitions()
 	c.JSON(http.StatusOK, gin.H{
@@ -213,14 +312,14 @@ func (s *Server) handleListTools(c *gin.Context) {
 	})
 }
 
-// handleListFonts returns all available fonts (installed in assets/fonts + built-in catalog).
+// ──────────────────────────────────────────────────────────────
+// Fonts
+// ──────────────────────────────────────────────────────────────
+
 func (s *Server) handleListFonts(c *gin.Context) {
 	registry := fonts.GetRegistry()
-
-	// Try to scan if directory exists
 	installed, _ := registry.Scan()
 	catalog := registry.Catalog()
-
 	c.JSON(http.StatusOK, gin.H{
 		"installed": installed,
 		"catalog":   catalog,
@@ -230,7 +329,6 @@ func (s *Server) handleListFonts(c *gin.Context) {
 	})
 }
 
-// handleScanFonts rescans the fonts directory for new files.
 func (s *Server) handleScanFonts(c *gin.Context) {
 	registry := fonts.GetRegistry()
 	entries, err := registry.Scan()
@@ -239,13 +337,12 @@ func (s *Server) handleScanFonts(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"status":  "scanned",
-		"count":   len(entries),
-		"fonts":   entries,
+		"status": "scanned",
+		"count":  len(entries),
+		"fonts":  entries,
 	})
 }
 
-// handleInstallFont accepts a font file upload and saves it to the fonts directory.
 func (s *Server) handleInstallFont(c *gin.Context) {
 	file, err := c.FormFile("font")
 	if err != nil {
@@ -260,7 +357,6 @@ func (s *Server) handleInstallFont(c *gin.Context) {
 		return
 	}
 
-	// Sanitize filename
 	safeName := filepath.Base(file.Filename)
 	ext := strings.ToLower(filepath.Ext(safeName))
 	if ext != ".ttf" && ext != ".otf" && ext != ".ttc" {
@@ -274,10 +370,7 @@ func (s *Server) handleInstallFont(c *gin.Context) {
 		return
 	}
 
-	// Re-scan to include the new font
 	entries, _ := registry.Scan()
-
-	// Find the just-installed font
 	var installed *fonts.FontEntry
 	for i := range entries {
 		if filepath.Base(entries[i].Path) == safeName {
@@ -287,14 +380,17 @@ func (s *Server) handleInstallFont(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"status":  "installed",
-		"file":    safeName,
-		"font":    installed,
-		"total":   len(entries),
+		"status": "installed",
+		"file":   safeName,
+		"font":   installed,
+		"total":  len(entries),
 	})
 }
 
-// handleDownload serves only files created by this process.
+// ──────────────────────────────────────────────────────────────
+// GET /download — serve a previously generated PPTX (one-time)
+// ──────────────────────────────────────────────────────────────
+
 func (s *Server) handleDownload(c *gin.Context) {
 	id := c.Query("id")
 	value, ok := s.downloads.LoadAndDelete(id)

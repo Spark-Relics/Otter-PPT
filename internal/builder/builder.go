@@ -22,8 +22,10 @@ import (
 	"io"
 	"math"
 	"mime"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/otter-ppt/otter-ppt/internal/model"
@@ -55,6 +57,7 @@ type Builder struct {
 	mediaAssets    []*mediaAsset
 	chartByElement map[*model.Element]*chartAsset
 	chartAssets    []*chartAsset
+	bgImageBySlide map[int]*mediaAsset
 	embeddedFonts  []embeddedFont
 }
 
@@ -67,6 +70,7 @@ func New(pres *model.Presentation) *Builder {
 		pres:           pres,
 		mediaByElement: make(map[*model.Element]*mediaAsset),
 		chartByElement: make(map[*model.Element]*chartAsset),
+		bgImageBySlide: make(map[int]*mediaAsset),
 	}
 	b.embeddedFonts = b.prepareEmbeddedFonts()
 	return b
@@ -118,6 +122,15 @@ func (b *Builder) Write(w io.Writer) error {
 		if err := b.writeSlideRels(zw, i+1, slide); err != nil {
 			return err
 		}
+		// Write notes slides
+		if slide.Notes != "" {
+			if err := b.writeNotesSlide(zw, i+1, slide); err != nil {
+				return err
+			}
+			if err := b.writeNotesSlideRels(zw, i+1); err != nil {
+				return err
+			}
+		}
 	}
 	for _, asset := range b.mediaAssets {
 		entry, err := zw.Create("ppt/media/" + asset.fileName)
@@ -149,10 +162,24 @@ func (b *Builder) prepareAssets() error {
 	b.mediaByElement = make(map[*model.Element]*mediaAsset)
 	b.chartAssets = nil
 	b.chartByElement = make(map[*model.Element]*chartAsset)
+	b.bgImageBySlide = make(map[int]*mediaAsset)
 	mediaIndex := 1
 	chartIndex := 1
-	for _, slide := range b.pres.Slides {
+	for slideIdx, slide := range b.pres.Slides {
 		relIndex := 2
+
+		// Background image
+		if slide.Background != nil && slide.Background.Type == model.BgImage && slide.Background.ImagePath != "" {
+			data, ext, err := loadImageData(slide.Background.ImagePath)
+			if err == nil {
+				asset := &mediaAsset{data: data, fileName: fmt.Sprintf("image%d%s", mediaIndex, ext), relID: fmt.Sprintf("rId%d", relIndex), ext: strings.TrimPrefix(ext, ".")}
+				b.mediaAssets = append(b.mediaAssets, asset)
+				b.bgImageBySlide[slideIdx] = asset
+				mediaIndex++
+				relIndex++
+			}
+		}
+
 		for _, elem := range slide.Elements {
 			if elem.Type == model.ElementChart && elem.Chart != nil {
 				asset := &chartAsset{index: chartIndex, relID: fmt.Sprintf("rId%d", relIndex), data: elem.Chart}
@@ -165,19 +192,9 @@ func (b *Builder) prepareAssets() error {
 			if elem.Type != model.ElementImage || elem.ImagePath == "" {
 				continue
 			}
-			if strings.HasPrefix(elem.ImagePath, "http://") || strings.HasPrefix(elem.ImagePath, "https://") {
-				continue
-			}
-			data, err := os.ReadFile(elem.ImagePath)
+			data, ext, err := loadImageData(elem.ImagePath)
 			if err != nil {
-				return fmt.Errorf("read image %q: %w", elem.ImagePath, err)
-			}
-			ext := strings.ToLower(filepath.Ext(elem.ImagePath))
-			if ext == ".jpeg" {
-				ext = ".jpg"
-			}
-			if ext != ".png" && ext != ".jpg" && ext != ".gif" {
-				return fmt.Errorf("unsupported image format %q", ext)
+				return fmt.Errorf("load image %q: %w", elem.ImagePath, err)
 			}
 			asset := &mediaAsset{data: data, fileName: fmt.Sprintf("image%d%s", mediaIndex, ext), relID: fmt.Sprintf("rId%d", relIndex), ext: strings.TrimPrefix(ext, ".")}
 			b.mediaAssets = append(b.mediaAssets, asset)
@@ -187,6 +204,58 @@ func (b *Builder) prepareAssets() error {
 		}
 	}
 	return nil
+}
+
+// loadImageData reads image data from a local path or downloads from a URL.
+// Returns the raw bytes and the file extension (e.g. ".png").
+func loadImageData(path string) ([]byte, string, error) {
+	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+		resp, err := http.Get(path)
+		if err != nil {
+			return nil, "", fmt.Errorf("download image: %w", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			return nil, "", fmt.Errorf("download image: HTTP %d", resp.StatusCode)
+		}
+		data, err := io.ReadAll(io.LimitReader(resp.Body, 50<<20)) // 50MB limit
+		if err != nil {
+			return nil, "", fmt.Errorf("read image response: %w", err)
+		}
+		// Determine extension from Content-Type or URL
+		ext := ".png"
+		ct := resp.Header.Get("Content-Type")
+		switch {
+		case strings.Contains(ct, "jpeg"), strings.Contains(ct, "jpg"):
+			ext = ".jpg"
+		case strings.Contains(ct, "gif"):
+			ext = ".gif"
+		case strings.Contains(ct, "webp"):
+			ext = ".png" // convert webp to png placeholder
+		default:
+			uExt := strings.ToLower(filepath.Ext(path))
+			if uExt == ".jpeg" {
+				uExt = ".jpg"
+			}
+			if uExt == ".png" || uExt == ".jpg" || uExt == ".gif" {
+				ext = uExt
+			}
+		}
+		return data, ext, nil
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, "", err
+	}
+	ext := strings.ToLower(filepath.Ext(path))
+	if ext == ".jpeg" {
+		ext = ".jpg"
+	}
+	if ext != ".png" && ext != ".jpg" && ext != ".gif" {
+		return nil, "", fmt.Errorf("unsupported image format %q", ext)
+	}
+	return data, ext, nil
 }
 
 func mediaContentType(ext string) string {
@@ -236,5 +305,6 @@ func fmtFloat(f float64) string {
 	if f == math.Trunc(f) {
 		return fmt.Sprintf("%d", int64(f))
 	}
-	return fmt.Sprintf("%.4f", f)
+	s := strconv.FormatFloat(f, 'f', -1, 64)
+	return s
 }

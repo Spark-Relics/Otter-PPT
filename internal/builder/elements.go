@@ -135,7 +135,16 @@ func (b *Builder) writeImage(buf *strings.Builder, elem *model.Element) {
 		}
 		fmt.Fprintf(buf, `<p:pic><p:nvPicPr><p:cNvPr id="%d" name="%s" descr="%s"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr>`, ooxmlObjectID(elem.ID), xmlEscape(elem.ID), xmlEscape(elem.ImageAlt))
 		fmt.Fprintf(buf, `<p:blipFill><a:blip r:embed="%s"/>%s<a:stretch><a:fillRect/></a:stretch></p:blipFill>`, asset.relID, crop)
-		buf.WriteString(`<p:spPr>` + transform.xml() + presetGeometryXML("rect", "") + `</p:spPr></p:pic>`)
+		// Use rounded rectangle geometry if ImageRadius > 0
+		geometry := presetGeometryXML("rect", "")
+		if elem.ImageRadius > 0 {
+			radVal := int(elem.ImageRadius * 50000)
+			if radVal > 50000 {
+				radVal = 50000
+			}
+			geometry = fmt.Sprintf(`<a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val %d"/></a:avLst></a:prstGeom>`, radVal)
+		}
+		buf.WriteString(`<p:spPr>` + transform.xml() + geometry + `</p:spPr></p:pic>`)
 		return
 	}
 
@@ -168,7 +177,7 @@ func (b *Builder) writeShape(buf *strings.Builder, elem *model.Element) {
 		geometry:  presetGeometryXML(prst, adjustments),
 		fill:      fillStyleXML(elem.Shape.Fill, elem.Shape.FillColor),
 		line:      lineStyleXML(elem.Shape.Line, elem.Shape.BorderColor, elem.Shape.BorderWidth),
-		effects:   shadowXML(elem.Shape.Shadow),
+		effects:   effectsXML(elem.Shape.Shadow, elem.Shape.Glow, elem.Shape.Reflection),
 	}.writeTo(buf)
 
 	// Text inside shape

@@ -148,24 +148,69 @@ func lineStyleXML(line *model.LineStyle, legacyColor string, legacyWidth float64
 	return buf.String()
 }
 
-func shadowXML(shadow *model.ShadowStyle) string {
-	if shadow == nil {
+// effectsXML generates an <a:effectLst> containing glow, shadow, and reflection effects.
+func effectsXML(shadow *model.ShadowStyle, glow *model.GlowStyle, reflection *model.ReflectionStyle) string {
+	var inner strings.Builder
+
+	// Glow must come before shadow in effectLst
+	if glow != nil {
+		color := glow.Color
+		if color == "" {
+			color = "6366F1"
+		}
+		opacity := glow.Opacity
+		if opacity == 0 {
+			opacity = 0.5
+		}
+		radius := int(glow.Radius * 12700)
+		if radius == 0 {
+			radius = 63500
+		}
+		fmt.Fprintf(&inner, `<a:glow rad="%d">%s</a:glow>`, radius, colorXMLWithOpacity(color, opacity))
+	}
+
+	// Inner shadow
+	if shadow != nil {
+		color := shadow.Color
+		if color == "" {
+			color = "000000"
+		}
+		opacity := shadow.Opacity
+		if opacity == 0 {
+			opacity = 0.35
+		}
+		blur, distance := int(shadow.Blur*12700), int(shadow.Distance*12700)
+		if blur == 0 {
+			blur = 63500
+		}
+		if distance == 0 {
+			distance = 25400
+		}
+		fmt.Fprintf(&inner, `<a:outerShdw blurRad="%d" dist="%d" dir="%d" algn="ctr" rotWithShape="0">%s</a:outerShdw>`,
+			blur, distance, int(shadow.Angle*60000), colorXMLWithOpacity(color, opacity))
+	}
+
+	// Reflection
+	if reflection != nil {
+		opacity := reflection.Opacity
+		if opacity == 0 {
+			opacity = 0.5
+		}
+		blur := int(reflection.Blur * 12700)
+		if blur == 0 {
+			blur = 25400
+		}
+		dist := int(reflection.Distance * 12700)
+		if dist == 0 {
+			dist = 38100
+		}
+		// sx (horizontal scaling), sy (vertical), dir=5400000 (downward mirror)
+		fmt.Fprintf(&inner, `<a:reflection blurRad="%d" stA="%d" stPos="0" dist="%d" dir="5400000" fadeDir="5400000" sy="-1000000" algn="b" rotWithShape="0"/>`,
+			blur, int(opacity*100000), dist)
+	}
+
+	if inner.Len() == 0 {
 		return ""
 	}
-	color := shadow.Color
-	if color == "" {
-		color = "#000000"
-	}
-	opacity := shadow.Opacity
-	if opacity == 0 {
-		opacity = 0.35
-	}
-	blur, distance := int(shadow.Blur*12700), int(shadow.Distance*12700)
-	if blur == 0 {
-		blur = 63500
-	}
-	if distance == 0 {
-		distance = 25400
-	}
-	return fmt.Sprintf(`<a:effectLst><a:outerShdw blurRad="%d" dist="%d" dir="%d" algn="ctr" rotWithShape="0">%s</a:outerShdw></a:effectLst>`, blur, distance, int(shadow.Angle*60000), colorXMLWithOpacity(color, opacity))
+	return fmt.Sprintf(`<a:effectLst>%s</a:effectLst>`, inner.String())
 }
