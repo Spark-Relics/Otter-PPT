@@ -1,30 +1,32 @@
 <div align="center">
 
-# 🦦 Otter PPT
+<img src="icon.png" alt="Otter PPT" width="80"/>
 
-### AI 驱动的 PPT 生成引擎 — 用工具调用构建可编辑的 PowerPoint
+# Otter PPT
 
-[English](./README_EN.md) | 中文
+### AI-Powered PPT Generation Engine — Building Editable PowerPoint via Tool Calls
+
+English | [中文](./README_CN.md)
 
 </div>
 
 ---
 
-## 📖 项目简介
+## 📖 Introduction
 
-Otter PPT 是一个**基于 AI Agent + 工具调用**的 PPT 生成引擎。
+Otter PPT is a **tool-call-based AI Agent** PPT generation engine.
 
-与传统的"一次性生成 JSON"方案不同，Otter PPT 将 PowerPoint 的每一步设计操作封装为**可调用的工具**，让 AI 像人类设计师一样逐步搭建 PPT：
+Unlike traditional "one-shot JSON generation" approaches, Otter PPT encapsulates every PowerPoint design operation into **callable tools**, allowing AI to build presentations step by step — just like a human designer:
 
 ```
-用户: "做一个关于AI的PPT"
+User: "Create a PPT about AI"
   ↓
-AI Agent (function calling 循环)
+AI Agent (function calling loop)
   ├── set_theme(primary_color="#1A73E8", ...)
-  ├── add_slide(layout="title")           → 返回 slide_id
-  ├── add_title(slide_id, text="AI的未来")
+  ├── add_slide(layout="title")           → returns slide_id
+  ├── add_title(slide_id, text="The Future of AI")
   ├── set_bg_gradient(slide_id, ...)
-  ├── add_slide(layout="title_content")   → 返回 slide_id
+  ├── add_slide(layout="title_content")   → returns slide_id
   ├── add_bullet_list(slide_id, items=[...])
   ├── add_chart(slide_id, chart_type="bar", ...)
   ├── add_shape(slide_id, shape_type="rounded_rectangle", ...)
@@ -32,34 +34,34 @@ AI Agent (function calling 循环)
   ├── set_animation(slide_id, element_id, type="fly_in")
   └── done()
   ↓
-Presentation 对象 → PPTX Builder → 可编辑的 .pptx 文件
+Presentation Object → PPTX Builder → Editable .pptx File
 ```
 
-## ✨ 核心特性
+## ✨ Key Features
 
-| 特性 | 说明 |
-|------|------|
-| 🔧 **30+ 设计工具** | AI 可以调用覆盖 PPT 所有功能的工具集 |
-| 🎨 **主题与样式** | 颜色方案、字体、渐变背景 |
-| 📝 **文本与排版** | 标题、正文、项目符号列表、富文本 |
-| 🖼️ **视觉元素** | 图片、形状（14种）、表格、图表、连接线 |
-| ✨ **动画与切换** | 元素动画、幻灯片切换效果 |
-| 📐 **精确定位** | 百分比坐标系，分辨率无关 |
-| 🏗️ **原生 PPTX** | 直接生成 OOXML，完全可编辑 |
-| 🌐 **HTTP API** | 内置 Gin 服务器，支持 REST API 调用 |
-| 🔌 **多协议集成** | MCP、STDIO JSON-RPC、OpenAPI，便于接入 Claude Code、Cursor、Codex 和自研软件 |
-| 📦 **Python SDK** | 提供轻量 Python 客户端，便于自动化集成 |
-| 🖥️ **CLI 工具** | 命令行一键生成 PPT |
+| Feature | Description |
+|---------|-------------|
+| 🔧 **30+ Design Tools** | A comprehensive toolset covering all PPT capabilities |
+| 🎨 **Themes & Styles** | Color schemes, fonts, gradient backgrounds |
+| 📝 **Text & Typography** | Titles, body text, bullet lists, rich text |
+| 🖼️ **Visual Elements** | Images, shapes (14 types), tables, charts, connectors |
+| ✨ **Animations & Transitions** | Element animations, slide transition effects |
+| 📐 **Precise Positioning** | Percentage-based coordinate system, resolution-independent |
+| 🏗️ **Native PPTX** | Direct OOXML generation, fully editable |
+| 🌐 **HTTP API** | Built-in Gin server with REST API support |
+| 🔌 **Multi-Protocol Integration** | MCP, STDIO JSON-RPC, OpenAPI — works with Claude Code, Cursor, Codex, and custom software |
+| 📦 **Python SDK** | Lightweight Python client for automation |
+| 🖥️ **CLI Tool** | One-command PPT generation from the terminal |
 
-## 🔌 集成 Claude Code、Cursor、Codex 与自研软件
+## 🔌 Integrating with Claude Code, Cursor, Codex & Custom Software
 
-构建后可直接启动 MCP stdio 服务：
+Start the MCP stdio service after building:
 
 ```bash
 ./bin/otter-ppt mcp
 ```
 
-在支持 MCP 的客户端中配置：
+Configure in any MCP-compatible client:
 
 ```json
 {
@@ -72,18 +74,18 @@ Presentation 对象 → PPTX Builder → 可编辑的 .pptx 文件
 }
 ```
 
-AI 调用不是强制的：既可配置文字与图像模型由 Otter PPT 编排，也可让外部模型生成 Presentation JSON 或工具调用，再通过 `/api/v1/build` 或 `/api/v1/execute` 交给 Otter PPT。其他程序还可使用 `otter-ppt stdio`（JSON-RPC 2.0），或通过 [`openapi.yaml`](./openapi.yaml) 自动生成客户端。Python 客户端位于 [`sdk/python`](./sdk/python)。服务直接以本地 Go 二进制运行。
+AI invocation is not mandatory: you can configure text/image models for Otter PPT to orchestrate, or have external models generate Presentation JSON or tool calls, then hand them to Otter PPT via `/api/v1/build` or `/api/v1/execute`. Other programs can also use `otter-ppt stdio` (JSON-RPC 2.0), or auto-generate clients via [`openapi.yaml`](./openapi.yaml). The Python client is located at [`sdk/python`](./sdk/python). The service runs as a local Go binary.
 
-完整配置和协议说明见 [`INTEGRATION.md`](./INTEGRATION.md)。
+Full configuration and protocol details: [`INTEGRATION.md`](./INTEGRATION.md).
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
+### Prerequisites
 
 - Go 1.22+
-- OpenAI 兼容的 API Key（支持 OpenAI / DeepSeek / 其他兼容服务）
+- An OpenAI-compatible API key (supports OpenAI / DeepSeek / other compatible services)
 
-### 安装
+### Installation
 
 ```bash
 git clone https://github.com/Spark-Relics/Otter-PPT.git
@@ -91,116 +93,116 @@ cd Otter-PPT/otter-ppt
 make build
 ```
 
-### 命令行生成
+### CLI Generation
 
 ```bash
-# 设置 API Key
+# Set API Key
 export OPENAI_API_KEY="sk-your-key-here"
 
-# 生成 PPT
+# Generate PPT
 ./bin/otter-ppt gen \
-  --topic "人工智能的未来发展趋势" \
+  --topic "Future Trends of Artificial Intelligence" \
   --slides 10 \
-  --style "科技感、深色主题" \
-  --language zh \
+  --style "tech, dark theme" \
+  --language en \
   --output my_presentation.pptx
 ```
 
-### 启动 HTTP 服务
+### Start HTTP Server
 
 ```bash
 export OPENAI_API_KEY="sk-your-key-here"
 ./bin/otter-ppt serve --port 8080
 ```
 
-API 调用示例：
+API usage examples:
 
 ```bash
-# 生成 PPT
+# Generate PPT
 curl -X POST http://localhost:8080/api/v1/generate \
   -H "Content-Type: application/json" \
-  -d '{"topic":"人工智能","slides":8,"language":"zh","style":"科技感"}'
+  -d '{"topic":"Artificial Intelligence","slides":8,"language":"en","style":"tech"}'
 
-# 从 JSON 构建 PPTX
+# Build PPTX from JSON
 curl -X POST http://localhost:8080/api/v1/build \
   -H "Content-Type: application/json" \
   -d @presentation.json \
   -o output.pptx
 
-# 查看可用工具
+# List available tools
 curl http://localhost:8080/api/v1/tools
 ```
 
-## 🔧 工具列表
+## 🔧 Tool Reference
 
-AI Agent 可调用的全部工具：
+All tools available to the AI Agent:
 
-### 演示文稿级别
-| 工具 | 说明 |
-|------|------|
-| `set_title` | 设置演示文稿标题 |
-| `set_theme` | 设置全局颜色方案和字体 |
-| `set_slide_size` | 设置幻灯片尺寸（16:9 / 4:3） |
+### Presentation Level
+| Tool | Description |
+|------|-------------|
+| `set_title` | Set presentation title |
+| `set_theme` | Set global color scheme and fonts |
+| `set_slide_size` | Set slide dimensions (16:9 / 4:3) |
 
-### 幻灯片操作
-| 工具 | 说明 |
-|------|------|
-| `add_slide` | 添加新幻灯片 |
-| `delete_slide` | 删除幻灯片 |
-| `duplicate_slide` | 复制幻灯片 |
-| `move_slide` | 调整幻灯片顺序 |
-| `set_notes` | 设置演讲者备注 |
+### Slide Operations
+| Tool | Description |
+|------|-------------|
+| `add_slide` | Add a new slide |
+| `delete_slide` | Delete a slide |
+| `duplicate_slide` | Duplicate a slide |
+| `move_slide` | Reorder slides |
+| `set_notes` | Set speaker notes |
 
-### 背景
-| 工具 | 说明 |
-|------|------|
-| `set_bg_color` | 设置纯色背景 |
-| `set_bg_gradient` | 设置渐变背景 |
-| `set_bg_image` | 设置图片背景 |
+### Background
+| Tool | Description |
+|------|-------------|
+| `set_bg_color` | Set solid color background |
+| `set_bg_gradient` | Set gradient background |
+| `set_bg_image` | Set image background |
 
-### 文本
-| 工具 | 说明 |
-|------|------|
-| `add_title` | 添加标题 |
-| `add_text` | 添加文本框 |
-| `add_bullet_list` | 添加项目符号列表 |
+### Text
+| Tool | Description |
+|------|-------------|
+| `add_title` | Add a title |
+| `add_text` | Add a text box |
+| `add_bullet_list` | Add a bullet list |
 
-### 视觉元素
-| 工具 | 说明 |
-|------|------|
-| `add_image` | 添加图片 |
-| `add_shape` | 添加形状（矩形/椭圆/箭头/星形等14种） |
-| `add_table` | 添加表格 |
-| `add_chart` | 添加原生可编辑 DrawingML 图表（柱状/条形/折线/饼图/面积图/圆环图） |
-| `add_connector` | 添加连接线/箭头 |
+### Visual Elements
+| Tool | Description |
+|------|-------------|
+| `add_image` | Add an image |
+| `add_shape` | Add a shape (rectangle / oval / arrow / star, etc. — 14 types) |
+| `add_table` | Add a table |
+| `add_chart` | Add a native editable DrawingML chart (bar / line / pie / area / doughnut) |
+| `add_connector` | Add a connector / arrow |
 
-### 元素操作
-| 工具 | 说明 |
-|------|------|
-| `update_text` | 更新文本内容 |
-| `update_style` | 更新字体样式 |
-| `update_position` | 更新位置和大小 |
-| `delete_element` | 删除元素 |
-| `bring_to_front` | 置于顶层 |
-| `send_to_back` | 置于底层 |
-| `set_rotation` | 设置旋转角度 |
-| `set_opacity` | 设置透明度 |
+### Element Operations
+| Tool | Description |
+|------|-------------|
+| `update_text` | Update text content |
+| `update_style` | Update font style |
+| `update_position` | Update position and size |
+| `delete_element` | Delete an element |
+| `bring_to_front` | Bring to front |
+| `send_to_back` | Send to back |
+| `set_rotation` | Set rotation angle |
+| `set_opacity` | Set opacity |
 
-### 动画与切换
-| 工具 | 说明 |
-|------|------|
-| `set_transition` | 设置幻灯片切换效果 |
-| `set_animation` | 设置元素动画 |
+### Animation & Transitions
+| Tool | Description |
+|------|-------------|
+| `set_transition` | Set slide transition effect |
+| `set_animation` | Set element animation |
 
-### 状态与导出
-| 工具 | 说明 |
-|------|------|
-| `get_state` | 获取当前状态 |
-| `done` | 完成并导出 |
+### State & Export
+| Tool | Description |
+|------|-------------|
+| `get_state` | Get current state |
+| `done` | Finish and export |
 
-## 📐 坐标系统
+## 📐 Coordinate System
 
-所有位置使用**百分比坐标**（0-100），相对于幻灯片尺寸：
+All positions use **percentage coordinates** (0–100), relative to slide dimensions:
 
 ```
 ┌─────────────────────────────────┐
@@ -216,71 +218,70 @@ AI Agent 可调用的全部工具：
 └─────────────────────────────────┘
 ```
 
-- `x, y`: 左上角坐标
-- `w, h`: 宽度和高度
-- 建议内容范围：`x+w ≤ 95`, `y+h ≤ 92`
+- `x, y`: Top-left corner coordinates
+- `w, h`: Width and height
+- Recommended content range: `x+w ≤ 95`, `y+h ≤ 92`
 
-## 🏗️ 项目结构
+## 🏗️ Project Structure
 
 ```
 otter-ppt/
 ├── cmd/
 │   └── otter-ppt/
-│       └── main.go           # CLI 入口 (serve / gen)
+│       └── main.go           # CLI entry point (serve / gen)
 ├── internal/
-│   ├── model/                # 数据模型
+│   ├── model/                # Data models
 │   │   ├── presentation.go   # Presentation, Slide, Element
-│   │   ├── slide.go          # ElementType, ShapeType, ChartType 枚举
+│   │   ├── slide.go          # ElementType, ShapeType, ChartType enums
 │   │   ├── background.go     # Background, Gradient, Transition, Animation
 │   │   ├── shape.go          # ShapeData, ChartData, ConnectorData
 │   │   └── layout.go         # SlideLayout
-│   ├── pptoolkit/            # ★ 核心：PPT 工具集
-│   │   ├── session.go        # Session (线程安全的画布)
-│   │   ├── tools.go          # OpenAI 工具定义 (30+)
-│   │   ├── handlers.go       # 工具调度与执行
-│   │   └── schema.go         # JSON Schema 构建辅助
-│   ├── agent/                # AI Agent 循环
-│   │   └── agent.go          # LLM ↔ 工具调用编排
-│   ├── builder/              # PPTX 构建器
-│   │   ├── builder.go        # 主入口 + 辅助函数
+│   ├── pptoolkit/            # ★ Core: PPT toolset
+│   │   ├── session.go        # Session (thread-safe canvas)
+│   │   ├── tools.go          # OpenAI tool definitions (30+)
+│   │   ├── handlers.go       # Tool dispatch and execution
+│   │   └── schema.go         # JSON Schema build helpers
+│   ├── agent/                # AI Agent loop
+│   │   └── agent.go          # LLM ↔ tool call orchestration
+│   ├── builder/              # PPTX builder
+│   │   ├── builder.go        # Main entry + helper functions
 │   │   ├── content_types.go  # [Content_Types].xml
 │   │   ├── presentation.go   # presentation.xml
 │   │   ├── theme_master.go   # theme + slideMaster + slideLayout
-│   │   ├── slide.go          # 幻灯片 XML 生成
-│   │   └── elements.go       # 元素 XML (文本/形状/表格/图表/连接线)
-│   ├── server/               # HTTP API 服务
-│   │   └── server.go         # Gin 路由
-│   ├── ai/                   # 传统单次生成模式
+│   │   ├── slide.go          # Slide XML generation
+│   │   └── elements.go       # Element XML (text/shape/table/chart/connector)
+│   ├── server/               # HTTP API server
+│   │   └── server.go         # Gin routes
+│   ├── ai/                   # Legacy one-shot generation mode
 │   │   └── generator.go
-│   └── imageutil/            # 图片处理工具
+│   └── imageutil/            # Image utilities
 │       └── image.go
 ├── go.mod
 ├── Makefile
 └── README.md
 ```
 
-## 🔑 环境变量
+## 🔑 Environment Variables
 
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `OPENAI_API_KEY` | API 密钥（必填） | - |
-| `OPENAI_BASE_URL` | 自定义 API 地址 | OpenAI 官方 |
-| `OPENAI_MODEL` | 模型名称 | `gpt-4o` |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OPENAI_API_KEY` | API key (required) | - |
+| `OPENAI_BASE_URL` | Custom API endpoint | Official OpenAI |
+| `OPENAI_MODEL` | Model name | `gpt-4o` |
 
-### 兼容的 LLM 服务
+### Compatible LLM Services
 
-设置 `OPENAI_BASE_URL` 即可使用其他兼容服务：
+Set `OPENAI_BASE_URL` to use other compatible services:
 
 ```bash
 # DeepSeek
 export OPENAI_BASE_URL="https://api.deepseek.com/v1"
 export OPENAI_MODEL="deepseek-chat"
 
-# 其他兼容服务
+# Other compatible services
 export OPENAI_BASE_URL="https://your-api.com/v1"
 ```
 
-## 📄 许可证
+## 📄 License
 
 MIT License
-

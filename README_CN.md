@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🦦 Otter PPT
+<img src="icon.png" alt="Otter PPT" width="80"/>
+
+# Otter PPT
 
 **AI 驱动的演示文稿生成器 — 通过工具调用 Agent 构建 PPTX**
 
