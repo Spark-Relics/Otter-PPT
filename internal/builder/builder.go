@@ -72,6 +72,7 @@ func (b *Builder) Write(w io.Writer) error {
 		b.writeSlideMaster,
 		b.writeSlideMasterRels,
 		b.writeSlideLayout,
+		b.writeSlideLayoutRels,
 	}
 
 	for _, fn := range writers {

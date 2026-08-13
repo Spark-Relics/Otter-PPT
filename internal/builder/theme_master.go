@@ -140,7 +140,6 @@ func (b *Builder) writeSlideMasterRels(zw *zip.Writer) error {
 }
 
 // writeSlideLayout writes a minimal slide layout.
-// writeSlideLayout writes a minimal slide layout.
 func (b *Builder) writeSlideLayout(zw *zip.Writer) error {
 	w, err := zw.Create("ppt/slideLayouts/slideLayout1.xml")
 	if err != nil {
@@ -160,6 +159,23 @@ func (b *Builder) writeSlideLayout(zw *zip.Writer) error {
 </p:spTree>
 </p:cSld>
 </p:sldLayout>`
+
+	_, err = w.Write([]byte(xml))
+	return err
+}
+
+// writeSlideLayoutRels writes ppt/slideLayouts/_rels/slideLayout1.xml.rels.
+func (b *Builder) writeSlideLayoutRels(zw *zip.Writer) error {
+	w, err := zw.Create("ppt/slideLayouts/_rels/slideLayout1.xml.rels")
+	if err != nil {
+		return err
+	}
+
+	xml := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/>
+</Relationships>`
 
 	_, err = w.Write([]byte(xml))
 	return err
