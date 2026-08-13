@@ -99,7 +99,7 @@ func (b *Builder) writeGradientFill(buf *strings.Builder, grad *model.Gradient) 
 		for _, stop := range grad.Stops {
 			r, g, bl := hexToRGB(stop.Color)
 			pos := int(stop.Position * 1000)
-			fmt.Fprintf(gradFill,
+			gradFill += fmt.Sprintf(
 				`<a:gs pos="%d"><a:srgbClr val="%02X%02X%02X"/></a:gs>`,
 				pos, r, g, bl)
 		}

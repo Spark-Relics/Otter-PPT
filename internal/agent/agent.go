@@ -16,11 +16,14 @@ import (
 
 // AgentConfig holds the settings for an agent run.
 type AgentConfig struct {
-	APIKey   string
-	BaseURL  string
-	Model    string
-	Language string // "zh" or "en"
-	MaxSteps int    // safety limit for tool-call rounds
+	APIKey        string
+	BaseURL       string
+	Model         string
+	Language      string // "zh" or "en"
+	MaxSteps      int    // safety limit for tool-call rounds
+	ImageGenerator interface {
+		Generate(context.Context, string) (string, error)
+	}
 }
 
 // Agent drives the PPT creation process.
@@ -115,6 +118,23 @@ func (a *Agent) Run(ctx context.Context, userPrompt string) (*AgentResult, error
 
 			log.Printf("[Agent] Tool: %s args: %v", toolName, args)
 
+			// Resolve generated image assets only when an image model is configured.
+			if toolName == "add_image" {
+				imagePath, _ := args["image_path"].(string)
+				imagePrompt, _ := args["image_prompt"].(string)
+				if imagePath == "" && imagePrompt != "" {
+					if a.cfg.ImageGenerator == nil {
+						return result, fmt.Errorf("add_image at step %d requires image_path because no image model is configured", step)
+					} else {
+						generatedPath, err := a.cfg.ImageGenerator.Generate(ctx, imagePrompt)
+						if err != nil {
+							return result, fmt.Errorf("generate image at step %d: %w", step, err)
+						}
+						args["image_path"] = generatedPath
+					}
+				}
+			}
+
 			// Execute the tool
 			toolResult := a.session.ExecuteTool(toolName, args)
 			resultStr := toolResult.String()
@@ -174,6 +194,7 @@ Use these tools step by step, exactly like a human designer would in PowerPoint.
    - Set background (set_bg_color, set_bg_gradient, or set_bg_image)
    - Add title, text, bullet lists
    - Add shapes, images, tables, charts as needed
+   - For images, use image_prompt when image generation is available; otherwise use image_path supplied by the user
    - Add transitions and animations
    - Set speaker notes
 4. Call done when the presentation is complete.

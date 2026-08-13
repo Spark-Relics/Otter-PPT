@@ -89,6 +89,40 @@ AI Agent 可以使用以下所有操作：
 
 ---
 
+## 多平台与第三方集成
+
+Otter PPT 将演示文稿模型、工具执行器、AI 提供方和传输协议分层。AI 调用不是强制的：可以为服务配置文字/图像模型，也可以由外部模型生成完整 Presentation JSON 或工具调用，再交给 Otter PPT 执行和渲染。
+
+| 接入方式 | 适用场景 |
+|---|---|
+| **MCP stdio** | Claude Code、Cursor 及其他 MCP 客户端 |
+| **STDIO JSON-RPC 2.0** | Codex 包装器、编辑器插件、桌面软件和自研编排器 |
+| **REST + OpenAPI 3.0** | 跨语言服务、Web 应用、自动生成客户端 |
+| **Python SDK** | Python 自动化与 AI 工作流 |
+
+启动 MCP 服务：
+
+```bash
+./bin/otter-ppt mcp
+```
+
+MCP 客户端配置示例：
+
+```json
+{
+  "mcpServers": {
+    "otter-ppt": {
+      "command": "/absolute/path/to/otter-ppt",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+不支持 MCP 时可运行 `./bin/otter-ppt stdio`，或使用 [`openapi.yaml`](./openapi.yaml) 和 [`sdk/python`](./sdk/python)。完整说明见 [`INTEGRATION.md`](./INTEGRATION.md)。
+
+---
+
 ## 快速开始
 
 ### 前置条件

@@ -12,14 +12,14 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_title",
 			Description: "Set the presentation title (shown on cover page).",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"title": {typ: "string", desc: "Presentation title", req: true},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_theme",
 			Description: "Set the global color scheme and fonts for the entire presentation. Call this first before adding slides.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"name":             {typ: "string", desc: "Theme name"},
 				"primary_color":    {typ: "string", desc: "Primary color hex, e.g. #1A73E8", req: true},
 				"secondary_color":  {typ: "string", desc: "Secondary color hex"},
@@ -33,7 +33,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_slide_size",
 			Description: "Set slide dimensions in inches. Use 13.333x7.5 for 16:9 or 10x7.5 for 4:3.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"width":  {typ: "number", desc: "Width in inches", req: true},
 				"height": {typ: "number", desc: "Height in inches", req: true},
 			}),
@@ -43,28 +43,28 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "add_slide",
 			Description: "Add a new slide. Returns the slide ID. Layout options: title, title_content, two_column, image_left, image_right, image_full, section.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"layout": {typ: "string", desc: "Slide layout type", req: true},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "delete_slide",
 			Description: "Delete a slide by ID.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id": {typ: "string", desc: "Slide ID", req: true},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "duplicate_slide",
 			Description: "Duplicate an existing slide. Returns the new slide ID.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id": {typ: "string", desc: "Slide ID to duplicate", req: true},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "move_slide",
 			Description: "Reorder a slide to a new position.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":  {typ: "string", desc: "Slide ID", req: true},
 				"new_index": {typ: "integer", desc: "New 0-based position", req: true},
 			}),
@@ -72,7 +72,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_notes",
 			Description: "Set speaker notes for a slide.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id": {typ: "string", desc: "Slide ID", req: true},
 				"notes":    {typ: "string", desc: "Speaker notes text", req: true},
 			}),
@@ -82,7 +82,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_bg_color",
 			Description: "Set a solid background color for a slide.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id": {typ: "string", desc: "Slide ID", req: true},
 				"color":    {typ: "string", desc: "Hex color e.g. #1A237E", req: true},
 			}),
@@ -90,7 +90,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_bg_gradient",
 			Description: "Set a gradient background. Provide 2+ color stops.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id": {typ: "string", desc: "Slide ID", req: true},
 				"type":     {typ: "string", desc: "linear or radial", req: true},
 				"angle":    {typ: "number", desc: "Angle in degrees (for linear)"},
@@ -100,7 +100,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_bg_image",
 			Description: "Set an image as the slide background.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":   {typ: "string", desc: "Slide ID", req: true},
 				"image_path": {typ: "string", desc: "Local path or URL to image", req: true},
 			}),
@@ -110,7 +110,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_transition",
 			Description: "Set slide transition effect.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id": {typ: "string", desc: "Slide ID", req: true},
 				"type":     {typ: "string", desc: "fade, push, wipe, split, cover, zoom, morph", req: true},
 				"duration": {typ: "number", desc: "Duration in seconds"},
@@ -160,10 +160,11 @@ func ToolDefinitions() []openai.Tool {
 		// ────────── Visual Elements ──────────
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "add_image",
-			Description: "Add an image to a slide.",
+			Description: "Add an image to a slide. Provide image_path for an existing asset, or image_prompt when an image model is configured.",
 			Parameters: rectParams(map[string]prop{
-				"slide_id":   {typ: "string", desc: "Slide ID", req: true},
-				"image_path": {typ: "string", desc: "Local path or URL", req: true},
+				"slide_id":    {typ: "string", desc: "Slide ID", req: true},
+				"image_path":  {typ: "string", desc: "Existing local path or URL"},
+				"image_prompt": {typ: "string", desc: "Prompt for the configured image model"},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
@@ -206,7 +207,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "add_connector",
 			Description: "Add a connector line or arrow between two points.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":       {typ: "string", desc: "Slide ID", req: true},
 				"connector_type": {typ: "string", desc: "line, arrow, double_arrow", req: true},
 				"color":          {typ: "string", desc: "Line color hex", req: true},
@@ -222,7 +223,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "update_text",
 			Description: "Update text content of an existing element.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id": {typ: "string", desc: "Slide ID", req: true},
 				"element_id": {typ: "string", desc: "Element ID", req: true},
 				"text":     {typ: "string", desc: "New text", req: true},
@@ -231,7 +232,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "update_style",
 			Description: "Update font/style of an existing element.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":   {typ: "string", desc: "Slide ID", req: true},
 				"element_id": {typ: "string", desc: "Element ID", req: true},
 				"font_size":  {typ: "integer", desc: "Font size in pt"},
@@ -245,7 +246,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "update_position",
 			Description: "Move or resize an element. Coordinates are percentages 0-100.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":   {typ: "string", desc: "Slide ID", req: true},
 				"element_id": {typ: "string", desc: "Element ID", req: true},
 				"x":          {typ: "number", desc: "Left position %", req: true},
@@ -258,7 +259,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "delete_element",
 			Description: "Delete an element from a slide.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":   {typ: "string", desc: "Slide ID", req: true},
 				"element_id": {typ: "string", desc: "Element ID", req: true},
 			}),
@@ -266,7 +267,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "bring_to_front",
 			Description: "Bring an element to the front (highest z-order).",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":   {typ: "string", desc: "Slide ID", req: true},
 				"element_id": {typ: "string", desc: "Element ID", req: true},
 			}),
@@ -274,7 +275,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "send_to_back",
 			Description: "Send an element to the back (lowest z-order).",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":   {typ: "string", desc: "Slide ID", req: true},
 				"element_id": {typ: "string", desc: "Element ID", req: true},
 			}),
@@ -282,7 +283,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_rotation",
 			Description: "Set rotation angle of an element.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":   {typ: "string", desc: "Slide ID", req: true},
 				"element_id": {typ: "string", desc: "Element ID", req: true},
 				"degrees":    {typ: "number", desc: "Rotation in degrees", req: true},
@@ -291,7 +292,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_opacity",
 			Description: "Set element opacity/transparency (0 = invisible, 1 = opaque).",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":   {typ: "string", desc: "Slide ID", req: true},
 				"element_id": {typ: "string", desc: "Element ID", req: true},
 				"opacity":    {typ: "number", desc: "Opacity 0-1", req: true},
@@ -302,7 +303,7 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_animation",
 			Description: "Add an animation effect to an element. Types: fade, fly_in, zoom_in, bounce, rotate, wipe, appear.",
-			Parameters: params({
+			Parameters: params(map[string]prop{
 				"slide_id":   {typ: "string", desc: "Slide ID", req: true},
 				"element_id": {typ: "string", desc: "Element ID", req: true},
 				"type":       {typ: "string", desc: "Animation type", req: true},
@@ -317,12 +318,12 @@ func ToolDefinitions() []openai.Tool {
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "get_state",
 			Description: "Get the current presentation state as JSON (for review).",
-			Parameters: params({}),
+			Parameters: params(map[string]prop{}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "done",
 			Description: "Signal that the presentation is complete and ready for export.",
-			Parameters: params({}),
+			Parameters: params(map[string]prop{}),
 		}},
 	}
 }

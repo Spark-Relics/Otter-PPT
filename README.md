@@ -47,7 +47,34 @@ Presentation 对象 → PPTX Builder → 可编辑的 .pptx 文件
 | 📐 **精确定位** | 百分比坐标系，分辨率无关 |
 | 🏗️ **原生 PPTX** | 直接生成 OOXML，完全可编辑 |
 | 🌐 **HTTP API** | 内置 Gin 服务器，支持 REST API 调用 |
+| 🔌 **多协议集成** | MCP、STDIO JSON-RPC、OpenAPI，便于接入 Claude Code、Cursor、Codex 和自研软件 |
+| 📦 **Python SDK** | 提供轻量 Python 客户端，便于自动化集成 |
 | 🖥️ **CLI 工具** | 命令行一键生成 PPT |
+
+## 🔌 集成 Claude Code、Cursor、Codex 与自研软件
+
+构建后可直接启动 MCP stdio 服务：
+
+```bash
+./bin/otter-ppt mcp
+```
+
+在支持 MCP 的客户端中配置：
+
+```json
+{
+  "mcpServers": {
+    "otter-ppt": {
+      "command": "/absolute/path/to/otter-ppt",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+AI 调用不是强制的：既可配置文字与图像模型由 Otter PPT 编排，也可让外部模型生成 Presentation JSON 或工具调用，再通过 `/api/v1/build` 或 `/api/v1/execute` 交给 Otter PPT。其他程序还可使用 `otter-ppt stdio`（JSON-RPC 2.0），或通过 [`openapi.yaml`](./openapi.yaml) 自动生成客户端。Python 客户端位于 [`sdk/python`](./sdk/python)。服务直接以本地 Go 二进制运行。
+
+完整配置和协议说明见 [`INTEGRATION.md`](./INTEGRATION.md)。
 
 ## 🚀 快速开始
 

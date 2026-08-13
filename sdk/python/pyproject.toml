@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otter-ppt"
+version = "0.1.0"
+description = "Thin Python client for the Otter PPT HTTP API"
+requires-python = ">=3.9"
+dependencies = ["httpx>=0.25,<1"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["otter_ppt"]

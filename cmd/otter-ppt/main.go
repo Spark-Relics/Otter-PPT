@@ -9,7 +9,9 @@ import (
 	"path/filepath"
 
 	"github.com/otter-ppt/otter-ppt/internal/agent"
+	"github.com/otter-ppt/otter-ppt/internal/ai"
 	"github.com/otter-ppt/otter-ppt/internal/builder"
+	"github.com/otter-ppt/otter-ppt/internal/integration"
 	"github.com/otter-ppt/otter-ppt/internal/server"
 )
 
@@ -26,6 +28,14 @@ func main() {
 		cmdServe(os.Args[2:])
 	case "gen":
 		cmdGen(os.Args[2:])
+	case "mcp":
+		if err := integration.NewStdioServer(os.Stdin, os.Stdout).RunMCP(); err != nil {
+			log.Fatalf("MCP server failed: %v", err)
+		}
+	case "stdio":
+		if err := integration.NewStdioServer(os.Stdin, os.Stdout).RunJSONRPC(); err != nil {
+			log.Fatalf("STDIO server failed: %v", err)
+		}
 	case "version":
 		fmt.Printf("otter-ppt v%s\n", version)
 	case "help", "-h", "--help":
@@ -46,6 +56,8 @@ Usage:
 Commands:
   serve    Start the HTTP API server
   gen      Generate a PPTX from a topic prompt
+  mcp      Start an MCP server over stdio (Claude Code / Cursor)
+  stdio    Start the generic JSON-RPC server over stdio
   version  Show version info
   help     Show this help
 
@@ -54,9 +66,12 @@ Examples:
   otter-ppt gen --topic "AI的未来" --slides 8 --style 科技感 --output my.pptx
 
 Environment:
-  OPENAI_API_KEY     OpenAI-compatible API key (required for gen)
-  OPENAI_BASE_URL    Custom API endpoint (optional)
-  OPENAI_MODEL       Model name (default: gpt-4o)`)
+  TEXT_MODEL_API_KEY / OPENAI_API_KEY       Text model API key (required for gen)
+  TEXT_MODEL_BASE_URL / OPENAI_BASE_URL     OpenAI-compatible text endpoint
+  TEXT_MODEL_NAME / OPENAI_MODEL            Text model name (default: gpt-4o)
+  IMAGE_MODEL_API_KEY                       Optional image model API key
+  IMAGE_MODEL_BASE_URL                      Optional OpenAI-compatible image endpoint
+  IMAGE_MODEL_NAME                          Optional image model name`)
 }
 
 // ────────── serve command ──────────
@@ -66,22 +81,25 @@ func cmdServe(args []string) {
 	port := fs.String("port", "8080", "HTTP server port")
 	fs.Parse(args)
 
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	baseURL := os.Getenv("OPENAI_BASE_URL")
-	model := os.Getenv("OPENAI_MODEL")
+	apiKey := envOr("TEXT_MODEL_API_KEY", "OPENAI_API_KEY")
+	baseURL := envOr("TEXT_MODEL_BASE_URL", "OPENAI_BASE_URL")
+	model := envOr("TEXT_MODEL_NAME", "OPENAI_MODEL")
 	if model == "" {
 		model = "gpt-4o"
 	}
 
 	srv := server.New(server.Config{
-		Port:    *port,
-		APIKey:  apiKey,
-		BaseURL: baseURL,
-		Model:   model,
+		Port:         *port,
+		APIKey:       apiKey,
+		BaseURL:      baseURL,
+		Model:        model,
+		ImageAPIKey:  os.Getenv("IMAGE_MODEL_API_KEY"),
+		ImageBaseURL: os.Getenv("IMAGE_MODEL_BASE_URL"),
+		ImageModel:   os.Getenv("IMAGE_MODEL_NAME"),
 	})
 
 	log.Printf("Otter PPT server starting on :%s", *port)
-	log.Printf("Endpoints: POST /api/v1/generate, POST /api/v1/build, GET /api/v1/tools")
+	log.Printf("Endpoints: POST /api/v1/generate, POST /api/v1/execute, POST /api/v1/build, GET /api/v1/tools")
 	log.Printf("Health check: GET /health")
 
 	if err := srv.Run(); err != nil {
@@ -109,17 +127,17 @@ func cmdGen(args []string) {
 		os.Exit(1)
 	}
 
-	apiKey := os.Getenv("OPENAI_API_KEY")
+	apiKey := envOr("TEXT_MODEL_API_KEY", "OPENAI_API_KEY")
 	if apiKey == "" {
-		fmt.Fprintln(os.Stderr, "Error: OPENAI_API_KEY environment variable is required")
+		fmt.Fprintln(os.Stderr, "Error: TEXT_MODEL_API_KEY or OPENAI_API_KEY is required")
 		os.Exit(1)
 	}
 
 	if *baseURL == "" {
-		*baseURL = os.Getenv("OPENAI_BASE_URL")
+		*baseURL = envOr("TEXT_MODEL_BASE_URL", "OPENAI_BASE_URL")
 	}
 	if *modelName == "" {
-		*modelName = os.Getenv("OPENAI_MODEL")
+		*modelName = envOr("TEXT_MODEL_NAME", "OPENAI_MODEL")
 		if *modelName == "" {
 			*modelName = "gpt-4o"
 		}
@@ -128,13 +146,15 @@ func cmdGen(args []string) {
 	log.Printf("Generating presentation: %s (%d slides, style=%s, lang=%s)",
 		*topic, *slides, *style, *language)
 
-	ag := agent.NewAgent(agent.AgentConfig{
-		APIKey:   apiKey,
-		BaseURL:  *baseURL,
-		Model:    *modelName,
-		Language: *language,
-		MaxSteps: *maxSteps,
-	})
+	agentConfig := agent.AgentConfig{
+		APIKey: apiKey, BaseURL: *baseURL, Model: *modelName, Language: *language, MaxSteps: *maxSteps,
+	}
+	if imageAPIKey := os.Getenv("IMAGE_MODEL_API_KEY"); imageAPIKey != "" {
+		agentConfig.ImageGenerator = ai.NewImageGenerator(ai.ImageConfig{
+			APIKey: imageAPIKey, BaseURL: os.Getenv("IMAGE_MODEL_BASE_URL"), Model: os.Getenv("IMAGE_MODEL_NAME"),
+		})
+	}
+	ag := agent.NewAgent(agentConfig)
 
 	prompt := agent.SplitPrompt(*topic, *slides, *style)
 	result, err := ag.Run(context.Background(), prompt)
@@ -157,4 +177,11 @@ func cmdGen(args []string) {
 
 	log.Printf("✅ Generated %d slides in %d steps → %s",
 		len(pres.Slides), result.TotalSteps, *output)
+}
+
+func envOr(primary, fallback string) string {
+	if value := os.Getenv(primary); value != "" {
+		return value
+	}
+	return os.Getenv(fallback)
 }
