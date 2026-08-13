@@ -219,7 +219,7 @@ func (b *Builder) writeTable(buf *strings.Builder, elem *model.Element) {
 
 	fmt.Fprintf(buf,
 		`<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">`+
-			`<a:tbl><a:tblPr firstRow="1" bandRow="1"><a:tableStyleId/>`+
+			`<a:tbl><a:tblPr firstRow="1" bandRow="1"><a:tableStyleId>`+
 			`{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}</a:tableStyleId></a:tblPr>`)
 
 	// Column widths

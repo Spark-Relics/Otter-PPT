@@ -1,5 +1,7 @@
 package model
 
+import "encoding/json"
+
 // FillStyle defines a reusable solid or gradient DrawingML fill.
 type FillStyle struct {
 	Color    string    `json:"color,omitempty"`
@@ -38,6 +40,33 @@ type ShapeData struct {
 	Text         string       `json:"text,omitempty"`
 	Style        TextStyle    `json:"style,omitempty"`
 	CornerRadius float64      `json:"corner_radius,omitempty"`
+}
+
+// UnmarshalJSON accepts both "type" and "shape_type" for ShapeType,
+// and both "fill_opacity" (legacy) and properly structured Fill.Opacity.
+func (s *ShapeData) UnmarshalJSON(data []byte) error {
+	type Alias ShapeData
+	var raw struct {
+		Alias
+		Type        string  `json:"type"`
+		FillOpacity float64 `json:"fill_opacity"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*s = ShapeData(raw.Alias)
+	// Accept "type" as alternative key for shape_type
+	if s.ShapeType == "" && raw.Type != "" {
+		s.ShapeType = ShapeType(raw.Type)
+	}
+	// Handle legacy fill_opacity by injecting into Fill
+	if raw.FillOpacity > 0 && s.Fill != nil && s.Fill.Opacity == 0 {
+		s.Fill.Opacity = raw.FillOpacity
+	}
+	if raw.FillOpacity > 0 && s.Fill == nil && s.FillColor != "" {
+		s.Fill = &FillStyle{Color: s.FillColor, Opacity: raw.FillOpacity}
+	}
+	return nil
 }
 
 // ChartSeries is one data series in a chart.
