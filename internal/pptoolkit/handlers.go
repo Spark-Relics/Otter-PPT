@@ -358,15 +358,18 @@ func mapToRect(args map[string]any) model.Rect {
 func mapToStyle(args map[string]any) model.TextStyle {
 	fs := int(toFloat(args["font_size"]))
 	return model.TextStyle{
-		FontSize:    fs,
-		FontName:    strOr(args, "font_name", ""),
-		Bold:        boolOr(args, "bold"),
-		Italic:      boolOr(args, "italic"),
-		Underline:   boolOr(args, "underline"),
-		Color:       strOr(args, "color", ""),
-		Align:       strOr(args, "align", ""),
-		LineSpacing: toFloat(args["line_spacing"]),
-		BulletChar:  strOr(args, "bullet_char", ""),
+		FontSize:      fs,
+		FontName:      strOr(args, "font_name", ""),
+		Bold:          boolOr(args, "bold"),
+		Italic:        boolOr(args, "italic"),
+		Underline:     boolOr(args, "underline"),
+		Color:         strOr(args, "color", ""),
+		Align:         strOr(args, "align", ""),
+		LineSpacing:   toFloat(args["line_spacing"]),
+		LetterSpacing: toFloat(args["letter_spacing"]),
+		BulletChar:    strOr(args, "bullet_char", ""),
+		VAlign:        strOr(args, "valign", ""),
+		Shadow:        boolOr(args, "shadow"),
 	}
 }
 
@@ -394,20 +397,38 @@ func mapToGradientStops(v any) []model.GradientStop {
 			stops = append(stops, model.GradientStop{
 				Color:    strOr(m, "color", "#FFFFFF"),
 				Position: toFloat(m["position"]),
+				Opacity:  toFloat(m["opacity"]),
 			})
 		}
 	}
 	return stops
 }
 
+func mapToGradient(v any) *model.Gradient {
+	m, ok := v.(map[string]any)
+	if !ok {
+		return nil
+	}
+	stops := mapToGradientStops(m["stops"])
+	if len(stops) == 0 {
+		return nil
+	}
+	return &model.Gradient{Type: model.GradientType(strOr(m, "type", "linear")), Angle: toFloat(m["angle"]), Stops: stops}
+}
+
 func mapToShape(args map[string]any) *model.ShapeData {
 	shape := &model.ShapeData{
-		ShapeType:   model.ShapeType(strOr(args, "shape_type", "rectangle")),
-		FillColor:   strOr(args, "fill_color", ""),
-		BorderColor: strOr(args, "border_color", ""),
-		BorderWidth: toFloat(args["border_width"]),
-		Text:        strOr(args, "text", ""),
-		CornerRadius: toFloat(args["corner_radius"]),
+		ShapeType: model.ShapeType(strOr(args, "shape_type", "rectangle")), FillColor: strOr(args, "fill_color", ""),
+		BorderColor: strOr(args, "border_color", ""), BorderWidth: toFloat(args["border_width"]),
+		Text: strOr(args, "text", ""), CornerRadius: toFloat(args["corner_radius"]),
+	}
+	if gradient := mapToGradient(args["gradient"]); gradient != nil {
+		shape.Fill = &model.FillStyle{Gradient: gradient, Opacity: toFloat(args["fill_opacity"])}
+	} else if opacity := toFloat(args["fill_opacity"]); opacity > 0 {
+		shape.Fill = &model.FillStyle{Color: shape.FillColor, Opacity: opacity}
+	}
+	if boolOr(args, "shadow") {
+		shape.Shadow = &model.ShadowStyle{Color: "#000000", Opacity: 0.25, Blur: 6, Distance: 2, Angle: 45}
 	}
 	return shape
 }

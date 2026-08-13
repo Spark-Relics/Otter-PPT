@@ -12,23 +12,25 @@ type Rect struct {
 
 // TextStyle defines font properties for a text element.
 type TextStyle struct {
-	FontSize    int     `json:"font_size,omitempty"`     // pt
-	FontName    string  `json:"font_name,omitempty"`     // e.g. "Microsoft YaHei"
-	Bold        bool    `json:"bold,omitempty"`
-	Italic      bool    `json:"italic,omitempty"`
-	Underline   bool    `json:"underline,omitempty"`
-	Color       string  `json:"color,omitempty"`         // hex like "#FFFFFF"
-	Align       string  `json:"align,omitempty"`         // left, center, right, justify
-	LineSpacing float64 `json:"line_spacing,omitempty"`  // 1.0 = single
-	LetterSpacing float64 `json:"letter_spacing,omitempty"` // pt
-	// Bullet formatting for lists.
-	BulletChar string `json:"bullet_char,omitempty"` // e.g. "•", "▶", "1.", ""
-	// Vertical alignment for the text box.
-	VAlign string `json:"valign,omitempty"` // top, middle, bottom
-	// Word wrap toggle.
-	WordWrap *bool `json:"word_wrap,omitempty"`
-	// Text shadow.
-	Shadow bool `json:"shadow,omitempty"`
+	FontSize      int     `json:"font_size,omitempty"` // pt
+	FontName      string  `json:"font_name,omitempty"`
+	Bold          bool    `json:"bold,omitempty"`
+	Italic        bool    `json:"italic,omitempty"`
+	Underline     bool    `json:"underline,omitempty"`
+	Strike        bool    `json:"strike,omitempty"`
+	Color         string  `json:"color,omitempty"`
+	Opacity       float64 `json:"opacity,omitempty"`
+	Align         string  `json:"align,omitempty"`
+	LineSpacing   float64 `json:"line_spacing,omitempty"`
+	LetterSpacing float64 `json:"letter_spacing,omitempty"`
+	BulletChar    string  `json:"bullet_char,omitempty"`
+	VAlign        string  `json:"valign,omitempty"`
+	WordWrap      *bool   `json:"word_wrap,omitempty"`
+	Shadow        bool    `json:"shadow,omitempty"`
+	MarginLeft    float64 `json:"margin_left,omitempty"`   // pt
+	MarginRight   float64 `json:"margin_right,omitempty"`  // pt
+	MarginTop     float64 `json:"margin_top,omitempty"`    // pt
+	MarginBottom  float64 `json:"margin_bottom,omitempty"` // pt
 }
 
 // RichTextRun is a single styled text fragment within a paragraph.
@@ -39,38 +41,48 @@ type RichTextRun struct {
 
 // Paragraph is a block of text with optional mixed formatting.
 type Paragraph struct {
-	Runs      []RichTextRun `json:"runs,omitempty"`        // if empty, use plain Text
-	Text      string        `json:"text,omitempty"`        // fallback plain text
-	Style     TextStyle     `json:"style,omitempty"`       // paragraph-level default style
-	Level     int           `json:"level,omitempty"`       // indentation level 0-8
-	SpaceAfter float64      `json:"space_after,omitempty"` // pt
+	Runs        []RichTextRun `json:"runs,omitempty"`
+	Text        string        `json:"text,omitempty"`
+	Style       TextStyle     `json:"style,omitempty"`
+	Level       int           `json:"level,omitempty"`
+	SpaceBefore float64       `json:"space_before,omitempty"` // pt
+	SpaceAfter  float64       `json:"space_after,omitempty"`  // pt
+	Bullet      string        `json:"bullet,omitempty"`
 }
 
 // TableCellStyle for individual table cells.
 type TableCellStyle struct {
-	BgColor   string `json:"bg_color,omitempty"`
-	Bold      bool   `json:"bold,omitempty"`
-	Align     string `json:"align,omitempty"`
-	FontSize  int    `json:"font_size,omitempty"`
-	Color     string `json:"color,omitempty"`
+	BgColor  string `json:"bg_color,omitempty"`
+	Bold     bool   `json:"bold,omitempty"`
+	Align    string `json:"align,omitempty"`
+	FontSize int    `json:"font_size,omitempty"`
+	Color    string `json:"color,omitempty"`
 }
 
 // TableCell with value and optional styling.
 type TableCell struct {
-	Text  string         `json:"text"`
-	Style TableCellStyle `json:"style,omitempty"`
-	ColSpan int          `json:"col_span,omitempty"`
-	RowSpan int          `json:"row_span,omitempty"`
+	Text    string         `json:"text"`
+	Style   TableCellStyle `json:"style,omitempty"`
+	ColSpan int            `json:"col_span,omitempty"`
+	RowSpan int            `json:"row_span,omitempty"`
 }
 
 // TableData holds a table structure with full styling control.
 type TableData struct {
 	Headers     []TableCell   `json:"headers"`
 	Rows        [][]TableCell `json:"rows"`
-	HeaderColor string        `json:"header_color,omitempty"`    // bg color for header row
+	HeaderColor string        `json:"header_color,omitempty"` // bg color for header row
 	BorderColor string        `json:"border_color,omitempty"`
-	AltRowColor string        `json:"alt_row_color,omitempty"`   // alternating row color
+	AltRowColor string        `json:"alt_row_color,omitempty"` // alternating row color
 	FontSize    int           `json:"font_size,omitempty"`
+}
+
+// ImageCrop specifies source cropping percentages.
+type ImageCrop struct {
+	Left   float64 `json:"left,omitempty"`
+	Top    float64 `json:"top,omitempty"`
+	Right  float64 `json:"right,omitempty"`
+	Bottom float64 `json:"bottom,omitempty"`
 }
 
 // Element is a single placed object on a slide.
@@ -79,19 +91,22 @@ type Element struct {
 	Type ElementType `json:"type"`
 
 	// Position in percentage coordinates (0-100 relative to slide).
-	Rect     Rect  `json:"rect"`
+	Rect     Rect    `json:"rect"`
 	Rotation float64 `json:"rotation,omitempty"` // degrees
 
 	// Z-order: higher = in front. Auto-assigned by index if 0.
 	ZOrder int `json:"z_order,omitempty"`
 
 	// Text content (for text-like elements: title, subtitle, body).
-	Text      string      `json:"text,omitempty"`
-	Style     TextStyle   `json:"style,omitempty"`
+	Text       string      `json:"text,omitempty"`
+	Style      TextStyle   `json:"style,omitempty"`
 	Paragraphs []Paragraph `json:"paragraphs,omitempty"` // for rich text
 
 	// Image path (for image elements). Can be local path or URL.
-	ImagePath string `json:"image_path,omitempty"`
+	ImagePath string     `json:"image_path,omitempty"`
+	ImageFit  string     `json:"image_fit,omitempty"` // contain, cover, stretch
+	ImageAlt  string     `json:"image_alt,omitempty"`
+	ImageCrop *ImageCrop `json:"image_crop,omitempty"`
 
 	// For bullet lists, each item is a separate string.
 	Items []string `json:"items,omitempty"`
@@ -120,12 +135,12 @@ type Element struct {
 
 // Slide is a single page in the presentation.
 type Slide struct {
-	ID         string         `json:"id"`
-	Layout     SlideLayout    `json:"layout"`
-	Background *Background    `json:"background,omitempty"`
-	Transition *Transition    `json:"transition,omitempty"`
-	Notes      string         `json:"notes,omitempty"`
-	Elements   []*Element     `json:"elements"`
+	ID         string      `json:"id"`
+	Layout     SlideLayout `json:"layout"`
+	Background *Background `json:"background,omitempty"`
+	Transition *Transition `json:"transition,omitempty"`
+	Notes      string      `json:"notes,omitempty"`
+	Elements   []*Element  `json:"elements"`
 }
 
 // Theme defines the visual style for the entire presentation.

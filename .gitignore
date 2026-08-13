@@ -10,6 +10,7 @@ dist/
 *.test
 *.out
 vendor/
+output/
 
 # Python
 __pycache__/

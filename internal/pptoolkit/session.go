@@ -38,13 +38,14 @@ func NewSession() *Session {
 	return &Session{
 		pres: &model.Presentation{
 			Theme: model.Theme{
-				PrimaryColor:    "#1A73E8",
-				SecondaryColor:  "#424242",
-				AccentColor:     "#FF6D00",
-				BackgroundColor: "#FFFFFF",
-				TextColor:       "#212121",
-				TitleFont:       "Microsoft YaHei",
-				BodyFont:        "Microsoft YaHei",
+				Name:            "Modern Editorial",
+				PrimaryColor:    "#2563EB",
+				SecondaryColor:  "#0F172A",
+				AccentColor:     "#F59E0B",
+				BackgroundColor: "#F8FAFC",
+				TextColor:       "#0F172A",
+				TitleFont:       "Microsoft YaHei UI",
+				BodyFont:        "Microsoft YaHei UI",
 			},
 			SlideWidth:  w,
 			SlideHeight: h,
@@ -272,10 +273,10 @@ func (s *Session) AddTitle(slideID string, rect model.Rect, text string, style m
 // AddBulletList adds a bullet list element.
 func (s *Session) AddBulletList(slideID string, rect model.Rect, items []string, style model.TextStyle) (string, error) {
 	return s.addElement(slideID, &model.Element{
-		Type:   model.ElementBullet,
-		Rect:   rect,
-		Items:  items,
-		Style:  style,
+		Type:  model.ElementBullet,
+		Rect:  rect,
+		Items: items,
+		Style: style,
 	})
 }
 
@@ -291,18 +292,18 @@ func (s *Session) AddImage(slideID string, rect model.Rect, imagePath string) (s
 // AddShape adds a shape element.
 func (s *Session) AddShape(slideID string, rect model.Rect, shape *model.ShapeData) (string, error) {
 	return s.addElement(slideID, &model.Element{
-		Type:   model.ElementShape,
-		Rect:   rect,
-		Shape:  shape,
+		Type:  model.ElementShape,
+		Rect:  rect,
+		Shape: shape,
 	})
 }
 
 // AddTable adds a table element.
 func (s *Session) AddTable(slideID string, rect model.Rect, table *model.TableData) (string, error) {
 	return s.addElement(slideID, &model.Element{
-		Type:   model.ElementTable,
-		Rect:   rect,
-		Table:  table,
+		Type:  model.ElementTable,
+		Rect:  rect,
+		Table: table,
 	})
 }
 

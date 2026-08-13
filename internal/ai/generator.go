@@ -56,8 +56,8 @@ func (g *Generator) Generate(ctx context.Context, req GenerateRequest) (*model.P
 			{Role: openai.ChatMessageRoleSystem, Content: systemPrompt},
 			{Role: openai.ChatMessageRoleUser, Content: prompt},
 		},
-		Temperature:      0.7,
-		MaxTokens:        g.maxTokens,
+		Temperature: 0.7,
+		MaxTokens:   g.maxTokens,
 		ResponseFormat: &openai.ChatCompletionResponseFormat{
 			Type: openai.ChatCompletionResponseFormatTypeJSONObject,
 		},
@@ -95,13 +95,16 @@ func (g *Generator) Generate(ctx context.Context, req GenerateRequest) (*model.P
 	return &pres, nil
 }
 
-const systemPrompt = `You are a professional presentation designer.
-You output ONLY valid JSON following the Presentation schema.
-All text content must be in the language requested by the user.
-Every text element must have a Rect with x, y, w, h as percentages (0-100) of the slide.
-Every text element must have a Style with at minimum font_size, color, bold, and align.
-Colors are hex strings like "#1A2B3C".
-Be creative but keep layouts clean and readable.`
+const systemPrompt = `You are a senior presentation art director, not a document summarizer.
+Output ONLY valid JSON following the Presentation schema. All content uses the requested language.
+Design every slide as a deliberate visual composition with hierarchy, spacing, contrast, and a consistent grid.
+Use the requested theme fonts explicitly and never rely on application defaults.
+Use a restrained palette: one dominant color, one accent, neutrals, and optional gradients with 2-4 stops.
+Use shapes as cards, bands, dividers, badges, and data containers. Shapes may use fill.gradient, fill.opacity, line.dash, and shadow.
+Use rich paragraphs/runs when emphasis within a text block is useful. Keep body text readable at 16pt or larger.
+Use local image elements when assets are supplied; choose image_fit cover for hero imagery and contain for diagrams.
+Every element needs a Rect in percentage coordinates. Avoid overlap unless intentional and keep content inside safe margins.
+Do not make every slide title-plus-bullets. Vary compositions while preserving the same visual system.`
 
 func buildPrompt(req GenerateRequest) string {
 	lang := "Chinese"
@@ -170,10 +173,12 @@ Rules:
 - Slide 1 should be layout "title" (cover page).
 - Slide 2 should be layout "section" (table of contents / agenda).
 - Last slide should be layout "title" (thank you page).
-- Middle slides use "title_content" or "two_column" layouts.
-- Each slide should have 3-6 elements.
+- Middle slides should mix two_column, image_left/right, dashboard, timeline, comparison, and large-number compositions.
+- Each slide should have 4-8 purposeful elements, including at least one visual container or accent shape.
+- Across the deck use at least: one gradient, two shadowed cards, one rich-text paragraph, one table or data visualization, and one image when an asset is available.
+- Use title_font/body_font on every text style; never omit font_name.
 - Keep text concise: titles <15 chars, bullets <30 chars each.
-- Vary element positions for visual interest, but keep within bounds (x+w <= 95, y+h <= 92).
+- Maintain safe margins and a consistent alignment grid (x+w <= 95, y+h <= 92).
 - Generate %d slides total.`,
 		req.Slides, req.Topic, lang, style, req.Slides)
 }

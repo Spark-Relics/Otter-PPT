@@ -52,7 +52,7 @@ func (b *Builder) writeSlide(zw *zip.Writer, slideNum int, slide *model.Slide) e
 	}
 
 	xml := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/officedocument.presentationml/2006/main">
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
 <p:cSld>%s</p:cSld>%s%s
 </p:sld>`, body.String(), transitionXML, "")
 
@@ -150,5 +150,5 @@ func (b *Builder) buildTransition(t *model.Transition) string {
 		return ""
 	}
 
-	return fmt.Sprintf(`<p:transition xmlns:p="http://schemas.openxmlformats.org/officedocument.presentationml/2006/main" spd="med">%s</p:transition>`, inner)
+	return fmt.Sprintf(`<p:transition xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" spd="med">%s</p:transition>`, inner)
 }

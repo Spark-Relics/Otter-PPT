@@ -1,0 +1,129 @@
+package builder
+
+import (
+	"archive/zip"
+	"bytes"
+	"encoding/xml"
+	"image"
+	"image/color"
+	"image/png"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/otter-ppt/otter-ppt/internal/model"
+)
+
+func TestEmbeddedImageCreatesMediaAndRelationship(t *testing.T) {
+	imagePath := filepath.Join(t.TempDir(), "sample.png")
+	file, err := os.Create(imagePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	img := image.NewRGBA(image.Rect(0, 0, 2, 2))
+	img.Set(0, 0, color.RGBA{R: 20, G: 80, B: 180, A: 255})
+	if err := png.Encode(file, img); err != nil {
+		file.Close()
+		t.Fatal(err)
+	}
+	file.Close()
+
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{ID: "image-1", Type: model.ElementImage, Rect: model.Rect{X: 10, Y: 10, W: 40, H: 40}, ImagePath: imagePath, ImageAlt: "sample"}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	if _, ok := parts["ppt/media/image1.png"]; !ok {
+		t.Fatal("embedded image media part missing")
+	}
+	if !strings.Contains(parts["ppt/slides/slide1.xml"], `<p:pic>`) || !strings.Contains(parts["ppt/slides/slide1.xml"], `r:embed="rId2"`) {
+		t.Fatal("slide picture reference missing")
+	}
+	if !strings.Contains(parts["ppt/slides/_rels/slide1.xml.rels"], `Target="../media/image1.png"`) {
+		t.Fatal("image relationship missing")
+	}
+	if !strings.Contains(parts["[Content_Types].xml"], `Extension="png" ContentType="image/png"`) {
+		t.Fatal("image content type missing")
+	}
+}
+
+func TestGeneratedPartsAreWellFormedXML(t *testing.T) {
+	pres := &model.Presentation{
+		Title: "OOXML validation",
+		Slides: []*model.Slide{{
+			ID:     "slide-1",
+			Layout: model.LayoutTitleContent,
+			Background: &model.Background{Type: model.BgGradient, Gradient: &model.Gradient{
+				Type: model.GradientLinear, Angle: 135,
+				Stops: []model.GradientStop{{Color: "#07111F", Position: 0}, {Color: "#0E7490", Position: 100}},
+			}},
+			Transition: &model.Transition{Type: model.TransitionFade, Duration: 0.7},
+			Elements: []*model.Element{
+				{
+					ID: "text-alpha", Type: model.ElementTitle, Text: "Otter PPT",
+					Rect: model.Rect{X: 10, Y: 10, W: 80, H: 20},
+				},
+				{
+					ID: "shape-alpha", Type: model.ElementShape, Rect: model.Rect{X: 10, Y: 35, W: 30, H: 20},
+					Rotation: 15, Shape: &model.ShapeData{ShapeType: model.ShapeRoundedRectangle, FillColor: "#3B82F6"},
+				},
+			},
+		}},
+	}
+
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatalf("open PPTX zip: %v", err)
+	}
+	for _, part := range zr.File {
+		if len(part.Name) < 4 || (part.Name[len(part.Name)-4:] != ".xml" && part.Name[len(part.Name)-5:] != ".rels") {
+			continue
+		}
+		r, err := part.Open()
+		if err != nil {
+			t.Fatalf("open %s: %v", part.Name, err)
+		}
+		data, readErr := io.ReadAll(r)
+		r.Close()
+		if readErr != nil {
+			t.Fatalf("read %s: %v", part.Name, readErr)
+		}
+		var node any
+		if err := xml.Unmarshal(data, &node); err != nil {
+			t.Errorf("invalid XML in %s: %v", part.Name, err)
+		}
+		if part.Name == "ppt/slides/slide1.xml" {
+			xmlText := string(data)
+			if !strings.Contains(xmlText, `<a:xfrm><a:off x="`) || !strings.Contains(xmlText, `<a:ext cx="`) {
+				t.Errorf("slide shape is missing required a:xfrm transform: %s", xmlText)
+			}
+			if strings.Contains(xmlText, `<p:spPr><a:off`) {
+				t.Errorf("shape transform children must be wrapped in a:xfrm: %s", xmlText)
+			}
+			if count := strings.Count(xmlText, `<p:spPr><a:xfrm`); count != 2 {
+				t.Errorf("expected every shape to use the OOXML property builder, got %d transforms", count)
+			}
+			if !strings.Contains(xmlText, `<a:xfrm rot="900000">`) {
+				t.Errorf("shape rotation must be encoded on a:xfrm: %s", xmlText)
+			}
+		}
+	}
+}

@@ -3,6 +3,9 @@ package builder
 import (
 	"archive/zip"
 	"fmt"
+	"strings"
+
+	"github.com/otter-ppt/otter-ppt/internal/model"
 )
 
 // writeTheme writes ppt/theme/theme1.xml.
@@ -11,17 +14,45 @@ func (b *Builder) writeTheme(zw *zip.Writer) error {
 	if err != nil {
 		return err
 	}
+	primary := strings.TrimPrefix(b.pres.Theme.PrimaryColor, "#")
+	if primary == "" {
+		primary = "1A73E8"
+	}
+	secondary := strings.TrimPrefix(b.pres.Theme.SecondaryColor, "#")
+	if secondary == "" {
+		secondary = "424242"
+	}
+	accent := strings.TrimPrefix(b.pres.Theme.AccentColor, "#")
+	if accent == "" {
+		accent = "FF6D00"
+	}
+	background := strings.TrimPrefix(b.pres.Theme.BackgroundColor, "#")
+	if background == "" {
+		background = "FFFFFF"
+	}
+	textColor := strings.TrimPrefix(b.pres.Theme.TextColor, "#")
+	if textColor == "" {
+		textColor = "212121"
+	}
+	titleFont := b.pres.Theme.TitleFont
+	if titleFont == "" {
+		titleFont = "Aptos Display"
+	}
+	bodyFont := b.pres.Theme.BodyFont
+	if bodyFont == "" {
+		bodyFont = "Aptos"
+	}
 
-	xml := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+	xml := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Office Theme">
 <a:themeElements>
 <a:clrScheme name="Office">
-<a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1>
-<a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1>
-<a:dk2><a:srgbClr val="424242"/></a:dk2>
+<a:dk1><a:srgbClr val="%s"/></a:dk1>
+<a:lt1><a:srgbClr val="%s"/></a:lt1>
+<a:dk2><a:srgbClr val="%s"/></a:dk2>
 <a:lt2><a:srgbClr val="E8E8E8"/></a:lt2>
-<a:accent1><a:srgbClr val="1A73E8"/></a:accent1>
-<a:accent2><a:srgbClr val="FF6D00"/></a:accent2>
+<a:accent1><a:srgbClr val="%s"/></a:accent1>
+<a:accent2><a:srgbClr val="%s"/></a:accent2>
 <a:accent3><a:srgbClr val="00ACC1"/></a:accent3>
 <a:accent4><a:srgbClr val="43A047"/></a:accent4>
 <a:accent5><a:srgbClr val="FB8C00"/></a:accent5>
@@ -31,10 +62,10 @@ func (b *Builder) writeTheme(zw *zip.Writer) error {
 </a:clrScheme>
 <a:fontScheme name="Office">
 <a:majorFont>
-<a:latin typeface="Calibri Light"/><a:ea typeface=""/><a:cs typeface=""/>
+<a:latin typeface="%s"/><a:ea typeface="%s"/><a:cs typeface="%s"/>
 </a:majorFont>
 <a:minorFont>
-<a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/>
+<a:latin typeface="%s"/><a:ea typeface="%s"/><a:cs typeface="%s"/>
 </a:minorFont>
 </a:fontScheme>
 <a:fmtScheme name="Office">
@@ -62,7 +93,7 @@ func (b *Builder) writeTheme(zw *zip.Writer) error {
 </a:themeElements>
 <a:objectDefaults/>
 <a:extraClrSchemeLst/>
-</a:theme>`
+</a:theme>`, textColor, background, secondary, primary, accent, xmlEscape(titleFont), xmlEscape(titleFont), xmlEscape(titleFont), xmlEscape(bodyFont), xmlEscape(bodyFont), xmlEscape(bodyFont))
 
 	_, err = w.Write([]byte(xml))
 	return err
@@ -76,7 +107,7 @@ func (b *Builder) writeSlideMaster(zw *zip.Writer) error {
 	}
 
 	xml := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/officedocument.presentationml/2006/main">
+<p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
 <p:cSld>
 <p:bg>
 <p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef>
@@ -147,7 +178,7 @@ func (b *Builder) writeSlideLayout(zw *zip.Writer) error {
 	}
 
 	xml := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/officedocument.presentationml/2006/main" type="blank" preserve="1">
+<p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank" preserve="1">
 <p:cSld name="Blank">
 <p:spTree>
 <p:nvGrpSpPr>
@@ -182,16 +213,22 @@ func (b *Builder) writeSlideLayoutRels(zw *zip.Writer) error {
 }
 
 // writeSlideRels writes ppt/slides/_rels/slideN.xml.rels.
-func (b *Builder) writeSlideRels(zw *zip.Writer, slideNum int) error {
+func (b *Builder) writeSlideRels(zw *zip.Writer, slideNum int, slide *model.Slide) error {
 	path := fmt.Sprintf("ppt/slides/_rels/slide%d.xml.rels", slideNum)
 	w, err := zw.Create(path)
 	if err != nil {
 		return err
 	}
 
+	var mediaRels strings.Builder
+	for _, elem := range slide.Elements {
+		if asset := b.mediaByElement[elem]; asset != nil {
+			fmt.Fprintf(&mediaRels, `<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/%s"/>`, asset.relID, asset.fileName)
+		}
+	}
 	xml := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>` + mediaRels.String() + `
 </Relationships>`
 
 	_, err = w.Write([]byte(xml))
