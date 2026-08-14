@@ -49,6 +49,11 @@ const (
 	ChartScatter   ChartType = "scatter"
 	ChartDoughnut  ChartType = "doughnut"
 	ChartCombo     ChartType = "combo" // mixed bar+line with optional secondary axis
+	ChartBar3D     ChartType = "bar_3d"
+	ChartColumn3D  ChartType = "column_3d"
+	ChartLine3D    ChartType = "line_3d"
+	ChartPie3D     ChartType = "pie_3d"
+	ChartArea3D    ChartType = "area_3d"
 )
 
 // BackgroundType enumerates background fill types.

@@ -23,6 +23,7 @@ func (b *Builder) writeChartPart(zw *zip.Writer, asset *chartAsset) error {
 func (b *Builder) chartXML(chart *model.ChartData, chartIndex int) string {
 	isScatter := chart.ChartType == model.ChartScatter
 	isCombo := chart.ChartType == model.ChartCombo
+	is3D := is3DChart(chart.ChartType)
 	chartType := nativeChartType(chart.ChartType)
 	catID, valID := chartIndex*2+100000, chartIndex*2+100001
 	secValID := chartIndex*2+100002 // secondary axis for combo charts
@@ -34,15 +35,15 @@ func (b *Builder) chartXML(chart *model.ChartData, chartIndex int) string {
 	} else {
 		fmt.Fprintf(&plot, `<c:%s>`, chartType)
 		switch chart.ChartType {
-		case model.ChartBar:
+		case model.ChartBar, model.ChartBar3D:
 			plot.WriteString(`<c:barDir val="bar"/><c:grouping val="clustered"/><c:varyColors val="0"/>`)
-		case model.ChartColumn:
+		case model.ChartColumn, model.ChartColumn3D:
 			plot.WriteString(`<c:barDir val="col"/><c:grouping val="clustered"/><c:varyColors val="0"/>`)
-		case model.ChartPie, model.ChartDoughnut:
+		case model.ChartPie, model.ChartDoughnut, model.ChartPie3D:
 			plot.WriteString(`<c:varyColors val="1"/>`)
-		case model.ChartLine:
+		case model.ChartLine, model.ChartLine3D:
 			plot.WriteString(`<c:grouping val="standard"/><c:varyColors val="0"/>`)
-		case model.ChartArea:
+		case model.ChartArea, model.ChartArea3D:
 			plot.WriteString(`<c:grouping val="standard"/><c:varyColors val="0"/>`)
 		case model.ChartScatter:
 			plot.WriteString(`<c:scatterStyle val="lineMarker"/><c:varyColors val="0"/>`)
@@ -50,7 +51,7 @@ func (b *Builder) chartXML(chart *model.ChartData, chartIndex int) string {
 			plot.WriteString(`<c:grouping val="standard"/><c:varyColors val="0"/>`)
 		}
 		// Add smooth for line charts
-		if chart.ChartType == model.ChartLine && chart.Smooth {
+		if (chart.ChartType == model.ChartLine || chart.ChartType == model.ChartLine3D) && chart.Smooth {
 			plot.WriteString(`<c:smooth val="1"/>`)
 		}
 		for i, series := range chart.Series {
@@ -64,20 +65,20 @@ func (b *Builder) chartXML(chart *model.ChartData, chartIndex int) string {
 			plot.WriteString(`<c:holeSize val="50"/>`)
 		}
 		if chart.ShowDataLabels {
-			if chart.ChartType == model.ChartPie || chart.ChartType == model.ChartDoughnut {
+			if chart.ChartType == model.ChartPie || chart.ChartType == model.ChartDoughnut || chart.ChartType == model.ChartPie3D {
 				fmt.Fprintf(&plot, `<c:dLbls><c:showLegendKey val="0"/><c:showVal val="0"/><c:showCatName val="1"/><c:showSerName val="0"/><c:showPercent val="1"/><c:showBubbleSize val="0"/></c:dLbls>`)
 			} else {
 				fmt.Fprintf(&plot, `<c:dLbls><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls>`)
 			}
 		}
-		if chart.ChartType != model.ChartPie && chart.ChartType != model.ChartDoughnut {
+		if chart.ChartType != model.ChartPie && chart.ChartType != model.ChartDoughnut && chart.ChartType != model.ChartPie3D {
 			fmt.Fprintf(&plot, `<c:axId val="%d"/><c:axId val="%d"/>`, catID, valID)
 		}
 		fmt.Fprintf(&plot, `</c:%s>`, chartType)
 	}
 
 	axes := ""
-	if chart.ChartType != model.ChartPie && chart.ChartType != model.ChartDoughnut {
+	if chart.ChartType != model.ChartPie && chart.ChartType != model.ChartDoughnut && chart.ChartType != model.ChartPie3D {
 		if isScatter {
 			axes = fmt.Sprintf(
 				`<c:valAx><c:axId val="%d"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:majorGridlines/><c:numFmt formatCode="General" sourceLinked="1"/><c:tickLblPos val="nextTo"/><c:crossAx val="%d"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx>`+
@@ -102,18 +103,39 @@ func (b *Builder) chartXML(chart *model.ChartData, chartIndex int) string {
 	if chart.ShowLegend {
 		legend = `<c:legend><c:legendPos val="r"/><c:layout/><c:overlay val="0"/></c:legend>`
 	}
-	return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><c:date1904 val="0"/><c:lang val="zh-CN"/><c:roundedCorners val="0"/><c:chart>` + title + `<c:autoTitleDeleted val="0"/><c:plotArea><c:layout/>` + plot.String() + axes + `</c:plotArea>` + legend + `<c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/><c:showDLblsOverMax val="0"/></c:chart><c:printSettings><c:headerFooter/><c:pageMargins b="0.75" l="0.7" r="0.7" t="0.75" header="0.3" footer="0.3"/><c:pageSetup/></c:printSettings></c:chartSpace>`
+	view3D := ""
+	if is3D {
+		view3D = view3DXML()
+	}
+	return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><c:date1904 val="0"/><c:lang val="zh-CN"/><c:roundedCorners val="0"/><c:chart>` + title + `<c:autoTitleDeleted val="0"/><c:plotArea><c:layout/>` + plot.String() + axes + view3D + `</c:plotArea>` + legend + `<c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/><c:showDLblsOverMax val="0"/></c:chart><c:printSettings><c:headerFooter/><c:pageMargins b="0.75" l="0.7" r="0.7" t="0.75" header="0.3" footer="0.3"/><c:pageSetup/></c:printSettings></c:chartSpace>`
 }
 
 func nativeChartType(chartType model.ChartType) string {
 	switch chartType {
-	case model.ChartBar, model.ChartColumn:
+	case model.ChartBar, model.ChartBar3D:
+		if chartType == model.ChartBar3D {
+			return "bar3DChart"
+		}
 		return "barChart"
-	case model.ChartLine:
+	case model.ChartColumn, model.ChartColumn3D:
+		if chartType == model.ChartColumn3D {
+			return "bar3DChart"
+		}
+		return "barChart"
+	case model.ChartLine, model.ChartLine3D:
+		if chartType == model.ChartLine3D {
+			return "line3DChart"
+		}
 		return "lineChart"
-	case model.ChartPie:
+	case model.ChartPie, model.ChartPie3D:
+		if chartType == model.ChartPie3D {
+			return "pie3DChart"
+		}
 		return "pieChart"
-	case model.ChartArea:
+	case model.ChartArea, model.ChartArea3D:
+		if chartType == model.ChartArea3D {
+			return "area3DChart"
+		}
 		return "areaChart"
 	case model.ChartDoughnut:
 		return "doughnutChart"
@@ -124,6 +146,20 @@ func nativeChartType(chartType model.ChartType) string {
 	default:
 		return "lineChart"
 	}
+}
+
+// is3DChart returns true for all 3D chart types.
+func is3DChart(t model.ChartType) bool {
+	switch t {
+	case model.ChartBar3D, model.ChartColumn3D, model.ChartLine3D, model.ChartPie3D, model.ChartArea3D:
+		return true
+	}
+	return false
+}
+
+// view3DXML returns the c:view3D element for 3D charts.
+func view3DXML() string {
+	return `<c:view3D><c:rotX val="15"/><c:rotY val="20"/><c:depthPercent val="100"/><c:rAngAx val="1"/><c:perspective val="30"/></c:view3D>`
 }
 
 // seriesColor returns the hex color (without #) for a chart series, using a
@@ -217,12 +253,12 @@ func chartSeriesXML(chart *model.ChartData, series model.ChartSeries, index int)
 	}
 	// Markers for line charts
 	marker := ""
-	if chart.ChartType == model.ChartLine {
+	if chart.ChartType == model.ChartLine || chart.ChartType == model.ChartLine3D {
 		marker = markerXML(color)
 	}
 	// Per-series smooth
 	smooth := ""
-	if (chart.ChartType == model.ChartLine) && (chart.Smooth || series.Smooth) {
+	if (chart.ChartType == model.ChartLine || chart.ChartType == model.ChartLine3D) && (chart.Smooth || series.Smooth) {
 		smooth = `<c:smooth val="1"/>`
 	}
 	// Per-series trendline

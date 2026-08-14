@@ -240,6 +240,90 @@ func TestLineChartSmoothAndTrendline(t *testing.T) {
 	}
 }
 
+func Test3DColumnChart(t *testing.T) {
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "chart-3d", Type: model.ElementChart, Rect: model.Rect{X: 10, Y: 10, W: 70, H: 60},
+		Chart: &model.ChartData{ChartType: model.ChartColumn3D, Categories: []string{"A", "B", "C"}, Title: "3D Revenue", ShowLegend: true,
+			Series: []model.ChartSeries{
+				{Name: "2026", Values: []float64{10, 20, 30}, Color: "#4472C4"},
+			}},
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	chartXML := parts["ppt/charts/chart1.xml"]
+	// Must use bar3DChart element
+	if !strings.Contains(chartXML, `<c:bar3DChart>`) {
+		t.Fatalf("3D chart element missing: %s", chartXML)
+	}
+	// Must have view3D
+	if !strings.Contains(chartXML, `<c:view3D>`) {
+		t.Fatalf("view3D missing: %s", chartXML)
+	}
+	// Must have rotX and rotY
+	if !strings.Contains(chartXML, `<c:rotX val="15"/>`) || !strings.Contains(chartXML, `<c:rotY val="20"/>`) {
+		t.Fatalf("3D rotation missing: %s", chartXML)
+	}
+	// Must have catAx and valAx
+	if !strings.Contains(chartXML, `<c:catAx>`) || !strings.Contains(chartXML, `<c:valAx>`) {
+		t.Fatalf("axes missing in 3D chart: %s", chartXML)
+	}
+	// Must close with bar3DChart
+	if !strings.Contains(chartXML, `</c:bar3DChart>`) {
+		t.Fatalf("3D chart closing tag missing: %s", chartXML)
+	}
+}
+
+func Test3DPieChart(t *testing.T) {
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "chart-3dpie", Type: model.ElementChart, Rect: model.Rect{X: 10, Y: 10, W: 70, H: 60},
+		Chart: &model.ChartData{ChartType: model.ChartPie3D, Categories: []string{"A", "B"}, Title: "Share", ShowLegend: true,
+			Series: []model.ChartSeries{
+				{Name: "Share", Values: []float64{60, 40}, Color: "#4472C4"},
+			}},
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	chartXML := parts["ppt/charts/chart1.xml"]
+	// Must use pie3DChart
+	if !strings.Contains(chartXML, `<c:pie3DChart>`) {
+		t.Fatalf("3D pie chart element missing: %s", chartXML)
+	}
+	// Must have view3D
+	if !strings.Contains(chartXML, `<c:view3D>`) {
+		t.Fatalf("view3D missing: %s", chartXML)
+	}
+	// Must NOT have axes (pie charts don't use axes)
+	if strings.Contains(chartXML, `<c:catAx>`) || strings.Contains(chartXML, `<c:valAx>`) {
+		t.Fatalf("3D pie should not have axes: %s", chartXML)
+	}
+}
+
 func TestColumnChartWithErrorBars(t *testing.T) {
 	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
 		ID: "chart-err", Type: model.ElementChart, Rect: model.Rect{X: 10, Y: 10, W: 70, H: 60},
