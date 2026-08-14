@@ -52,13 +52,14 @@ type chartAsset struct {
 }
 
 type Builder struct {
-	pres           *model.Presentation
-	mediaByElement map[*model.Element]*mediaAsset
-	mediaAssets    []*mediaAsset
-	chartByElement map[*model.Element]*chartAsset
-	chartAssets    []*chartAsset
-	bgImageBySlide map[int]*mediaAsset
-	embeddedFonts  []embeddedFont
+	pres            *model.Presentation
+	mediaByElement  map[*model.Element]*mediaAsset
+	mediaAssets     []*mediaAsset
+	chartByElement  map[*model.Element]*chartAsset
+	chartAssets     []*chartAsset
+	bgImageBySlide  map[int]*mediaAsset
+	posterByElement map[*model.Element]*mediaAsset
+	embeddedFonts   []embeddedFont
 }
 
 // New creates a builder for the given presentation.
@@ -67,10 +68,11 @@ func New(pres *model.Presentation) *Builder {
 		pres.SlideWidth, pres.SlideHeight = model.DefaultSlideSize()
 	}
 	b := &Builder{
-		pres:           pres,
-		mediaByElement: make(map[*model.Element]*mediaAsset),
-		chartByElement: make(map[*model.Element]*chartAsset),
-		bgImageBySlide: make(map[int]*mediaAsset),
+		pres:            pres,
+		mediaByElement:  make(map[*model.Element]*mediaAsset),
+		chartByElement:  make(map[*model.Element]*chartAsset),
+		bgImageBySlide:  make(map[int]*mediaAsset),
+		posterByElement: make(map[*model.Element]*mediaAsset),
 	}
 	b.embeddedFonts = b.prepareEmbeddedFonts()
 	return b
@@ -189,6 +191,30 @@ func (b *Builder) prepareAssets() error {
 				relIndex++
 				continue
 			}
+			// Video / Audio media
+			if (elem.Type == model.ElementVideo || elem.Type == model.ElementAudio) && elem.Media != nil && elem.Media.MediaPath != "" {
+				data, ext, err := loadMediaData(elem.Media.MediaPath)
+				if err == nil {
+					asset := &mediaAsset{data: data, fileName: fmt.Sprintf("media%d%s", mediaIndex, ext), relID: fmt.Sprintf("rId%d", relIndex), ext: strings.TrimPrefix(ext, ".")}
+					b.mediaAssets = append(b.mediaAssets, asset)
+					b.mediaByElement[elem] = asset
+					mediaIndex++
+					relIndex++
+					// Load poster image if provided
+					if elem.Media.PosterPath != "" {
+						pData, pExt, err := loadImageData(elem.Media.PosterPath)
+						if err == nil {
+							poster := &mediaAsset{data: pData, fileName: fmt.Sprintf("image%d%s", mediaIndex, pExt), relID: fmt.Sprintf("rId%d", relIndex), ext: strings.TrimPrefix(pExt, ".")}
+							b.mediaAssets = append(b.mediaAssets, poster)
+							b.posterByElement[elem] = poster
+							mediaIndex++
+							relIndex++
+						}
+					}
+					continue
+				}
+				continue
+			}
 			if elem.Type != model.ElementImage || elem.ImagePath == "" {
 				continue
 			}
@@ -232,12 +258,14 @@ func loadImageData(path string) ([]byte, string, error) {
 			ext = ".gif"
 		case strings.Contains(ct, "webp"):
 			ext = ".png" // convert webp to png placeholder
+		case strings.Contains(ct, "svg"):
+			ext = ".svg"
 		default:
 			uExt := strings.ToLower(filepath.Ext(path))
 			if uExt == ".jpeg" {
 				uExt = ".jpg"
 			}
-			if uExt == ".png" || uExt == ".jpg" || uExt == ".gif" {
+			if uExt == ".png" || uExt == ".jpg" || uExt == ".gif" || uExt == ".svg" {
 				ext = uExt
 			}
 		}
@@ -252,15 +280,76 @@ func loadImageData(path string) ([]byte, string, error) {
 	if ext == ".jpeg" {
 		ext = ".jpg"
 	}
-	if ext != ".png" && ext != ".jpg" && ext != ".gif" {
+	if ext != ".png" && ext != ".jpg" && ext != ".gif" && ext != ".svg" {
 		return nil, "", fmt.Errorf("unsupported image format %q", ext)
 	}
 	return data, ext, nil
 }
 
+// loadMediaData reads video/audio data from a local path or downloads from a URL.
+// Returns the raw bytes and the file extension (e.g. ".mp4").
+func loadMediaData(path string) ([]byte, string, error) {
+	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+		resp, err := http.Get(path)
+		if err != nil {
+			return nil, "", fmt.Errorf("download media: %w", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			return nil, "", fmt.Errorf("download media: HTTP %d", resp.StatusCode)
+		}
+		data, err := io.ReadAll(io.LimitReader(resp.Body, 200<<20)) // 200MB limit
+		if err != nil {
+			return nil, "", fmt.Errorf("read media response: %w", err)
+		}
+		ext := strings.ToLower(filepath.Ext(path))
+		if ext == "" {
+			ext = ".mp4"
+		}
+		return data, ext, nil
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, "", err
+	}
+	ext := strings.ToLower(filepath.Ext(path))
+	if ext == "" {
+		ext = ".mp4"
+	}
+	return data, ext, nil
+}
+
 func mediaContentType(ext string) string {
-	if ext == "jpg" {
+	switch ext {
+	case "jpg", "jpeg":
 		return "image/jpeg"
+	case "svg":
+		return "image/svg+xml"
+	case "mp4":
+		return "video/mp4"
+	case "avi":
+		return "video/x-msvideo"
+	case "mov":
+		return "video/quicktime"
+	case "wmv":
+		return "video/x-ms-wmv"
+	case "webm":
+		return "video/webm"
+	case "mkv":
+		return "video/x-matroska"
+	case "mp3":
+		return "audio/mpeg"
+	case "wav":
+		return "audio/wav"
+	case "aac":
+		return "audio/aac"
+	case "m4a":
+		return "audio/mp4"
+	case "ogg":
+		return "audio/ogg"
+	case "flac":
+		return "audio/flac"
 	}
 	if value := mime.TypeByExtension("." + ext); value != "" {
 		return value

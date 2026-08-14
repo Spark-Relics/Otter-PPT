@@ -324,6 +324,280 @@ func Test3DPieChart(t *testing.T) {
 	}
 }
 
+func TestElementAnimation(t *testing.T) {
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{
+		{
+			ID: "title-1", Type: model.ElementTitle, Text: "Hello",
+			Rect: model.Rect{X: 10, Y: 10, W: 80, H: 20},
+			Animation: &model.Animation{
+				Type:      model.AnimFade,
+				Trigger:   model.TriggerOnClick,
+				Duration:  0.5,
+			},
+		},
+		{
+			ID: "body-1", Type: model.ElementBody, Text: "World",
+			Rect: model.Rect{X: 10, Y: 40, W: 80, H: 20},
+			Animation: &model.Animation{
+				Type:      model.AnimFlyIn,
+				Trigger:   model.TriggerAfterPrev,
+				Direction: model.DirFromLeft,
+				Duration:  0.8,
+				Delay:     0.2,
+			},
+		},
+	}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	slideXML := parts["ppt/slides/slide1.xml"]
+	// Must have <p:timing>
+	if !strings.Contains(slideXML, `<p:timing>`) {
+		t.Fatalf("timing element missing: %s", slideXML)
+	}
+	// Must have main sequence
+	if !strings.Contains(slideXML, `nodeType="mainSeq"`) {
+		t.Fatalf("main sequence missing: %s", slideXML)
+	}
+	// Must have animEffect with "fade" for the first element
+	if !strings.Contains(slideXML, `filter="fade"`) {
+		t.Fatalf("fade animation filter missing: %s", slideXML)
+	}
+	// Must have animEffect with "wipe(left)" for the second element (fly_in from left)
+	if !strings.Contains(slideXML, `filter="wipe(left)"`) {
+		t.Fatalf("wipe animation filter missing: %s", slideXML)
+	}
+	// Must have proper timing node types
+	if !strings.Contains(slideXML, `nodeType="clickEffect"`) {
+		t.Fatalf("clickEffect node type missing: %s", slideXML)
+	}
+	if !strings.Contains(slideXML, `nodeType="afterEffect"`) {
+		t.Fatalf("afterEffect node type missing: %s", slideXML)
+	}
+	// Must close timing
+	if !strings.Contains(slideXML, `</p:timing>`) {
+		t.Fatalf("timing closing tag missing: %s", slideXML)
+	}
+}
+
+func TestTableMergedCells(t *testing.T) {
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "table-1", Type: model.ElementTable, Rect: model.Rect{X: 10, Y: 10, W: 80, H: 60},
+		Table: &model.TableData{
+			Headers: []model.TableCell{
+				{Text: "Category", ColSpan: 2},
+				{Text: ""},
+				{Text: "Value"},
+			},
+			Rows: [][]model.TableCell{
+				{{Text: "A", ColSpan: 2}, {Text: ""}, {Text: "100"}},
+				{{Text: "B"}, {Text: "B2"}, {Text: "200", RowSpan: 2}},
+				{{Text: "C"}, {Text: "C2"}, {Text: "", RowSpan: -1}},
+			},
+		},
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	slideXML := parts["ppt/slides/slide1.xml"]
+	// Must have gridSpan for col_span
+	if !strings.Contains(slideXML, `gridSpan="2"`) {
+		t.Fatalf("gridSpan (col_span) missing: %s", slideXML)
+	}
+	// Must have rowSpan for row_span
+	if !strings.Contains(slideXML, `rowSpan="2"`) {
+		t.Fatalf("rowSpan missing: %s", slideXML)
+	}
+	// Must have hMerge for continuation cells (row_span=-1)
+	if !strings.Contains(slideXML, `hMerge="1"`) {
+		t.Fatalf("hMerge missing: %s", slideXML)
+	}
+}
+
+func TestSVGImageEmbed(t *testing.T) {
+	// Create a minimal SVG file
+	svgPath := filepath.Join(t.TempDir(), "test.svg")
+	svgContent := `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="blue"/></svg>`
+	if err := os.WriteFile(svgPath, []byte(svgContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "svg-1", Type: model.ElementImage, Rect: model.Rect{X: 10, Y: 10, W: 40, H: 40},
+		ImagePath: svgPath, ImageAlt: "SVG test",
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	// SVG file must be embedded in media
+	mediaKey := ""
+	for k := range parts {
+		if strings.Contains(k, "ppt/media/") && strings.HasSuffix(k, ".svg") {
+			mediaKey = k
+			break
+		}
+	}
+	if mediaKey == "" {
+		t.Fatal("SVG media file not embedded")
+	}
+	// Content types must include svg+xml
+	if !strings.Contains(parts["[Content_Types].xml"], `image/svg+xml`) {
+		t.Fatalf("SVG content type missing: %s", parts["[Content_Types].xml"])
+	}
+	// Slide XML must have svgBlip extension
+	slideXML := parts["ppt/slides/slide1.xml"]
+	if !strings.Contains(slideXML, `svgBlip`) {
+		t.Fatalf("svgBlip extension missing: %s", slideXML)
+	}
+}
+
+func TestVideoEmbed(t *testing.T) {
+	// Create a minimal MP4 file (just some bytes)
+	videoPath := filepath.Join(t.TempDir(), "test.mp4")
+	if err := os.WriteFile(videoPath, []byte("fake mp4 data"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "video-1", Type: model.ElementVideo, Rect: model.Rect{X: 10, Y: 10, W: 60, H: 50},
+		Media: &model.MediaData{
+			MediaPath: videoPath,
+			MediaType: "video",
+			MimeType:  "video/mp4",
+		},
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	// Video file must be embedded
+	mediaKey := ""
+	for k := range parts {
+		if strings.Contains(k, "ppt/media/") && strings.HasSuffix(k, ".mp4") {
+			mediaKey = k
+			break
+		}
+	}
+	if mediaKey == "" {
+		t.Fatal("video media file not embedded")
+	}
+	// Content types must include video/mp4
+	if !strings.Contains(parts["[Content_Types].xml"], `video/mp4`) {
+		t.Fatalf("video content type missing: %s", parts["[Content_Types].xml"])
+	}
+	// Slide XML must have video reference
+	slideXML := parts["ppt/slides/slide1.xml"]
+	if !strings.Contains(slideXML, `p14:media`) {
+		t.Fatalf("video p14:media extension missing: %s", slideXML)
+	}
+	// Slide rels must have video relationship type
+	relsXML := parts["ppt/slides/_rels/slide1.xml.rels"]
+	if !strings.Contains(relsXML, `relationships/video`) {
+		t.Fatalf("video relationship missing: %s", relsXML)
+	}
+}
+
+func TestAudioEmbed(t *testing.T) {
+	// Create a minimal MP3 file (just some bytes)
+	audioPath := filepath.Join(t.TempDir(), "test.mp3")
+	if err := os.WriteFile(audioPath, []byte("fake mp3 data"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "audio-1", Type: model.ElementAudio, Rect: model.Rect{X: 10, Y: 10, W: 30, H: 10},
+		Media: &model.MediaData{
+			MediaPath: audioPath,
+			MediaType: "audio",
+			MimeType:  "audio/mpeg",
+		},
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	// Audio file must be embedded
+	mediaKey := ""
+	for k := range parts {
+		if strings.Contains(k, "ppt/media/") && strings.HasSuffix(k, ".mp3") {
+			mediaKey = k
+			break
+		}
+	}
+	if mediaKey == "" {
+		t.Fatal("audio media file not embedded")
+	}
+	// Content types must include audio/mpeg
+	if !strings.Contains(parts["[Content_Types].xml"], `audio/mpeg`) {
+		t.Fatalf("audio content type missing: %s", parts["[Content_Types].xml"])
+	}
+	// Slide XML must have audio reference
+	slideXML := parts["ppt/slides/slide1.xml"]
+	if !strings.Contains(slideXML, `p14:media`) {
+		t.Fatalf("audio p14:media extension missing: %s", slideXML)
+	}
+	// Slide rels must have audio relationship type
+	relsXML := parts["ppt/slides/_rels/slide1.xml.rels"]
+	if !strings.Contains(relsXML, `relationships/audio`) {
+		t.Fatalf("audio relationship missing: %s", relsXML)
+	}
+}
+
 func TestColumnChartWithErrorBars(t *testing.T) {
 	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
 		ID: "chart-err", Type: model.ElementChart, Rect: model.Rect{X: 10, Y: 10, W: 70, H: 60},

@@ -121,6 +121,9 @@ type Element struct {
 	// Chart data.
 	Chart *ChartData `json:"chart,omitempty"`
 
+	// Media data (video / audio).
+	Media *MediaData `json:"media,omitempty"`
+
 	// Connector data.
 	Connector *ConnectorData `json:"connector,omitempty"`
 

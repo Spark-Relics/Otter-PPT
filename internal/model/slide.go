@@ -15,6 +15,8 @@ const (
 	ElementConnector ElementType = "connector"
 	ElementIcon     ElementType = "icon"
 	ElementGroup    ElementType = "group"
+	ElementVideo    ElementType = "video"
+	ElementAudio    ElementType = "audio"
 )
 
 // ShapeType enumerates supported auto shapes.

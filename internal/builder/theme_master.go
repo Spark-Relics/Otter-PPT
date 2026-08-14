@@ -234,7 +234,18 @@ func (b *Builder) writeSlideRels(zw *zip.Writer, slideNum int, slide *model.Slid
 
 	for _, elem := range slide.Elements {
 		if asset := b.mediaByElement[elem]; asset != nil {
-			fmt.Fprintf(&mediaRels, `<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/%s"/>`, asset.relID, asset.fileName)
+			// Determine relationship type based on element type
+			relType := "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+			if elem.Type == model.ElementVideo {
+				relType = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/video"
+			} else if elem.Type == model.ElementAudio {
+				relType = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/audio"
+			}
+			fmt.Fprintf(&mediaRels, `<Relationship Id="%s" Type="%s" Target="../media/%s"/>`, asset.relID, relType, asset.fileName)
+		}
+		// Poster image for video/audio
+		if posterAsset := b.posterByElement[elem]; posterAsset != nil {
+			fmt.Fprintf(&mediaRels, `<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/%s"/>`, posterAsset.relID, posterAsset.fileName)
 		}
 		if asset := b.chartByElement[elem]; asset != nil {
 			fmt.Fprintf(&mediaRels, `<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../charts/chart%d.xml"/>`, asset.relID, asset.index)

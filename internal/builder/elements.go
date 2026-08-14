@@ -25,6 +25,10 @@ func (b *Builder) writeElement(buf *strings.Builder, elem *model.Element) {
 		b.writeChart(buf, elem)
 	case model.ElementConnector:
 		b.writeConnector(buf, elem)
+	case model.ElementVideo:
+		b.writeVideo(buf, elem)
+	case model.ElementAudio:
+		b.writeAudio(buf, elem)
 	case model.ElementGroup:
 		// Groups are logical; children are rendered independently
 	default:
@@ -134,7 +138,15 @@ func (b *Builder) writeImage(buf *strings.Builder, elem *model.Element) {
 			crop = fmt.Sprintf(`<a:srcRect l="%d" t="%d" r="%d" b="%d"/>`, int(elem.ImageCrop.Left*1000), int(elem.ImageCrop.Top*1000), int(elem.ImageCrop.Right*1000), int(elem.ImageCrop.Bottom*1000))
 		}
 		fmt.Fprintf(buf, `<p:pic><p:nvPicPr><p:cNvPr id="%d" name="%s" descr="%s"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr>`, ooxmlObjectID(elem.ID), xmlEscape(elem.ID), xmlEscape(elem.ImageAlt))
-		fmt.Fprintf(buf, `<p:blipFill><a:blip r:embed="%s"/>%s<a:stretch><a:fillRect/></a:stretch></p:blipFill>`, asset.relID, crop)
+		// SVG images get an extension block for svgBlip
+		isSVG := asset.ext == "svg"
+		blipInner := fmt.Sprintf(` r:embed="%s"`, asset.relID)
+		if isSVG {
+			// SVG requires a rasterized fallback; we use the same SVG reference with the asvg extension.
+			// Modern PowerPoint renders this correctly.
+			blipInner = fmt.Sprintf(` r:embed="%s"><a:extLst><a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}"><asvg:svgBlip xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main" r:embed="%s"/></a:ext></a:extLst>`, asset.relID, asset.relID)
+		}
+		fmt.Fprintf(buf, `<p:blipFill><a:blip%s</a:blip>%s<a:stretch><a:fillRect/></a:stretch></p:blipFill>`, blipInner, crop)
 		// Use rounded rectangle geometry if ImageRadius > 0
 		geometry := presetGeometryXML("rect", "")
 		if elem.ImageRadius > 0 {
@@ -248,13 +260,21 @@ func (b *Builder) writeTable(buf *strings.Builder, elem *model.Element) {
 		}
 		hr, hg, hb := hexToRGB(hdrColor)
 		for _, cell := range td.Headers {
+			gridSpan := ""
+			if cell.ColSpan > 1 {
+				gridSpan = fmt.Sprintf(` gridSpan="%d"`, cell.ColSpan)
+			}
+			rowSpan := ""
+			if cell.RowSpan > 1 {
+				rowSpan = fmt.Sprintf(` rowSpan="%d"`, cell.RowSpan)
+			}
 			fmt.Fprintf(buf,
-				`<a:tc><a:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>`+
+				`<a:tc%s%s><a:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>`+
 					`<a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-CN" sz="%d" b="1">`+
 					`<a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:rPr>`+
 					`<a:t>%s</a:t></a:r></a:p></a:txBody>`+
 					`<a:tcPr><a:solidFill><a:srgbClr val="%02X%02X%02X"/></a:solidFill></a:tcPr></a:tc>`,
-				fontSize*100, xmlEscape(cell.Text), hr, hg, hb)
+				gridSpan, rowSpan, fontSize*100, xmlEscape(cell.Text), hr, hg, hb)
 		}
 		buf.WriteString(`</a:tr>`)
 	}
@@ -290,13 +310,28 @@ func (b *Builder) writeTable(buf *strings.Builder, elem *model.Element) {
 				cellFontSize = cell.Style.FontSize
 			}
 
+			// Cell merge attributes
+			gridSpan := ""
+			if cell.ColSpan > 1 {
+				gridSpan = fmt.Sprintf(` gridSpan="%d"`, cell.ColSpan)
+			}
+			rowSpan := ""
+			if cell.RowSpan > 1 {
+				rowSpan = fmt.Sprintf(` rowSpan="%d"`, cell.RowSpan)
+			}
+			// hMerge: this cell is a continuation of a vertically merged cell above
+			hMerge := ""
+			if cell.RowSpan < 0 {
+				hMerge = ` hMerge="1"`
+			}
+
 			fmt.Fprintf(buf,
-				`<a:tc><a:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>`+
+				`<a:tc%s%s%s><a:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>`+
 					`<a:p><a:pPr algn="%s"/><a:r><a:rPr lang="zh-CN" sz="%d"%s>`+
 					`<a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:rPr>`+
 					`<a:t>%s</a:t></a:r></a:p></a:txBody>`+
 					`<a:tcPr>%s</a:tcPr></a:tc>`,
-				cellAlign, cellFontSize*100, boldAttr, textColor, xmlEscape(cell.Text), bgXML)
+				gridSpan, rowSpan, hMerge, cellAlign, cellFontSize*100, boldAttr, textColor, xmlEscape(cell.Text), bgXML)
 		}
 		buf.WriteString(`</a:tr>`)
 	}
@@ -545,4 +580,87 @@ func shapeToPrst(st model.ShapeType) string {
 	default:
 		return "rect"
 	}
+}
+
+// writeVideo writes a video element as a p:pic with embedded media.
+func (b *Builder) writeVideo(buf *strings.Builder, elem *model.Element) {
+	if elem.Media == nil {
+		return
+	}
+	transform := b.transform(elem)
+	objID := ooxmlObjectID(elem.ID)
+
+	// Get the video asset and optional poster image asset
+	videoAsset := b.mediaByElement[elem]
+	if videoAsset == nil {
+		// Fallback: render as placeholder text
+		b.writeTextBox(buf, elem)
+		return
+	}
+
+	// Determine poster image embed (if provided)
+	posterEmbed := ""
+	if posterAsset := b.posterByElement[elem]; posterAsset != nil {
+		posterEmbed = posterAsset.relID
+	} else {
+		// Use the video's own relationship for the blip fallback
+		posterEmbed = videoAsset.relID
+	}
+
+	// Build the pic element with video extension
+	fmt.Fprintf(buf,
+		`<p:pic><p:nvPicPr><p:cNvPr id="%d" name="%s"><a:hlinkClick r:id="" action="ppaction://media"/></p:cNvPr>`,
+		objID, xmlEscape(elem.ID))
+	fmt.Fprintf(buf,
+		`<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>`)
+	fmt.Fprintf(buf,
+		`<p:nvPr><a:videoFile r:link=""/><p:extLst><p:ext uri="{DAA4B4D4-6D71-4841-9C94-3DE7FCFB9230}"><p14:media xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" r:embed="%s"/></p:ext></p:extLst></p:nvPr></p:nvPicPr>`,
+		videoAsset.relID)
+
+	// blipFill with poster image
+	fmt.Fprintf(buf,
+		`<p:blipFill><a:blip r:embed="%s"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>`,
+		posterEmbed)
+
+	// Shape properties
+	geometry := presetGeometryXML("rect", "")
+	buf.WriteString(`<p:spPr>` + transform.xml() + geometry + `</p:spPr>`)
+
+	buf.WriteString(`</p:pic>`)
+}
+
+// writeAudio writes an audio element as a small icon-style p:pic with embedded media.
+func (b *Builder) writeAudio(buf *strings.Builder, elem *model.Element) {
+	if elem.Media == nil {
+		return
+	}
+	transform := b.transform(elem)
+	objID := ooxmlObjectID(elem.ID)
+
+	audioAsset := b.mediaByElement[elem]
+	if audioAsset == nil {
+		b.writeTextBox(buf, elem)
+		return
+	}
+
+	posterEmbed := audioAsset.relID
+
+	// Build the pic element with audio extension
+	fmt.Fprintf(buf,
+		`<p:pic><p:nvPicPr><p:cNvPr id="%d" name="%s"><a:hlinkClick r:id="" action="ppaction://media"/></p:cNvPr>`,
+		objID, xmlEscape(elem.ID))
+	fmt.Fprintf(buf,
+		`<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>`)
+	fmt.Fprintf(buf,
+		`<p:nvPr><a:audioFile r:link=""/><p:extLst><p:ext uri="{DAA4B4D4-6D71-4841-9C94-3DE7FCFB9230}"><p14:media xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" r:embed="%s"/></p:ext></p:extLst></p:nvPr></p:nvPicPr>`,
+		audioAsset.relID)
+
+	fmt.Fprintf(buf,
+		`<p:blipFill><a:blip r:embed="%s"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>`,
+		posterEmbed)
+
+	geometry := presetGeometryXML("rect", "")
+	buf.WriteString(`<p:spPr>` + transform.xml() + geometry + `</p:spPr>`)
+
+	buf.WriteString(`</p:pic>`)
 }
