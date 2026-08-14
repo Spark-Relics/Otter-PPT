@@ -8,6 +8,10 @@
 
 English | [中文](./README_CN.md)
 
+[![CI](https://github.com/Spark-Relics/Otter-PPT/actions/workflows/ci.yml/badge.svg)](https://github.com/Spark-Relics/Otter-PPT/actions/workflows/ci.yml)
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 </div>
 
 ---
@@ -78,6 +82,18 @@ Configure in any MCP-compatible client:
 AI invocation is not mandatory: you can configure text/image models for Otter PPT to orchestrate, or have external models generate Presentation JSON or tool calls, then hand them to Otter PPT via `/api/v1/build` or `/api/v1/execute`. Other programs can also use `otter-ppt stdio` (JSON-RPC 2.0), or auto-generate clients via [`openapi.yaml`](./openapi.yaml). The Python client is located at [`sdk/python`](./sdk/python). The service runs as a local Go binary.
 
 Full configuration and protocol details: [`INTEGRATION.md`](./INTEGRATION.md).
+
+### 📚 Platform Tutorials
+
+| Platform | Tutorial |
+|----------|----------|
+| CLI (gen / serve / mcp) | [CLI Tutorial](./docs/tutorial-cli.md) |
+| Claude Code (MCP) | [Claude Code Tutorial](./docs/tutorial-claude-code.md) |
+| Cursor (MCP) | [Cursor Tutorial](./docs/tutorial-cursor.md) |
+| Codex / STDIO JSON-RPC | [Codex / STDIO Tutorial](./docs/tutorial-codex.md) |
+| Python SDK | [Python SDK Tutorial](./docs/tutorial-python-sdk.md) |
+| REST API (curl / OpenAPI) | [REST API Tutorial](./docs/tutorial-rest-api.md) |
+| Docker Deployment | [Docker Tutorial](./docs/tutorial-docker.md) |
 
 ## 🚀 Quick Start
 

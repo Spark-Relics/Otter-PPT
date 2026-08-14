@@ -8,6 +8,10 @@
 
 [English](./README.md) | [中文](./README_CN.md)
 
+[![CI](https://github.com/Spark-Relics/Otter-PPT/actions/workflows/ci.yml/badge.svg)](https://github.com/Spark-Relics/Otter-PPT/actions/workflows/ci.yml)
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 </div>
 
 ---
@@ -122,6 +126,18 @@ MCP 客户端配置示例：
 ```
 
 不支持 MCP 时可运行 `./bin/otter-ppt stdio`，或使用 [`openapi.yaml`](./openapi.yaml) 和 [`sdk/python`](./sdk/python)。完整说明见 [`INTEGRATION.md`](./INTEGRATION.md)。
+
+### 📚 各平台使用教程
+
+| 平台 / 工具 | 教程链接 |
+|-------------|----------|
+| 命令行（gen / serve / mcp） | [CLI 教程](./docs/tutorial-cli.md) |
+| Claude Code（MCP） | [Claude Code 教程](./docs/tutorial-claude-code.md) |
+| Cursor（MCP） | [Cursor 教程](./docs/tutorial-cursor.md) |
+| Codex / STDIO JSON-RPC | [Codex / STDIO 教程](./docs/tutorial-codex.md) |
+| Python SDK | [Python SDK 教程](./docs/tutorial-python-sdk.md) |
+| REST API（curl / OpenAPI） | [REST API 教程](./docs/tutorial-rest-api.md) |
+| Docker 部署 | [Docker 教程](./docs/tutorial-docker.md) |
 
 ---
 

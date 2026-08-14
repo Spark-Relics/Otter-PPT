@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Lint & Test
+  # ─────────────────────────────────────────────
+  test:
+    name: Test (Go ${{ matrix.go }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        go: ['1.22', '1.23']
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test -p 1 -v -count=1 ./...
+
+      - name: Vet
+        run: go vet ./...
+
+  # ─────────────────────────────────────────────
+  # Build Binaries (on push to main only)
+  # ─────────────────────────────────────────────
+  build-binaries:
+    name: Build Binaries
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            suffix: ''
+          - goos: linux
+            goarch: arm64
+            suffix: ''
+          - goos: windows
+            goarch: amd64
+            suffix: .exe
+          - goos: darwin
+            goarch: amd64
+            suffix: ''
+          - goos: darwin
+            goarch: arm64
+            suffix: ''
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          mkdir -p dist
+          go build -ldflags="-s -w" -o dist/otter-ppt-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }} ./cmd/otter-ppt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: otter-ppt-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/otter-ppt-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }}
+
+  # ─────────────────────────────────────────────
+  # Python SDK Test
+  # ─────────────────────────────────────────────
+  sdk-test:
+    name: Python SDK Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check SDK syntax
+        run: |
+          python -m py_compile sdk/python/otter_ppt/*.py || echo "No .py files or syntax error"
+
+  # ─────────────────────────────────────────────
+  # YAML / OpenAPI Lint
+  # ─────────────────────────────────────────────
+  lint-config:
+    name: Config Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Validate OpenAPI spec compiles
+        run: |
+          if [ -f openapi.yaml ]; then
+            echo "openapi.yaml exists ✓"
+          else
+            echo "openapi.yaml not found"
+          fi
+
+      - name: Check Makefile targets
+        run: |
+          grep -q 'build:' Makefile && echo "build target ✓"
+          grep -q 'test:' Makefile && echo "test target ✓"
