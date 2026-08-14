@@ -540,6 +540,11 @@ func mapToChart(args map[string]any) *model.ChartData {
 						cs.Values = append(cs.Values, toFloat(v))
 					}
 				}
+				if xvals, ok := m["x_values"].([]any); ok {
+					for _, v := range xvals {
+						cs.XValues = append(cs.XValues, toFloat(v))
+					}
+				}
 				cd.Series = append(cd.Series, cs)
 			}
 		}

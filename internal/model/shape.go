@@ -89,6 +89,7 @@ func (s *ShapeData) UnmarshalJSON(data []byte) error {
 type ChartSeries struct {
 	Name   string    `json:"name"`
 	Values []float64 `json:"values"`
+	XValues []float64 `json:"x_values,omitempty"` // scatter chart X values
 	Color  string    `json:"color,omitempty"` // hex
 }
 

@@ -95,6 +95,60 @@ func TestNativeChartCreatesEditableChartPart(t *testing.T) {
 	}
 }
 
+func TestScatterChartCreatesScatterChartPart(t *testing.T) {
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "chart-scatter", Type: model.ElementChart, Rect: model.Rect{X: 10, Y: 10, W: 70, H: 60},
+		Chart: &model.ChartData{ChartType: model.ChartScatter, Title: "Correlation", ShowLegend: true,
+			Series: []model.ChartSeries{
+				{Name: "Series A", XValues: []float64{1, 2, 3, 4}, Values: []float64{2, 4, 5, 4}, Color: "#4472C4"},
+				{Name: "Series B", XValues: []float64{1, 2, 3}, Values: []float64{3, 5, 7}, Color: "#ED7D31"},
+			}},
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	chartXML := parts["ppt/charts/chart1.xml"]
+	// Must use scatterChart element
+	if !strings.Contains(chartXML, `<c:scatterChart>`) {
+		t.Fatalf("scatter chart element missing: %s", chartXML)
+	}
+	// Must have scatterStyle
+	if !strings.Contains(chartXML, `<c:scatterStyle val="lineMarker"/>`) {
+		t.Fatalf("scatterStyle missing: %s", chartXML)
+	}
+	// Must have xVal/yVal with numeric data
+	if !strings.Contains(chartXML, `<c:xVal>`) || !strings.Contains(chartXML, `<c:yVal>`) {
+		t.Fatalf("xVal/yVal missing in scatter series: %s", chartXML)
+	}
+	// Must have two valAx (no catAx)
+	if strings.Contains(chartXML, `<c:catAx>`) {
+		t.Fatalf("scatter chart should not have catAx: %s", chartXML)
+	}
+	if strings.Count(chartXML, `<c:valAx>`) != 2 {
+		t.Fatalf("scatter chart should have 2 valAx, got %d", strings.Count(chartXML, `<c:valAx>`))
+	}
+	// Must have markers
+	if !strings.Contains(chartXML, `<c:marker>`) {
+		t.Fatalf("marker missing in scatter series: %s", chartXML)
+	}
+	// Verify data values are present
+	if !strings.Contains(chartXML, `<c:v>4</c:v>`) {
+		t.Fatalf("scatter y-value missing: %s", chartXML)
+	}
+}
+
 func TestGeneratedPartsAreWellFormedXML(t *testing.T) {
 	pres := &model.Presentation{
 		Title: "OOXML validation",
