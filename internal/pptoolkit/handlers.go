@@ -550,6 +550,23 @@ func mapToChart(args map[string]any) *model.ChartData {
 						cs.XValues = append(cs.XValues, toFloat(v))
 					}
 				}
+				if eb, ok := m["error_bars"].(map[string]any); ok {
+					cs.ErrorBars = &model.ErrorBarStyle{
+						Direction: strOr(eb, "direction", "y"),
+						Type:      strOr(eb, "type", "fixedVal"),
+						Value:     toFloat(eb["value"]),
+					}
+					if pv, ok := eb["plus_values"].([]any); ok {
+						for _, v := range pv {
+							cs.ErrorBars.PlusValues = append(cs.ErrorBars.PlusValues, toFloat(v))
+						}
+					}
+					if mv, ok := eb["minus_values"].([]any); ok {
+						for _, v := range mv {
+							cs.ErrorBars.MinusValues = append(cs.ErrorBars.MinusValues, toFloat(v))
+						}
+					}
+				}
 				cd.Series = append(cd.Series, cs)
 			}
 		}

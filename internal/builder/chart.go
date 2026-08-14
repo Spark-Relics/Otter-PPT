@@ -158,6 +158,30 @@ func trendlineXML(trendlineType string) string {
 	return fmt.Sprintf(`<c:trendline><c:trendlineType val="%s"/><c:dispEq val="0"/><c:dispRSqr val="0"/></c:trendline>`, trendVal)
 }
 
+// errorBarsXML builds a c:errBars element.
+func errorBarsXML(eb *model.ErrorBarStyle) string {
+	if eb == nil {
+		return ""
+	}
+	dir := eb.Direction
+	if dir == "" {
+		dir = "y"
+	}
+	ebType := eb.Type
+	if ebType == "" {
+		ebType = "fixedVal"
+	}
+	var inner string
+	if ebType == "custom" {
+		plusXML := numCacheOnlyXML(eb.PlusValues)
+		minusXML := numCacheOnlyXML(eb.MinusValues)
+		inner = fmt.Sprintf(`<c:errValType val="custom"/><c:noEndCap val="0"/><c:plus>%s</c:plus><c:minus>%s</c:minus>`, plusXML, minusXML)
+	} else {
+		inner = fmt.Sprintf(`<c:errValType val="%s"/><c:noEndCap val="0"/><c:val><c:numLit><c:formatCode>General</c:formatCode><c:pt idx="0"><c:v>%s</c:v></c:pt></c:numLit></c:val>`, ebType, fmtFloat(eb.Value))
+	}
+	return fmt.Sprintf(`<c:errBars><c:errDir val="%s"/><c:errBarType val="both"/>%s</c:errBars>`, dir, inner)
+}
+
 // categoryCacheXML generates c:cat with c:strRef wrapping c:strCache.
 func categoryCacheXML(categories []string) string {
 	var pts strings.Builder
@@ -206,10 +230,12 @@ func chartSeriesXML(chart *model.ChartData, series model.ChartSeries, index int)
 	if series.Trendline != "" {
 		trendline = trendlineXML(series.Trendline)
 	}
+	// Per-series error bars
+	errBars := errorBarsXML(series.ErrorBars)
 	catXML := categoryCacheXML(chart.Categories)
 	valXML := valueCacheXML(series.Values)
-	return fmt.Sprintf(`<c:ser><c:idx val="%d"/><c:order val="%d"/><c:tx><c:v>%s</c:v></c:tx><c:spPr><a:solidFill><a:srgbClr val="%s"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:ln></c:spPr>%s%s%s%s%s%s</c:ser>`,
-		index, index, xmlEscape(series.Name), color, color, marker, smooth, trendline, dLbls, catXML, valXML)
+	return fmt.Sprintf(`<c:ser><c:idx val="%d"/><c:order val="%d"/><c:tx><c:v>%s</c:v></c:tx><c:spPr><a:solidFill><a:srgbClr val="%s"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:ln></c:spPr>%s%s%s%s%s%s%s</c:ser>`,
+		index, index, xmlEscape(series.Name), color, color, marker, smooth, trendline, errBars, dLbls, catXML, valXML)
 }
 
 // scatterSeriesXML builds a c:ser element for scatter charts using c:xVal/c:yVal.
@@ -245,8 +271,11 @@ func scatterSeriesXML(chart *model.ChartData, series model.ChartSeries, index in
 		trendline = trendlineXML(series.Trendline)
 	}
 
-	return fmt.Sprintf(`<c:ser><c:idx val="%d"/><c:order val="%d"/><c:tx><c:v>%s</c:v></c:tx><c:spPr><a:ln><a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:ln></c:spPr>%s%s%s%s<c:xVal>%s</c:xVal><c:yVal>%s</c:yVal></c:ser>`,
-		index, index, xmlEscape(series.Name), color, marker, smooth, trendline, dLbls, xValXML, yValXML)
+	// Per-series error bars
+	errBars := errorBarsXML(series.ErrorBars)
+
+	return fmt.Sprintf(`<c:ser><c:idx val="%d"/><c:order val="%d"/><c:tx><c:v>%s</c:v></c:tx><c:spPr><a:ln><a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:ln></c:spPr>%s%s%s%s%s<c:xVal>%s</c:xVal><c:yVal>%s</c:yVal></c:ser>`,
+		index, index, xmlEscape(series.Name), color, marker, smooth, trendline, errBars, dLbls, xValXML, yValXML)
 }
 
 // comboPlotXML renders a combo chart with bar+line sub-charts and optional secondary axis.
@@ -342,11 +371,14 @@ func comboSeriesXML(chart *model.ChartData, series model.ChartSeries, index int,
 		trendline = trendlineXML(series.Trendline)
 	}
 
+	// Per-series error bars
+	errBars := errorBarsXML(series.ErrorBars)
+
 	catXML := categoryCacheXML(chart.Categories)
 	valXML := valueCacheXML(series.Values)
 
 	spPr := fmt.Sprintf(`<c:spPr>%s<a:ln><a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:ln></c:spPr>`, solidFill, color)
 
-	return fmt.Sprintf(`<c:ser><c:idx val="%d"/><c:order val="%d"/><c:tx><c:v>%s</c:v></c:tx>%s%s%s%s%s%s</c:ser>`,
-		index, index, xmlEscape(series.Name), spPr, marker, smooth, trendline, catXML, valXML)
+	return fmt.Sprintf(`<c:ser><c:idx val="%d"/><c:order val="%d"/><c:tx><c:v>%s</c:v></c:tx>%s%s%s%s%s%s%s</c:ser>`,
+		index, index, xmlEscape(series.Name), spPr, marker, smooth, trendline, errBars, catXML, valXML)
 }

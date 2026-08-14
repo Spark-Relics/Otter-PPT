@@ -240,6 +240,46 @@ func TestLineChartSmoothAndTrendline(t *testing.T) {
 	}
 }
 
+func TestColumnChartWithErrorBars(t *testing.T) {
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "chart-err", Type: model.ElementChart, Rect: model.Rect{X: 10, Y: 10, W: 70, H: 60},
+		Chart: &model.ChartData{ChartType: model.ChartColumn, Categories: []string{"A", "B", "C"}, Title: "Measurements",
+			Series: []model.ChartSeries{
+				{Name: "Data", Values: []float64{10, 20, 30}, Color: "#4472C4",
+					ErrorBars: &model.ErrorBarStyle{Direction: "y", Type: "fixedVal", Value: 1.5}},
+			}},
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	chartXML := parts["ppt/charts/chart1.xml"]
+	// Must have error bars
+	if !strings.Contains(chartXML, `<c:errBars>`) {
+		t.Fatalf("error bars element missing: %s", chartXML)
+	}
+	if !strings.Contains(chartXML, `<c:errDir val="y"/>`) {
+		t.Fatalf("error direction missing: %s", chartXML)
+	}
+	if !strings.Contains(chartXML, `<c:errValType val="fixedVal"/>`) {
+		t.Fatalf("error value type missing: %s", chartXML)
+	}
+	if !strings.Contains(chartXML, `<c:v>1.5</c:v>`) {
+		t.Fatalf("error value missing: %s", chartXML)
+	}
+}
+
 func TestGeneratedPartsAreWellFormedXML(t *testing.T) {
 	pres := &model.Presentation{
 		Title: "OOXML validation",

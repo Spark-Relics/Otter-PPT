@@ -85,16 +85,26 @@ func (s *ShapeData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ErrorBarStyle defines error bars for a chart series.
+type ErrorBarStyle struct {
+	Direction   string    `json:"direction,omitempty"`    // "x" or "y" (default "y")
+	Type        string    `json:"type,omitempty"`         // fixedVal, percentage, stdDev, stdErr, custom
+	Value       float64   `json:"value,omitempty"`        // used for fixedVal/percentage/stdDev
+	PlusValues  []float64 `json:"plus_values,omitempty"`  // custom: positive error amounts
+	MinusValues []float64 `json:"minus_values,omitempty"` // custom: negative error amounts
+}
+
 // ChartSeries is one data series in a chart.
 type ChartSeries struct {
-	Name          string    `json:"name"`
-	Values        []float64 `json:"values"`
-	XValues       []float64 `json:"x_values,omitempty"`          // scatter chart X values
-	Color         string    `json:"color,omitempty"`             // hex
-	ChartType     ChartType `json:"chart_type,omitempty"`        // combo: per-series type (bar/line)
-	SecondaryAxis bool      `json:"secondary_axis,omitempty"`    // use secondary Y axis (combo)
-	Smooth        bool      `json:"smooth,omitempty"`            // smooth line for this series
-	Trendline     string    `json:"trendline,omitempty"`         // linear, exponential, polynomial, movingAvg
+	Name          string         `json:"name"`
+	Values        []float64      `json:"values"`
+	XValues       []float64      `json:"x_values,omitempty"`       // scatter chart X values
+	Color         string         `json:"color,omitempty"`          // hex
+	ChartType     ChartType      `json:"chart_type,omitempty"`     // combo: per-series type (bar/line)
+	SecondaryAxis bool           `json:"secondary_axis,omitempty"` // use secondary Y axis (combo)
+	Smooth        bool           `json:"smooth,omitempty"`         // smooth line for this series
+	Trendline     string         `json:"trendline,omitempty"`      // linear, exponential, polynomial, movingAvg
+	ErrorBars     *ErrorBarStyle `json:"error_bars,omitempty"`     // error bars for this series
 }
 
 // ChartData holds chart-specific properties.
