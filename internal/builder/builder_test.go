@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -702,6 +703,134 @@ func TestGeneratedPartsAreWellFormedXML(t *testing.T) {
 			if !strings.Contains(xmlText, `<a:xfrm rot="900000">`) {
 				t.Errorf("shape rotation must be encoded on a:xfrm: %s", xmlText)
 			}
+		}
+	}
+}
+
+func TestMultiLayoutPlaceholders(t *testing.T) {
+	pres := &model.Presentation{Slides: []*model.Slide{
+		{ID: "s1", Layout: model.LayoutTitle, Elements: []*model.Element{
+			{ID: "t1", Type: model.ElementTitle, Text: "Title", Rect: model.Rect{X: 10, Y: 10, W: 80, H: 20}},
+		}},
+		{ID: "s2", Layout: model.LayoutTitleContent, Elements: []*model.Element{
+			{ID: "t2", Type: model.ElementTitle, Text: "Title", Rect: model.Rect{X: 10, Y: 10, W: 80, H: 20}},
+			{ID: "b2", Type: model.ElementBody, Text: "Body", Rect: model.Rect{X: 10, Y: 35, W: 80, H: 50}},
+		}},
+		{ID: "s3", Layout: model.LayoutTwoColumn, Elements: []*model.Element{}},
+		{ID: "s4", Layout: model.LayoutSection, Elements: []*model.Element{}},
+		{ID: "s5", Layout: model.LayoutImageLeft, Elements: []*model.Element{}},
+	}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+
+	// All 5 layout files must exist
+	for i := 1; i <= 5; i++ {
+		key := fmt.Sprintf("ppt/slideLayouts/slideLayout%d.xml", i)
+		if _, ok := parts[key]; !ok {
+			t.Fatalf("layout file %s missing", key)
+		}
+	}
+
+	// Content types must include all 5 layout overrides
+	ctXML := parts["[Content_Types].xml"]
+	for i := 1; i <= 5; i++ {
+		expected := fmt.Sprintf(`PartName="/ppt/slideLayouts/slideLayout%d.xml"`, i)
+		if !strings.Contains(ctXML, expected) {
+			t.Fatalf("content type missing layout %d override", i)
+		}
+	}
+
+	// Master must reference all 5 layouts
+	masterXML := parts["ppt/slideMasters/slideMaster1.xml"]
+	for i := 1; i <= 5; i++ {
+		expected := fmt.Sprintf(`Target="../slideLayouts/slideLayout%d.xml"`, i)
+		if !strings.Contains(masterXML, expected) {
+			// Check master rels instead
+			masterRels := parts["ppt/slideMasters/_rels/slideMaster1.xml.rels"]
+			if !strings.Contains(masterRels, expected) {
+				t.Fatalf("master rels missing layout %d", i)
+			}
+		}
+	}
+
+	// Layout 1 (title) must have ctrTitle placeholder
+	layout1 := parts["ppt/slideLayouts/slideLayout1.xml"]
+	if !strings.Contains(layout1, `type="ctrTitle"`) {
+		t.Fatalf("layout 1 (title) missing ctrTitle placeholder: %s", layout1)
+	}
+	if !strings.Contains(layout1, `type="subTitle"`) {
+		t.Fatalf("layout 1 (title) missing subTitle placeholder: %s", layout1)
+	}
+
+	// Layout 2 (titleContent) must have title + body placeholders
+	layout2 := parts["ppt/slideLayouts/slideLayout2.xml"]
+	if !strings.Contains(layout2, `type="title"`) {
+		t.Fatalf("layout 2 (titleContent) missing title placeholder")
+	}
+	if !strings.Contains(layout2, `type="body"`) {
+		t.Fatalf("layout 2 (titleContent) missing body placeholder")
+	}
+
+	// Layout 3 (twoColumn) must have title + two body placeholders
+	layout3 := parts["ppt/slideLayouts/slideLayout3.xml"]
+	if strings.Count(layout3, `type="body"`) != 2 {
+		t.Fatalf("layout 3 (twoColumn) should have 2 body placeholders, got %d", strings.Count(layout3, `type="body"`))
+	}
+
+	// Layout 4 (section) must have ctrTitle
+	layout4 := parts["ppt/slideLayouts/slideLayout4.xml"]
+	if !strings.Contains(layout4, `type="ctrTitle"`) {
+		t.Fatalf("layout 4 (section) missing ctrTitle placeholder")
+	}
+
+	// Layout 5 (blank) should have no placeholders
+	layout5 := parts["ppt/slideLayouts/slideLayout5.xml"]
+	if strings.Contains(layout5, `<p:ph `) {
+		t.Fatalf("layout 5 (blank) should have no placeholders")
+	}
+
+	// Slide rels must point to correct layout
+	// s1=LayoutTitle → layout1, s2=LayoutTitleContent → layout2, s3=LayoutTwoColumn → layout3, s4=LayoutSection → layout4, s5=LayoutImageLeft → layout3
+	slide1Rels := parts["ppt/slides/_rels/slide1.xml.rels"]
+	if !strings.Contains(slide1Rels, `slideLayout1.xml`) {
+		t.Fatalf("slide 1 should reference slideLayout1.xml")
+	}
+	slide2Rels := parts["ppt/slides/_rels/slide2.xml.rels"]
+	if !strings.Contains(slide2Rels, `slideLayout2.xml`) {
+		t.Fatalf("slide 2 should reference slideLayout2.xml")
+	}
+	slide3Rels := parts["ppt/slides/_rels/slide3.xml.rels"]
+	if !strings.Contains(slide3Rels, `slideLayout3.xml`) {
+		t.Fatalf("slide 3 should reference slideLayout3.xml")
+	}
+	slide4Rels := parts["ppt/slides/_rels/slide4.xml.rels"]
+	if !strings.Contains(slide4Rels, `slideLayout4.xml`) {
+		t.Fatalf("slide 4 should reference slideLayout4.xml")
+	}
+	slide5Rels := parts["ppt/slides/_rels/slide5.xml.rels"]
+	if !strings.Contains(slide5Rels, `slideLayout3.xml`) {
+		t.Fatalf("slide 5 (image_left) should reference slideLayout3.xml (twoColumn mapping)")
+	}
+
+	// All layout XML must be well-formed
+	for i := 1; i <= 5; i++ {
+		key := fmt.Sprintf("ppt/slideLayouts/slideLayout%d.xml", i)
+		var node any
+		if err := xml.Unmarshal([]byte(parts[key]), &node); err != nil {
+			t.Errorf("invalid XML in %s: %v", key, err)
 		}
 	}
 }
