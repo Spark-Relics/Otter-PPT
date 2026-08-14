@@ -48,6 +48,7 @@ const (
 	ChartArea      ChartType = "area"
 	ChartScatter   ChartType = "scatter"
 	ChartDoughnut  ChartType = "doughnut"
+	ChartCombo     ChartType = "combo" // mixed bar+line with optional secondary axis
 )
 
 // BackgroundType enumerates background fill types.

@@ -524,6 +524,7 @@ func mapToChart(args map[string]any) *model.ChartData {
 		Title:          strOr(args, "title", ""),
 		ShowLegend:     true,
 		ShowDataLabels: boolOr(args, "show_data_labels"),
+		Smooth:         boolOr(args, "smooth"),
 	}
 	if v, ok := args["show_legend"]; ok {
 		cd.ShowLegend = v.(bool)
@@ -532,8 +533,12 @@ func mapToChart(args map[string]any) *model.ChartData {
 		for _, s := range series {
 			if m, ok := s.(map[string]any); ok {
 				cs := model.ChartSeries{
-					Name:  strOr(m, "name", ""),
-					Color: strOr(m, "color", ""),
+					Name:          strOr(m, "name", ""),
+					Color:         strOr(m, "color", ""),
+					ChartType:     model.ChartType(strOr(m, "chart_type", "")),
+					SecondaryAxis: boolOr(m, "secondary_axis"),
+					Smooth:        boolOr(m, "smooth"),
+					Trendline:     strOr(m, "trendline", ""),
 				}
 				if vals, ok := m["values"].([]any); ok {
 					for _, v := range vals {

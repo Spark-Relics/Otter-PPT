@@ -87,10 +87,14 @@ func (s *ShapeData) UnmarshalJSON(data []byte) error {
 
 // ChartSeries is one data series in a chart.
 type ChartSeries struct {
-	Name   string    `json:"name"`
-	Values []float64 `json:"values"`
-	XValues []float64 `json:"x_values,omitempty"` // scatter chart X values
-	Color  string    `json:"color,omitempty"` // hex
+	Name          string    `json:"name"`
+	Values        []float64 `json:"values"`
+	XValues       []float64 `json:"x_values,omitempty"`          // scatter chart X values
+	Color         string    `json:"color,omitempty"`             // hex
+	ChartType     ChartType `json:"chart_type,omitempty"`        // combo: per-series type (bar/line)
+	SecondaryAxis bool      `json:"secondary_axis,omitempty"`    // use secondary Y axis (combo)
+	Smooth        bool      `json:"smooth,omitempty"`            // smooth line for this series
+	Trendline     string    `json:"trendline,omitempty"`         // linear, exponential, polynomial, movingAvg
 }
 
 // ChartData holds chart-specific properties.
@@ -101,6 +105,7 @@ type ChartData struct {
 	Title          string        `json:"title,omitempty"`
 	ShowLegend     bool          `json:"show_legend,omitempty"`
 	ShowDataLabels bool          `json:"show_data_labels,omitempty"`
+	Smooth         bool          `json:"smooth,omitempty"` // smooth lines for all series (line/scatter)
 }
 
 // ConnectorData defines a line/arrow connecting two points.

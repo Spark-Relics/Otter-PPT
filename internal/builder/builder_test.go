@@ -149,6 +149,97 @@ func TestScatterChartCreatesScatterChartPart(t *testing.T) {
 	}
 }
 
+func TestComboChartWithSecondaryAxis(t *testing.T) {
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "chart-combo", Type: model.ElementChart, Rect: model.Rect{X: 10, Y: 10, W: 70, H: 60},
+		Chart: &model.ChartData{ChartType: model.ChartCombo, Categories: []string{"Q1", "Q2", "Q3"}, Title: "Revenue vs Growth", ShowLegend: true,
+			Series: []model.ChartSeries{
+				{Name: "Revenue", Values: []float64{100, 150, 200}, Color: "#4472C4", ChartType: model.ChartColumn},
+				{Name: "Growth %", Values: []float64{10, 15, 25}, Color: "#ED7D31", ChartType: model.ChartLine, SecondaryAxis: true, Trendline: "linear"},
+			}},
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	chartXML := parts["ppt/charts/chart1.xml"]
+	// Must have both barChart and lineChart sub-elements
+	if !strings.Contains(chartXML, `<c:barChart>`) {
+		t.Fatalf("combo chart missing barChart: %s", chartXML)
+	}
+	if !strings.Contains(chartXML, `<c:lineChart>`) {
+		t.Fatalf("combo chart missing lineChart: %s", chartXML)
+	}
+	// Must have 3 axes: catAx + primary valAx + secondary valAx
+	if strings.Count(chartXML, `<c:catAx>`) != 1 {
+		t.Fatalf("combo chart should have 1 catAx, got %d", strings.Count(chartXML, `<c:catAx>`))
+	}
+	if strings.Count(chartXML, `<c:valAx>`) != 2 {
+		t.Fatalf("combo chart should have 2 valAx, got %d", strings.Count(chartXML, `<c:valAx>`))
+	}
+	// Secondary valAx must be on the right
+	if !strings.Contains(chartXML, `<c:axPos val="r"/>`) {
+		t.Fatalf("secondary axis should be positioned right: %s", chartXML)
+	}
+	// Must have trendline
+	if !strings.Contains(chartXML, `<c:trendline>`) {
+		t.Fatalf("trendline missing: %s", chartXML)
+	}
+	// Must use numCache/strCache
+	if !strings.Contains(chartXML, `<c:numCache>`) || !strings.Contains(chartXML, `<c:strCache>`) {
+		t.Fatalf("numCache/strCache missing: %s", chartXML)
+	}
+}
+
+func TestLineChartSmoothAndTrendline(t *testing.T) {
+	pres := &model.Presentation{Slides: []*model.Slide{{ID: "slide-1", Elements: []*model.Element{{
+		ID: "chart-line", Type: model.ElementChart, Rect: model.Rect{X: 10, Y: 10, W: 70, H: 60},
+		Chart: &model.ChartData{ChartType: model.ChartLine, Categories: []string{"A", "B", "C"}, Title: "Trend", Smooth: true,
+			Series: []model.ChartSeries{
+				{Name: "Data", Values: []float64{1, 4, 9}, Color: "#4472C4", Trendline: "polynomial"},
+			}},
+	}}}}}
+	var output bytes.Buffer
+	if err := New(pres).Write(&output); err != nil {
+		t.Fatalf("build PPTX: %v", err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(output.Bytes()), int64(output.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := make(map[string]string)
+	for _, part := range zr.File {
+		r, _ := part.Open()
+		data, _ := io.ReadAll(r)
+		r.Close()
+		parts[part.Name] = string(data)
+	}
+	chartXML := parts["ppt/charts/chart1.xml"]
+	// Must have smooth
+	if !strings.Contains(chartXML, `<c:smooth val="1"/>`) {
+		t.Fatalf("smooth flag missing: %s", chartXML)
+	}
+	// Must have trendline with polynomial type
+	if !strings.Contains(chartXML, `<c:trendlineType val="poly"/>`) {
+		t.Fatalf("polynomial trendline missing: %s", chartXML)
+	}
+	// Must have marker
+	if !strings.Contains(chartXML, `<c:marker>`) {
+		t.Fatalf("marker missing: %s", chartXML)
+	}
+}
+
 func TestGeneratedPartsAreWellFormedXML(t *testing.T) {
 	pres := &model.Presentation{
 		Title: "OOXML validation",
