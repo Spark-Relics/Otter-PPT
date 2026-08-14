@@ -21,6 +21,7 @@ export TEXT_MODEL_NAME="gpt-4o"
 | `POST` | `/api/v1/generate` | AI 自动生成 PPT | ✅ |
 | `POST` | `/api/v1/execute` | 执行工具调用（无状态） | ❌ |
 | `POST` | `/api/v1/build` | 从 JSON 构建 PPTX | ❌ |
+| `POST` | `/api/v1/render` | 渲染幻灯片为图片（视觉反馈） | ❌ |
 | `GET` | `/api/v1/tools` | 列出所有工具定义 | ❌ |
 | `GET` | `/api/v1/download` | 下载生成的文件 | ❌ |
 | `GET` | `/health` | 健康检查 | ❌ |
@@ -173,6 +174,38 @@ curl http://localhost:8080/api/v1/tools | python -m json.tool
 curl http://localhost:8080/health
 # {"status":"ok"}
 ```
+
+---
+
+## 6. 渲染幻灯片（视觉反馈）
+
+将 Presentation JSON 渲染为图片，让 AI 视觉评审后优化：
+
+```bash
+curl -X POST http://localhost:8080/api/v1/render \
+  -H "Content-Type: application/json" \
+  -d @presentation.json
+```
+
+**响应：**
+
+```json
+{
+  "backend": "libreoffice",
+  "slide_count": 3,
+  "slides": [
+    {
+      "slide_num": 1,
+      "width": 1920,
+      "height": 1080,
+      "image_base64": "iVBORw0KGgo...",
+      "description": "Slide 1 [title]: ..."
+    }
+  ]
+}
+```
+
+详见 [视觉反馈教程](./visual-feedback.md)。
 
 ---
 

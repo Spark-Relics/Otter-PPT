@@ -81,8 +81,27 @@ Claude 调用 `export_pptx` 时会指定输出路径。你可以在对话中指�
 | `bring_to_front` / `send_to_back` | 调整层级 |
 | `set_rotation` / `set_opacity` | 旋转和透明度 |
 | `move_slide` / `duplicate_slide` | 幻灯片操作 |
+| **`render_slides`** | **渲染当前幻灯片为图片，返回给你做视觉评审** |
 | `export_pptx` | 导出为 .pptx 文件 |
 | `reset_session` | 重置会话 |
+
+## 视觉反馈循环
+
+Claude 是多模态 AI，可以直接"看到" `render_slides` 返回的图片：
+
+```
+你：帮我做一个 5 页的 PPT，然后检查一下设计效果
+
+Claude：
+  1. set_theme → add_slide × 5 → 添加元素...
+  2. render_slides()  ← Claude 看到渲染图片
+  3. "第 3 页标题和图片重叠了，我来修复"
+  4. update_position(slide_id="slide-3", element_id="...", y=8)
+  5. render_slides()  ← 验证修复效果
+  6. "现在好了！" → export_pptx
+```
+
+这是关键能力：**外部 AI 借助自己的视觉能力做设计优化**，不需要配置内部 LLM。
 
 ## 常见问题
 

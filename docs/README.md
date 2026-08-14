@@ -42,6 +42,7 @@
 5. **[Python SDK 教程](./tutorial-python-sdk.md)** — `pip install` + 完整代码示例
 6. **[REST API 教程](./tutorial-rest-api.md)** — curl + OpenAPI 客户端生成
 7. **[Docker 教程](./tutorial-docker.md)** — Dockerfile + Compose 部署
+8. **[视觉反馈循环](./visual-feedback.md)** — 让外部 AI 看到渲染效果并优化
 
 ## 快速决策树
 

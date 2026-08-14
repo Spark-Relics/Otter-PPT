@@ -17,6 +17,7 @@ import (
 	"github.com/otter-ppt/otter-ppt/internal/fonts"
 	"github.com/otter-ppt/otter-ppt/internal/model"
 	"github.com/otter-ppt/otter-ppt/internal/pptoolkit"
+	"github.com/otter-ppt/otter-ppt/internal/renderer"
 )
 
 // ──────────────────────────────────────────────────────────────
@@ -39,12 +40,13 @@ type Server struct {
 	cfg       Config
 	router    *gin.Engine
 	downloads sync.Map
+	renderer  *renderer.Renderer
 }
 
 // New creates a new server.
 func New(cfg Config) *Server {
 	gin.SetMode(gin.ReleaseMode)
-	s := &Server{cfg: cfg, router: gin.New()}
+	s := &Server{cfg: cfg, router: gin.New(), renderer: renderer.NewRenderer()}
 	s.setupRoutes()
 	return s
 }
@@ -59,6 +61,7 @@ func (s *Server) setupRoutes() {
 		api.POST("/generate", s.handleGenerate)
 		api.POST("/execute", s.handleExecute)
 		api.POST("/build", s.handleBuild)
+		api.POST("/render", s.handleRender)
 		api.GET("/tools", s.handleListTools)
 		api.GET("/fonts", s.handleListFonts)
 		api.POST("/fonts/scan", s.handleScanFonts)
@@ -298,6 +301,77 @@ func (s *Server) handleBuild(c *gin.Context) {
 	if err := builder.New(&pres).Write(c.Writer); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
+}
+
+// ──────────────────────────────────────────────────────────────
+// POST /render — render presentation JSON to slide images
+// ──────────────────────────────────────────────────────────────
+
+func (s *Server) handleRender(c *gin.Context) {
+	raw, err := c.GetRawData()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var pres model.Presentation
+	if err := json.Unmarshal(raw, &pres); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid presentation JSON: " + err.Error()})
+		return
+	}
+
+	if len(pres.Slides) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no slides to render"})
+		return
+	}
+
+	// Build PPTX to temp file
+	tmpFile, err := os.CreateTemp("", "otter-render-*.pptx")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create temp file"})
+		return
+	}
+	tmpPath := tmpFile.Name()
+	tmpFile.Close()
+	defer os.Remove(tmpPath)
+
+	if err := builder.New(&pres).Save(tmpPath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build PPTX: " + err.Error()})
+		return
+	}
+
+	// Render slides
+	images, err := s.renderer.RenderPresentation(tmpPath, &pres)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "render failed: " + err.Error()})
+		return
+	}
+
+	backend := "native"
+	if s.renderer.IsAvailable() {
+		backend = "libreoffice"
+	}
+
+	slides := make([]gin.H, 0, len(images))
+	for _, img := range images {
+		entry := gin.H{
+			"slide_num":    img.SlideNum,
+			"width":        img.Width,
+			"height":       img.Height,
+			"image_base64": img.Base64,
+		}
+		if img.FallbackDescription != "" {
+			entry["description"] = img.FallbackDescription
+		}
+		slides = append(slides, entry)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"backend":     backend,
+		"slide_count": len(slides),
+		"slides":      slides,
+		"hint":        "Use the image_base64 fields to visually evaluate each slide. If you have vision capability, analyze for design issues (overlaps, alignment, whitespace, color contrast) and fix them by sending updated tool calls to /api/v1/execute, then re-render to verify.",
+	})
 }
 
 // ──────────────────────────────────────────────────────────────

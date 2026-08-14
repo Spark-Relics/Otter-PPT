@@ -358,6 +358,18 @@ func ToolDefinitions() []openai.Tool {
 			Parameters:  params(map[string]prop{}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "render_slides",
+			Description: "Render the current presentation to slide images for visual review. Returns base64 PNG images and structural descriptions of each slide. Use this to visually inspect your design — check for element overlaps, alignment issues, whitespace balance, text readability, and color contrast. After reviewing the images, fix any issues using update_position/update_style/delete_element, then call render_slides again to verify your fixes. This creates a visual feedback loop for iterative design improvement.",
+			Parameters:  params(map[string]prop{}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "export_pptx",
+			Description: "Export the current presentation to an editable .pptx file on disk.",
+			Parameters: params(map[string]prop{
+				"output_path": {typ: "string", desc: "Destination .pptx file path", req: true},
+			}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "done",
 			Description: "Signal that the presentation is complete and ready for export.",
 			Parameters:  params(map[string]prop{}),

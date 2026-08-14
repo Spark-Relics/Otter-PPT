@@ -363,6 +363,32 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 	case "get_state":
 		return ok("Current state", s.Presentation())
 
+	case "render_slides":
+		// In toolkit layer: return structural layout analysis + element descriptions.
+		// Full image rendering is handled by MCP/STDIO and REST layers which have
+		// access to builder + renderer packages.
+		pres := s.Presentation()
+		report := layout.ValidatePresentation(pres)
+		totalIssues := 0
+		for _, sr := range report.Slides {
+			totalIssues += len(sr.Issues)
+		}
+		return ok(fmt.Sprintf("Rendered %d slides (structural mode). Layout score: %.0f/100. %d issues found.", len(pres.Slides), report.Score, totalIssues), map[string]any{
+			"layout_report": report,
+			"hint":          "For actual image rendering with visual feedback, use MCP render_slides tool or POST /api/v1/render with the presentation JSON. Multimodal AI can then analyze the rendered images.",
+		})
+
+	case "export_pptx":
+		output, _ := args["output_path"].(string)
+		if output == "" {
+			return fail("output_path is required")
+		}
+		// Use builder to export — handlers.go can import builder
+		if err := s.exportToPPTX(output); err != nil {
+			return fail(err.Error())
+		}
+		return ok(fmt.Sprintf("Exported to %s", output), map[string]string{"output_path": output})
+
 	case "done":
 		return ok("Presentation complete")
 

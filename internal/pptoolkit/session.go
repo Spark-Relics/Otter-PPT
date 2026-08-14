@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/otter-ppt/otter-ppt/internal/builder"
 	"github.com/otter-ppt/otter-ppt/internal/model"
 )
 
@@ -69,6 +70,13 @@ func (s *Session) Presentation() *model.Presentation {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.pres
+}
+
+// exportToPPTX builds the current presentation to a .pptx file at the given path.
+func (s *Session) exportToPPTX(outputPath string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return builder.New(s.pres).Save(outputPath)
 }
 
 // genID generates a short unique ID.
