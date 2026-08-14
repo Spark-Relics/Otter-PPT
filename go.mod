@@ -1,6 +1,6 @@
 module github.com/otter-ppt/otter-ppt
 
-go 1.22
+go 1.24
 
 require (
 	github.com/disintegration/imaging v1.6.2
