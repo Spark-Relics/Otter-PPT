@@ -44,10 +44,31 @@ type Renderer struct {
 
 // NewRenderer creates a renderer that auto-detects tooling.
 func NewRenderer() *Renderer {
+	soffice := findExecutable("soffice", "libreoffice")
+	pdftoppm := findExecutable("pdftoppm", "")
 	return &Renderer{
-		libreOfficePath: findExecutable("soffice", "libreoffice"),
-		pdftoppmPath:    findExecutable("pdftoppm", ""),
+		libreOfficePath: soffice,
+		pdftoppmPath:    pdftoppm,
 	}
+}
+
+// EnsureTooling checks if LibreOffice is available. If not, downloads and
+// installs it automatically. Call this before rendering for zero-setup UX.
+func (r *Renderer) EnsureTooling() error {
+	if r.IsAvailable() {
+		return nil
+	}
+	soffice, pdftoppm, err := EnsureLibreOffice()
+	if err != nil {
+		return err
+	}
+	if soffice != "" {
+		r.libreOfficePath = soffice
+	}
+	if pdftoppm != "" {
+		r.pdftoppmPath = pdftoppm
+	}
+	return nil
 }
 
 // IsAvailable returns true if LibreOffice rendering is available.
@@ -56,8 +77,13 @@ func (r *Renderer) IsAvailable() bool {
 }
 
 // RenderPresentation takes a PPTX file path and returns slide images.
-// If LibreOffice is unavailable, falls back to structural descriptions.
+// If LibreOffice is unavailable, it first tries to download it automatically.
+// If that also fails, it falls back to structural descriptions.
 func (r *Renderer) RenderPresentation(pptxPath string, pres *model.Presentation) ([]SlideImage, error) {
+	if !r.IsAvailable() {
+		// Try auto-install on first render
+		r.EnsureTooling()
+	}
 	if r.IsAvailable() {
 		return r.renderWithLibreOffice(pptxPath, pres)
 	}
