@@ -175,5 +175,5 @@ func scatterSeriesXML(chart *model.ChartData, series model.ChartSeries, index in
 
 	marker := markerXML(color)
 
-	return fmt.Sprintf(`<c:ser><c:idx val="%d"/><c:order val="%d"/><c:tx><c:v>%s</c:v></c:tx><c:spPr><a:ln><a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:ln></c:spPr>%s%s<c:marker><c:symbol val="circle"/><c:size val="7"/><c:spPr><a:solidFill><a:srgbClr val="%s"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:ln></c:marker><c:xVal><c:numLit><c:formatCode>General</c:formatCode><c:ptCount val="%d"/>%s</c:numLit></c:xVal><c:yVal><c:numLit><c:formatCode>General</c:formatCode><c:ptCount val="%d"/>%s</c:numLit></c:yVal></c:ser>`, index, index, xmlEscape(series.Name), color, marker, dLbls, color, color, xCount, xVals.String(), len(series.Values), yVals.String())
+	return fmt.Sprintf(`<c:ser><c:idx val="%d"/><c:order val="%d"/><c:tx><c:v>%s</c:v></c:tx><c:spPr><a:ln><a:solidFill><a:srgbClr val="%s"/></a:solidFill></a:ln></c:spPr>%s%s<c:xVal><c:numLit><c:formatCode>General</c:formatCode><c:ptCount val="%d"/>%s</c:numLit></c:xVal><c:yVal><c:numLit><c:formatCode>General</c:formatCode><c:ptCount val="%d"/>%s</c:numLit></c:yVal></c:ser>`, index, index, xmlEscape(series.Name), color, marker, dLbls, xCount, xVals.String(), len(series.Values), yVals.String())
 }
