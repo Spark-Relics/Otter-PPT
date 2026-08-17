@@ -16,7 +16,8 @@ import (
 func main() {
 	apiKey := os.Getenv("TEXT_MODEL_API_KEY")
 	if apiKey == "" {
-		apiKey = "REMOVED-LEAKED-KEY"
+		fmt.Fprintln(os.Stderr, "TEXT_MODEL_API_KEY is not set")
+		os.Exit(1)
 	}
 	model := os.Getenv("TEXT_MODEL_NAME")
 	if model == "" {

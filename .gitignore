@@ -31,3 +31,5 @@ Thumbs.db
 .env
 *.env
 .adnify
+officecli-ref/
+ppt-master/

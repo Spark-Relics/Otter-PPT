@@ -38,6 +38,8 @@ type Renderer struct {
 	libreOfficePath string
 	// pdftoppm binary path (auto-detected if empty).
 	pdftoppmPath string
+	// Headless-capable browser for the HTML rendering path (auto-detected).
+	browser *BrowserBackend
 	// Temp directory for intermediate files.
 	tempDir string
 }
@@ -49,6 +51,7 @@ func NewRenderer() *Renderer {
 	return &Renderer{
 		libreOfficePath: soffice,
 		pdftoppmPath:    pdftoppm,
+		browser:         FindBrowser(),
 	}
 }
 
@@ -77,17 +80,139 @@ func (r *Renderer) IsAvailable() bool {
 }
 
 // RenderPresentation takes a PPTX file path and returns slide images.
-// If LibreOffice is unavailable, it first tries to download it automatically.
-// If that also fails, it falls back to structural descriptions.
+// Rendering priority: LibreOffice (highest fidelity, if already installed)
+// → HTML + headless browser screenshot (zero-download, fast) → Go structural
+// fallback (always available).
 func (r *Renderer) RenderPresentation(pptxPath string, pres *model.Presentation) ([]SlideImage, error) {
 	if !r.IsAvailable() {
-		// Try auto-install on first render
-		r.EnsureTooling()
+		// Only auto-download LibreOffice when there is no browser path —
+		// the HTML renderer covers the zero-setup case without a 350MB download.
+		if r.browser == nil {
+			r.EnsureTooling()
+		}
 	}
 	if r.IsAvailable() {
 		return r.renderWithLibreOffice(pptxPath, pres)
 	}
+	if r.browser != nil && pres != nil {
+		images, err := r.renderWithBrowser(pres)
+		if err == nil && len(images) > 0 {
+			return images, nil
+		}
+	}
 	return r.renderStructuralFallback(pres), nil
+}
+
+// renderWithBrowser generates HTML from the presentation model and
+// screenshots it with the detected headless browser.
+func (r *Renderer) renderWithBrowser(pres *model.Presentation) ([]SlideImage, error) {
+	tempDir, err := os.MkdirTemp("", "otter-html-*")
+	if err != nil {
+		return nil, err
+	}
+	r.tempDir = tempDir
+
+	htmlPath := filepath.Join(tempDir, "slides.html")
+	if err := GenerateHTML(pres, htmlPath); err != nil {
+		return nil, fmt.Errorf("generate html: %w", err)
+	}
+
+	wIn, hIn := defaultSlideW, defaultSlideH
+	if pres.SlideWidth > 0 && pres.SlideHeight > 0 {
+		wIn, hIn = pres.SlideWidth, pres.SlideHeight
+	}
+	// Render at ~120 DPI for crisp text, capped so the long edge ≤ 1920px.
+	wPx := int(math.Round(wIn * 120))
+	hPx := int(math.Round(hIn * 120))
+	longEdge := math.Max(float64(wPx), float64(hPx))
+	if longEdge > 1920 {
+		scale := 1920.0 / float64(longEdge)
+		wPx = int(float64(wPx) * scale)
+		hPx = int(float64(hPx) * scale)
+	}
+
+	var images []SlideImage
+	for i := range pres.Slides {
+		slideHTMLPath := filepath.Join(tempDir, fmt.Sprintf("slide-%d.html", i+1))
+		if err := writeSingleSlideHTML(pres, i, htmlPath, slideHTMLPath, wPx, hPx); err != nil {
+			return nil, err
+		}
+		pngPath := filepath.Join(tempDir, fmt.Sprintf("slide-%02d.png", i+1))
+		if err := r.browser.ScreenshotHTML(slideHTMLPath, wPx, hPx, pngPath); err != nil {
+			return nil, fmt.Errorf("slide %d: %w", i+1, err)
+		}
+		img, err := imaging.Open(pngPath)
+		if err != nil {
+			continue
+		}
+		b64, err := fileToBase64(pngPath)
+		if err != nil {
+			continue
+		}
+		images = append(images, SlideImage{
+			SlideNum: i + 1,
+			Path:     pngPath,
+			Base64:   b64,
+			Width:    img.Bounds().Dx(),
+			Height:   img.Bounds().Dy(),
+		})
+	}
+	return images, nil
+}
+
+// writeSingleSlideHTML writes a wrapper HTML page that shows exactly one
+// slide (via CSS isolation of the Nth .slide) scaled to fill the viewport.
+func writeSingleSlideHTML(pres *model.Presentation, slideIdx int, allHTMLPath, outPath string, wPx, hPx int) error {
+	// Re-generate per-slide HTML: cheaper than post-processing the full doc.
+	g := &htmlGenerator{pres: pres, imgCache: map[string]string{}}
+	g.slideWIn, g.slideHIn = defaultSlideW, defaultSlideH
+	if pres.SlideWidth > 0 && pres.SlideHeight > 0 {
+		g.slideWIn, g.slideHIn = pres.SlideWidth, pres.SlideHeight
+	}
+	slide := pres.Slides[slideIdx]
+
+	var sb strings.Builder
+	sb.WriteString("<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<style>\n")
+	sb.WriteString("* { margin:0; padding:0; box-sizing:border-box; }\n")
+	sb.WriteString("html, body { width:" + fmt.Sprintf("%dpx", wPx) + "; height:" + fmt.Sprintf("%dpx", hPx) + "; overflow:hidden; }\n")
+	sb.WriteString(fmt.Sprintf(
+		".stage { width:%.4fin; height:%.4fin; transform:scale(%.6f); transform-origin:0 0; position:absolute; top:0; left:0; }\n",
+		g.slideWIn, g.slideHIn, float64(wPx)/(g.slideWIn*htmlDPI)))
+	sb.WriteString(fmt.Sprintf(
+		".slide { position:relative; width:%.4fin; height:%.4fin; overflow:hidden; background:#fff; }\n",
+		g.slideWIn, g.slideHIn))
+	sb.WriteString(".el { position:absolute; }\n")
+	sb.WriteString(".text-el { display:flex; flex-direction:column; }\n")
+	sb.WriteString("</style>\n</head>\n<body>\n<div class=\"stage\">\n")
+	sb.WriteString(slideBackgroundStyle(g, slide))
+	sb.WriteString(g.slideBody(slide))
+	sb.WriteString("</div>\n</body>\n</html>\n")
+	return os.WriteFile(outPath, []byte(sb.String()), 0644)
+}
+
+// slideBackgroundStyle returns a <style> block for the slide background
+// applying to .slide (used by the single-slide wrapper).
+func slideBackgroundStyle(g *htmlGenerator, slide *model.Slide) string {
+	bg := slide.Background
+	if bg == nil {
+		if g.pres.Theme.BackgroundColor != "" {
+			return fmt.Sprintf("<style>.slide { background: %s; }</style>\n", cssColor(g.pres.Theme.BackgroundColor))
+		}
+		return ""
+	}
+	switch bg.Type {
+	case model.BgSolid:
+		return fmt.Sprintf("<style>.slide { background: %s; }</style>\n", cssColor(bg.Color))
+	case model.BgGradient:
+		if bg.Gradient != nil && len(bg.Gradient.Stops) > 0 {
+			return fmt.Sprintf("<style>.slide { background: %s; }</style>\n", cssGradient(bg.Gradient))
+		}
+	case model.BgImage:
+		if uri := g.dataURI(bg.ImagePath); uri != "" {
+			return fmt.Sprintf("<style>.slide { background: url(%s) center/cover no-repeat; }</style>\n", uri)
+		}
+	}
+	return ""
 }
 
 // renderWithLibreOffice uses LibreOffice + pdftoppm to generate PNGs.
