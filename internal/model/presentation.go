@@ -157,6 +157,11 @@ type Theme struct {
 	TextColor       string `json:"text_color"`
 	TitleFont       string `json:"title_font"`
 	BodyFont        string `json:"body_font"`
+	// StyleKey references a design.StyleSpec preset (shape language /
+	// composition discipline). Optional — purely additive.
+	StyleKey string `json:"style_key,omitempty"`
+	// PaletteKey references a design.Palette preset this theme was built from.
+	PaletteKey string `json:"palette_key,omitempty"`
 }
 
 // Presentation is the top-level structure for a complete PPT.

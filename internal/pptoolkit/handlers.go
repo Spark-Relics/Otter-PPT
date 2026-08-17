@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/otter-ppt/otter-ppt/internal/design"
 	"github.com/otter-ppt/otter-ppt/internal/layout"
 	"github.com/otter-ppt/otter-ppt/internal/model"
 )
@@ -44,7 +45,13 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 
 	case "set_theme":
 		theme := mapToTheme(args)
-		return ok(s.SetTheme(theme))
+		note := s.SetTheme(theme)
+		// If style/palette presets were referenced, append the design lock
+		// so the agent obeys it for the rest of the deck.
+		if theme.StyleKey != "" || theme.PaletteKey != "" {
+			note += "\n\n" + design.Lock(theme.StyleKey, theme.PaletteKey)
+		}
+		return ok(note)
 
 	case "set_slide_size":
 		w := toFloat(args["width"])
@@ -460,16 +467,79 @@ func mapToStyle(args map[string]any) model.TextStyle {
 }
 
 func mapToTheme(args map[string]any) model.Theme {
-	return model.Theme{
+	styleKey := strOr(args, "style", "")
+	paletteKey := strOr(args, "palette", "")
+
+	t := model.Theme{
 		Name:            strOr(args, "name", ""),
-		PrimaryColor:    strOr(args, "primary_color", "#1A73E8"),
-		SecondaryColor:  strOr(args, "secondary_color", "#424242"),
-		AccentColor:     strOr(args, "accent_color", "#FF6D00"),
-		BackgroundColor: strOr(args, "background_color", "#FFFFFF"),
-		TextColor:       strOr(args, "text_color", "#212121"),
-		TitleFont:       strOr(args, "title_font", "Microsoft YaHei"),
-		BodyFont:        strOr(args, "body_font", "Microsoft YaHei"),
+		PrimaryColor:    strOr(args, "primary_color", ""),
+		SecondaryColor:  strOr(args, "secondary_color", ""),
+		AccentColor:     strOr(args, "accent_color", ""),
+		BackgroundColor: strOr(args, "background_color", ""),
+		TextColor:       strOr(args, "text_color", ""),
+		TitleFont:       strOr(args, "title_font", ""),
+		BodyFont:        strOr(args, "body_font", ""),
+		StyleKey:        styleKey,
+		PaletteKey:      paletteKey,
 	}
+
+	// Resolve palette preset: fills roles not explicitly overridden.
+	if p := design.GetPalette(paletteKey); p != nil {
+		if t.BackgroundColor == "" {
+			t.BackgroundColor = p.Background
+		}
+		if t.SecondaryColor == "" {
+			t.SecondaryColor = p.BackgroundSecondary
+		}
+		if t.PrimaryColor == "" {
+			t.PrimaryColor = p.Primary
+		}
+		if t.AccentColor == "" {
+			t.AccentColor = p.Accent
+		}
+		if t.TextColor == "" {
+			t.TextColor = p.Text
+		}
+		if t.Name == "" {
+			t.Name = p.Name
+		}
+	}
+	// Resolve style preset: fonts default from the style's typography spec.
+	if s := design.GetStyle(styleKey); s != nil {
+		if t.TitleFont == "" {
+			t.TitleFont = s.TitleFont
+		}
+		if t.BodyFont == "" {
+			t.BodyFont = s.BodyFont
+		}
+		if t.Name == "" {
+			t.Name = s.Name
+		}
+	}
+
+	// Fallback defaults when neither preset nor explicit values given.
+	if t.PrimaryColor == "" {
+		t.PrimaryColor = "#1A73E8"
+	}
+	if t.SecondaryColor == "" {
+		t.SecondaryColor = "#424242"
+	}
+	if t.AccentColor == "" {
+		t.AccentColor = "#FF6D00"
+	}
+	if t.BackgroundColor == "" {
+		t.BackgroundColor = "#FFFFFF"
+	}
+	if t.TextColor == "" {
+		t.TextColor = "#212121"
+	}
+	if t.TitleFont == "" {
+		t.TitleFont = "Microsoft YaHei"
+	}
+	if t.BodyFont == "" {
+		t.BodyFont = "Microsoft YaHei"
+	}
+	return t
 }
 
 func mapToGradientStops(v any) []model.GradientStop {

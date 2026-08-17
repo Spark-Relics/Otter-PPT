@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/otter-ppt/otter-ppt/internal/design"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -32,6 +33,8 @@ type SlidePlan struct {
 type DesignPlan struct {
 	Title          string      `json:"title"`
 	StyleDirection string      `json:"style_direction"` // overall visual style description
+	StyleKey       string      `json:"style_key"`       // design.StyleSpec preset key
+	PaletteKey     string      `json:"palette_key"`     // design.Palette preset key
 	ColorPalette   string      `json:"color_palette"`
 	FontStrategy   string      `json:"font_strategy"`
 	TargetAudience string      `json:"target_audience"`
@@ -72,12 +75,21 @@ func (p *Planner) Plan(ctx context.Context, topic string, slideCount int, style 
 Create a detailed plan for a %d-slide presentation about: "%s".
 Style: %s. All content in %s.
 
-Output JSON with this exact structure:
+First, SELECT the design system from these catalogs (pick by deck purpose, per each entry's rule):
+
+STYLE presets (shape language / composition discipline — color-free):
+%s
+PALETTE presets (six semantic color roles):
+%s
+
+Then output JSON with this exact structure:
 {
   "title": "Presentation title",
-  "style_direction": "Brief description of overall visual direction (e.g. 'Modern minimalist with bold typography, generous whitespace, and tech-inspired gradient accents')",
-  "color_palette": "Specific hex colors and their usage (e.g. '#1A73E8 primary, #F1F3F4 background, #EA4335 accent, #202124 text')",
-  "font_strategy": "Font choices and hierarchy (e.g. 'Montserrat Bold for titles, Inter Regular for body')",
+  "style_key": "the selected style preset key from the catalog above",
+  "palette_key": "the selected palette preset key from the catalog above",
+  "style_direction": "Brief description of overall visual direction",
+  "color_palette": "Specific hex colors and their usage",
+  "font_strategy": "Font choices and hierarchy",
   "target_audience": "Who is this presentation for",
   "slides": [
     {
@@ -96,6 +108,8 @@ Output JSON with this exact structure:
 }
 
 Design Rules:
+- style_key and palette_key MUST be valid keys from the catalogs above; the combination must suit the topic
+- If the user's style hint matches a preset's rule, select that preset; otherwise pick by topic
 - Slide 1 is always "title" layout (cover page with hero image or gradient bg)
 - Slide 2 is "agenda" layout (table of contents)
 - For data-heavy slides, use "chart" or "stats" layouts
@@ -105,7 +119,8 @@ Design Rules:
 - Only suggest image_prompt for slides that truly benefit from visuals (cover, section dividers, hero slides)
 - Keep image prompts detailed and professional (photographic, illustration style, mood, colors)
 - Vary layouts across slides — no more than 2 consecutive same-layout slides
-- Ensure content flows logically from introduction → problem → solution → details → conclusion`, slideCount, topic, style, langName)
+- Ensure content flows logically from introduction → problem → solution → details → conclusion`,
+		slideCount, topic, style, langName, design.StyleCatalog(), design.PaletteCatalog())
 
 	resp, err := p.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 		Model: p.model,
@@ -138,6 +153,15 @@ Design Rules:
 		}
 	}
 
+	// Normalize: unknown preset keys are dropped so the design lock falls
+	// back gracefully instead of silently resolving to nothing.
+	if design.GetStyle(plan.StyleKey) == nil {
+		plan.StyleKey = ""
+	}
+	if design.GetPalette(plan.PaletteKey) == nil {
+		plan.PaletteKey = ""
+	}
+
 	return &plan, nil
 }
 
@@ -149,6 +173,14 @@ func FormatPlan(plan *DesignPlan) string {
 	sb.WriteString(fmt.Sprintf("Style Direction: %s\n", plan.StyleDirection))
 	sb.WriteString(fmt.Sprintf("Color Palette: %s\n", plan.ColorPalette))
 	sb.WriteString(fmt.Sprintf("Font Strategy: %s\n\n", plan.FontStrategy))
+
+	// Design lock: the immutable per-deck contract (ppt-master spec_lock
+	// concept). When the planner selected presets, this is the binding
+	// rulebook the build agent must obey on every page.
+	if plan.StyleKey != "" || plan.PaletteKey != "" {
+		sb.WriteString(design.Lock(plan.StyleKey, plan.PaletteKey))
+		sb.WriteString(fmt.Sprintf("\nWhen calling set_theme, pass style=\"%s\" palette=\"%s\" as the first and only theme call.\n\n", plan.StyleKey, plan.PaletteKey))
+	}
 
 	sb.WriteString("SLIDE BREAKDOWN:\n")
 	for _, sp := range plan.Slides {

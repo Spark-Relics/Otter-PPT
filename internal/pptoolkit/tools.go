@@ -2,6 +2,7 @@ package pptoolkit
 
 import (
 	"github.com/sashabaranov/go-openai"
+	"github.com/otter-ppt/otter-ppt/internal/design"
 )
 
 // ToolDefinitions returns all available tools in OpenAI function-calling format.
@@ -18,17 +19,19 @@ func ToolDefinitions() []openai.Tool {
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_theme",
-			Description: "Set the global color scheme and fonts for the entire presentation. Call this first before adding slides.",
-			Parameters: params(map[string]prop{
-				"name":             {typ: "string", desc: "Theme name"},
-				"primary_color":    {typ: "string", desc: "Primary color hex, e.g. #1A73E8", req: true},
-				"secondary_color":  {typ: "string", desc: "Secondary color hex"},
-				"accent_color":     {typ: "string", desc: "Accent/highlight color hex"},
-				"background_color": {typ: "string", desc: "Default background color hex"},
-				"text_color":       {typ: "string", desc: "Default body text color hex"},
-				"title_font":       {typ: "string", desc: "Title font name"},
-				"body_font":        {typ: "string", desc: "Body font name"},
-			}),
+		Description: "Set the global color scheme and fonts for the entire presentation. Call this first before adding slides. Two modes: (a) pass style + palette preset keys from the catalog below for a professionally locked design system, or (b) pass explicit hex colors. Preset mode is strongly preferred.\n\nSTYLE presets (shape language / composition discipline):\n" + design.StyleCatalog() + "\nPALETTE presets (six semantic color roles):\n" + design.PaletteCatalog() + "\nWhen style/palette keys are given, individual color args are optional overrides.",
+		Parameters: params(map[string]prop{
+			"name":             {typ: "string", desc: "Theme name"},
+			"style":            {typ: "string", desc: "Style preset key (e.g. dark_tech, swiss_minimal, glassmorphism)"},
+			"palette":          {typ: "string", desc: "Palette preset key (e.g. tech_neon, cool_corporate)"},
+			"primary_color":    {typ: "string", desc: "Primary color hex, e.g. #1A73E8 (overrides palette)"},
+			"secondary_color":  {typ: "string", desc: "Secondary color hex"},
+			"accent_color":     {typ: "string", desc: "Accent/highlight color hex (overrides palette)"},
+			"background_color": {typ: "string", desc: "Default background color hex (overrides palette)"},
+			"text_color":       {typ: "string", desc: "Default body text color hex"},
+			"title_font":       {typ: "string", desc: "Title font name (overrides style)"},
+			"body_font":        {typ: "string", desc: "Body font name (overrides style)"},
+		}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_slide_size",
@@ -197,10 +200,19 @@ func ToolDefinitions() []openai.Tool {
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "add_chart",
-			Description: "Add a chart. Types: bar, column, line, pie, area, doughnut.",
-			Parameters: rectParams(map[string]prop{
-				"slide_id":    {typ: "string", desc: "Slide ID", req: true},
-				"chart_type":  {typ: "string", desc: "Chart type", req: true},
+		Description: "Add a native chart. Selection rules (pick by data shape, not preference): " +
+			"column: single-series category comparison, 3-8 categories; skip for >12 long labels (use bar) or multi-series (use grouped bar via multi-series column). " +
+			"bar (horizontal): ranking 5-12 items, especially long labels; skip for <=8 short labels (use column). " +
+			"line: 1-3 time-series showing direction; skip if cumulative volume matters (use area) or units differ (use combo with secondary axis). " +
+			"area: 1-2 cumulative trend series emphasizing volume; skip for >=3 series. " +
+			"pie: 3-6 simple proportions of one whole; skip for >=7 parts (use doughnut). " +
+			"doughnut: 3-6 proportions where a center KPI deserves emphasis. " +
+			"scatter: x-y correlation between two numeric variables; not for categories. " +
+			"combo: bar+line mix, or two metrics with different units/scales (line series on secondary axis). " +
+			"3D variants (bar_3d, column_3d, line_3d, pie_3d, area_3d): only when explicitly requested; 2D reads cleaner.",
+		Parameters: rectParams(map[string]prop{
+			"slide_id":    {typ: "string", desc: "Slide ID", req: true},
+			"chart_type":  {typ: "string", desc: "Chart type: bar, column, line, pie, area, doughnut, scatter, combo, bar_3d, column_3d, line_3d, pie_3d, area_3d", req: true},
 				"categories":  {typ: "array", desc: "Category labels (x-axis)", req: true},
 				"series":      {typ: "array", desc: "Series [{name, values:[num], color}]", req: true},
 				"title":       {typ: "string", desc: "Chart title"},
