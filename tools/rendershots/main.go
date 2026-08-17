@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/otter-ppt/otter-ppt/internal/builder"
 	"github.com/otter-ppt/otter-ppt/internal/model"
 	"github.com/otter-ppt/otter-ppt/internal/renderer"
 )
@@ -20,8 +21,15 @@ func main() {
 	if err := json.Unmarshal(data, &pres); err != nil {
 		panic(err)
 	}
+	pptxPath := "output/OtterPPT-项目介绍.pptx"
+	if _, err := os.Stat(pptxPath); os.IsNotExist(err) {
+		// Build the pptx first so we can render it.
+		if err := builder.New(&pres).Save(pptxPath); err != nil {
+			panic(err)
+		}
+	}
 	r := renderer.NewRenderer()
-	imgs, err := r.RenderSlides(&pres, nil)
+	imgs, err := r.RenderPresentation(pptxPath, &pres)
 	if err != nil {
 		panic(err)
 	}
