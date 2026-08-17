@@ -67,7 +67,13 @@ func (s *Server) setupRoutes() {
 		api.POST("/fonts/scan", s.handleScanFonts)
 		api.POST("/fonts/install", s.handleInstallFont)
 		api.GET("/download", s.handleDownload)
+
+		// Live preview (viewer page is outside /api/v1)
+		api.POST("/preview", s.handlePreviewCreate)
+		api.POST("/preview/:token", s.handlePreviewUpdate)
+		api.GET("/preview/:token/version", s.handlePreviewVersion)
 	}
+	s.router.GET("/preview/:token", s.handlePreviewViewer)
 }
 
 // Run starts the HTTP server.

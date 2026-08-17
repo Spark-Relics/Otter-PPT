@@ -9,6 +9,7 @@ import (
 	"github.com/otter-ppt/otter-ppt/internal/layout"
 	"github.com/otter-ppt/otter-ppt/internal/model"
 	"github.com/otter-ppt/otter-ppt/internal/svgdecode"
+	"github.com/otter-ppt/otter-ppt/internal/template"
 )
 
 func elementIDs(elems []*model.Element) []string {
@@ -365,6 +366,29 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 			return fail(err.Error())
 		}
 		return ok(msg)
+
+	// ──────── Template Import ────────
+	case "load_template":
+		pptxPath, _ := args["pptx_path"].(string)
+		if strings.TrimSpace(pptxPath) == "" {
+			return fail("pptx_path is required (path to an existing .pptx file)")
+		}
+		extracted, err := template.ParseFile(pptxPath)
+		if err != nil {
+			return fail(fmt.Sprintf("load template failed: %v", err))
+		}
+		applyExtracted, _ := args["apply"].(bool)
+		msg := fmt.Sprintf("Template parsed: theme %q, %d layouts, %.2fx%.2f in",
+			extracted.Theme.Name, len(extracted.Layouts), extracted.SlideWidth, extracted.SlideHeight)
+		if applyExtracted {
+			s.mu.Lock()
+			s.pres.Theme = extracted.Theme
+			s.pres.SlideWidth = extracted.SlideWidth
+			s.pres.SlideHeight = extracted.SlideHeight
+			s.mu.Unlock()
+			msg = "Applied template design. " + msg
+		}
+		return ok(msg, extracted)
 
 	// ──────── AI Image Generation ────────
 	case "generate_image":

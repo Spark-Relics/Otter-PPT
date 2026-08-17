@@ -344,13 +344,14 @@ export OPENAI_MODEL="moonshot-v1-32k"
 
 ## 开发路线
 
-- [ ] 真实图片嵌入（目前渲染为占位符）
-- [ ] 原生图表 XML（目前为数据摘要卡片）
-- [ ] 演讲者备注（notesSlide XML 部件）
-- [ ] 动画 XML 渲染
-- [ ] 智能布局自动排列
-- [ ] 模板系统
-- [ ] Web UI 实时预览
+- [x] 真实图片嵌入（PNG/JPEG/GIF/SVG，本地与 data: URI）
+- [x] 原生图表 XML（13 种图表，含 3D、趋势线、误差线、次坐标轴）
+- [x] 演讲者备注（notesSlide XML 部件）
+- [x] 动画 XML 渲染（7 种动画 × 触发方式 × 方向）
+- [x] SVG → 原生 PPTX 编译（import_svg，freeform custGeom）
+- [x] 智能布局自动排列（validate_layout / auto_fix_layout / apply_smart_layout，18 种智能模板）
+- [x] 模板系统（load_template：从现有 .pptx 导入色板/字体/尺寸/版式清单）
+- [x] Web UI 实时预览（/preview/:token 查看页 + 轮询自动刷新 + 工具调用推送）
 
 ---
 

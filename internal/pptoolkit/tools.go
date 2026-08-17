@@ -353,6 +353,14 @@ func ToolDefinitions() []openai.Tool {
 				"template":  {typ: "string", desc: "Template ID (e.g. three_cards, two_column, image_left)", req: true},
 			}),
 		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "load_template",
+			Description: "Import the design DNA from an existing .pptx file: extracts the color palette, title/body fonts, slide size, and slide-layout inventory. With apply=true, immediately applies theme + slide size to the current session (call before adding slides). Always returns the extracted palette/fonts so you can blend them with explicit set_theme overrides.",
+			Parameters: params(map[string]prop{
+				"pptx_path": {typ: "string", desc: "Path to an existing .pptx template file", req: true},
+				"apply":     {typ: "boolean", desc: "Apply the extracted theme and slide size to the current presentation (default false)"},
+			}),
+		}},
 
 		// ────────── AI Image Generation ──────────
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
