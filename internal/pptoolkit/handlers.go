@@ -3,11 +3,21 @@ package pptoolkit
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/otter-ppt/otter-ppt/internal/design"
 	"github.com/otter-ppt/otter-ppt/internal/layout"
 	"github.com/otter-ppt/otter-ppt/internal/model"
+	"github.com/otter-ppt/otter-ppt/internal/svgdecode"
 )
+
+func elementIDs(elems []*model.Element) []string {
+	ids := make([]string, len(elems))
+	for i, e := range elems {
+		ids[i] = e.ID
+	}
+	return ids
+}
 
 // ToolResult is the return value from executing a tool.
 type ToolResult struct {
@@ -365,6 +375,33 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 			return fail("generate_image requires the agent to resolve image_prompt to image_path first")
 		}
 		return ok(fmt.Sprintf("Image generated successfully (path=%s)", imgPath), map[string]string{"image_path": imgPath})
+
+	case "import_svg":
+		slideID, _ := args["slide_id"].(string)
+		svgText, _ := args["svg"].(string)
+		slide := s.Presentation().FindSlide(slideID)
+		if slide == nil {
+			return fail(fmt.Sprintf("slide %s not found", slideID))
+		}
+		if strings.TrimSpace(svgText) == "" {
+			return fail("svg markup is required")
+		}
+		res, err := svgdecode.Compile(svgText, svgdecode.Options{})
+		if err != nil {
+			return fail(fmt.Sprintf("SVG compile failed: %v", err))
+		}
+		for _, elem := range res.Elements {
+			slide.Elements = append(slide.Elements, elem)
+		}
+		msg := fmt.Sprintf("Imported %d elements from SVG", len(res.Elements))
+		if len(res.Skipped) > 0 {
+			msg += fmt.Sprintf(" (%d constructs skipped/approximated: %s)",
+				len(res.Skipped), strings.Join(res.Skipped, "; "))
+		}
+		return ok(msg, map[string]any{
+			"element_ids": elementIDs(res.Elements),
+			"skipped":     res.Skipped,
+		})
 
 	// ──────── State / Export ────────
 	case "get_state":

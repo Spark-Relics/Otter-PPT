@@ -356,6 +356,14 @@ func ToolDefinitions() []openai.Tool {
 
 		// ────────── AI Image Generation ──────────
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "import_svg",
+			Description: "Compile an SVG slide design into native editable PPTX elements on a slide. The SVG must use viewBox coordinates (e.g. viewBox=\"0 0 1280 720\"). Supported primitives map to native shapes: rect→rectangle/rounded-rectangle, circle/ellipse→ellipse, line/stroked 2-point path→connector, arbitrary path (curves flattened)→editable freeform (custom geometry), text→text box, image→picture. Gradient fills are approximated as solid gray. Transform support: translate/scale/rotate/matrix. Returns the number of created elements plus any skipped constructs.",
+			Parameters: params(map[string]prop{
+				"slide_id": {typ: "string", desc: "Target slide ID", req: true},
+				"svg":      {typ: "string", desc: "Complete SVG document markup", req: true},
+			}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "generate_image",
 			Description: "Generate a professional AI image from a text prompt and return the local path. Use this to create backgrounds, illustrations, and visual assets before adding them to slides.",
 			Parameters: params(map[string]prop{

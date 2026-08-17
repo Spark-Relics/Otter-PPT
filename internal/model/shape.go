@@ -56,6 +56,7 @@ type ShapeData struct {
 	Text         string           `json:"text,omitempty"`
 	Style        TextStyle    `json:"style,omitempty"`
 	CornerRadius float64      `json:"corner_radius,omitempty"`
+	Freeform     *FreeformData `json:"freeform,omitempty"`
 }
 
 // UnmarshalJSON accepts both "type" and "shape_type" for ShapeType,
@@ -83,6 +84,25 @@ func (s *ShapeData) UnmarshalJSON(data []byte) error {
 		s.Fill = &FillStyle{Color: s.FillColor, Opacity: raw.FillOpacity}
 	}
 	return nil
+}
+
+// ─────── Freeform (custom geometry) ───────
+
+// ShapeFreeform renders via an OOXML custGeom path built from contours.
+const ShapeFreeform ShapeType = "freeform"
+
+// Vec2 is a normalized (0-1, relative to element bounds) 2D point.
+type Vec2 struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+// FreeformData describes custom-geometry contours for freeform shapes.
+// Each contour is a polyline of normalized points; Closed marks whether the
+// contour should be closed with Z in the generated custGeom path.
+type FreeformData struct {
+	Contours [][]Vec2 `json:"contours"`
+	Closed   []bool   `json:"closed,omitempty"`
 }
 
 // ErrorBarStyle defines error bars for a chart series.

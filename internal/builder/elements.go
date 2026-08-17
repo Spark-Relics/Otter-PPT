@@ -174,19 +174,25 @@ func (b *Builder) writeShape(buf *strings.Builder, elem *model.Element) {
 	}
 	transform := b.transform(elem)
 
-	prst := shapeToPrst(elem.Shape.ShapeType)
-
+	var geometry string
+	if elem.Shape.ShapeType == model.ShapeFreeform && elem.Shape.Freeform != nil {
+		hasFill := elem.Shape.Fill != nil && elem.Shape.Fill.Color != ""
+		geometry = freeformGeometryXML(elem.Shape.Freeform, hasFill)
+	} else {
+		prst := shapeToPrst(elem.Shape.ShapeType)
+		adjustments := ""
+		if elem.Shape.ShapeType == model.ShapeRoundedRectangle && elem.Shape.CornerRadius > 0 {
+			rad := int(elem.Shape.CornerRadius * 50000)
+			adjustments = fmt.Sprintf(`<a:avLst><a:gd name="adj" fmla="val %d"/></a:avLst>`, rad)
+		}
+		geometry = presetGeometryXML(prst, adjustments)
+	}
 	fmt.Fprintf(buf,
 		`<p:sp><p:nvSpPr><p:cNvPr id="%d" name="Shape"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>`,
 		ooxmlObjectID(elem.ID))
-	adjustments := ""
-	if elem.Shape.ShapeType == model.ShapeRoundedRectangle && elem.Shape.CornerRadius > 0 {
-		rad := int(elem.Shape.CornerRadius * 50000)
-		adjustments = fmt.Sprintf(`<a:avLst><a:gd name="adj" fmla="val %d"/></a:avLst>`, rad)
-	}
 	shapeProperties{
 		transform: transform,
-		geometry:  presetGeometryXML(prst, adjustments),
+		geometry:  geometry,
 		fill:      fillStyleXML(elem.Shape.Fill, elem.Shape.FillColor),
 		line:      lineStyleXML(elem.Shape.Line, elem.Shape.BorderColor, elem.Shape.BorderWidth),
 		effects:   effectsXML(elem.Shape.Shadow, elem.Shape.Glow, elem.Shape.Reflection),
