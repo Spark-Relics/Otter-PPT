@@ -1,0 +1,566 @@
+{
+  "title": "Otter PPT — 项目介绍",
+  "theme": {
+    "name": "Dark Tech / Tech Neon",
+    "primary_color": "#22D3EE",
+    "secondary_color": "#141B2E",
+    "accent_color": "#A78BFA",
+    "background_color": "#0A0E1A",
+    "text_color": "#E2E8F0",
+    "title_font": "Noto Sans SC",
+    "body_font": "Noto Sans SC",
+    "style_key": "dark_tech",
+    "palette_key": "tech_neon"
+  },
+  "slides": [
+    {
+      "id": "s1",
+      "layout": "title",
+      "background": {
+        "type": "gradient",
+        "gradient": {
+          "type": "linear",
+          "angle": 135,
+          "stops": [
+            { "color": "#0A0E1A", "position": 0 },
+            { "color": "#141B2E", "position": 60 },
+            { "color": "#1E293B", "position": 100 }
+          ]
+        }
+      },
+      "elements": [
+        {
+          "id": "s1-deco1",
+          "type": "shape",
+          "rect": { "x": 78, "y": -6, "w": 30, "h": 30 },
+          "shape": {
+            "shape_type": "ellipse",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "radial",
+                "stops": [
+                  { "color": "#22D3EE", "position": 0, "opacity": 0.35 },
+                  { "color": "#22D3EE", "position": 70, "opacity": 0.05 },
+                  { "color": "#22D3EE", "position": 100, "opacity": 0 }
+                ]
+              }
+            }
+          },
+          "opacity": 0.6
+        },
+        {
+          "id": "s1-deco2",
+          "type": "shape",
+          "rect": { "x": -8, "y": 82, "w": 26, "h": 26 },
+          "shape": {
+            "shape_type": "ellipse",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "radial",
+                "stops": [
+                  { "color": "#A78BFA", "position": 0, "opacity": 0.3 },
+                  { "color": "#A78BFA", "position": 70, "opacity": 0.05 },
+                  { "color": "#A78BFA", "position": 100, "opacity": 0 }
+                ]
+              }
+            }
+          },
+          "opacity": 0.6
+        },
+        {
+          "id": "s1-rule",
+          "type": "shape",
+          "rect": { "x": 46.5, "y": 30, "w": 7, "h": 0.4 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" }
+          },
+          "animation": { "type": "wipe", "trigger": "after_previous", "direction": "left", "duration": 0.8 }
+        },
+        {
+          "id": "s1-title",
+          "type": "title",
+          "rect": { "x": 8, "y": 34, "w": 84, "h": 14 },
+          "text": "Otter PPT",
+          "style": { "font_size": 54, "bold": true, "color": "#E2E8F0", "align": "center", "shadow": true }
+        },
+        {
+          "id": "s1-sub",
+          "type": "subtitle",
+          "rect": { "x": 15, "y": 50, "w": 70, "h": 8 },
+          "text": "AI 驱动 · Go 原生 · 纯代码生成 PowerPoint",
+          "style": { "font_size": 22, "color": "#22D3EE", "align": "center" }
+        },
+        {
+          "id": "s1-meta",
+          "type": "body",
+          "rect": { "x": 20, "y": 72, "w": 60, "h": 6 },
+          "text": "单二进制 · MCP / HTTP / CLI 三种接入 · 2026.08",
+          "style": { "font_size": 13, "color": "#64748B", "align": "center" }
+        }
+      ],
+      "notes": "封面：项目一句话定位——AI 通过工具调用直接产出原生 PPTX，无 COM、无 Java、无浏览器依赖。"
+    },
+    {
+      "id": "s2",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s2-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "为什么做 Otter PPT",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s2-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "s2-p1",
+          "type": "body",
+          "rect": { "x": 7, "y": 22, "w": 86, "h": 24 },
+          "paragraphs": [
+            { "text": "AI 时代的内容生产瓶颈：", "style": { "font_size": 18, "bold": true, "color": "#22D3EE" }, "space_after": 8 },
+            { "text": "LLM 擅长写文字，但排版成专业 PPT 仍然要人肉拖拽。", "style": { "font_size": 15, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "HTML 转截图再贴图的方案不可编辑、不可二次加工。", "style": { "font_size": 15, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "python-pptx 类脚本库能力零散，缺少设计系统与智能布局。", "style": { "font_size": 15, "color": "#CBD5E1" }, "bullet": "•" }
+          ]
+        },
+        {
+          "id": "s2-p2",
+          "type": "body",
+          "rect": { "x": 7, "y": 52, "w": 86, "h": 14 },
+          "text": "Otter PPT 的回答：把「设计能力」做成一组结构化工具，让任何 AI Agent 通过函数调用直接产出可编辑的原生 PPTX。",
+          "style": { "font_size": 16, "color": "#E2E8F0", "line_spacing": 1.4 }
+        },
+        {
+          "id": "s2-chips",
+          "type": "body",
+          "rect": { "x": 7, "y": 72, "w": 86, "h": 6 },
+          "text": "Go 单二进制  ·  零外部依赖  ·  AI 原生设计系统  ·  18 种智能布局",
+          "style": { "font_size": 13, "color": "#22D3EE", "align": "center" }
+        }
+      ],
+      "notes": "痛点：AI 写得出内容但排不出版；贴图方案不可编辑。方案：设计能力工具化。"
+    },
+    {
+      "id": "s3",
+      "layout": "twoColumn",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s3-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "架构总览",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s3-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" }
+          }
+        },
+        {
+          "id": "s3-col-l",
+          "type": "body",
+          "rect": { "x": 7, "y": 24, "w": 42, "h": 62 },
+          "paragraphs": [
+            { "text": "接入层", "style": { "font_size": 19, "bold": true, "color": "#A78BFA" }, "space_after": 6 },
+            { "text": "CLI（gen / serve）", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "HTTP REST API", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "MCP Server（Claude / Cursor）", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "STDIO JSON-RPC", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "space_after": 12 },
+            { "text": "智能层", "style": { "font_size": 19, "bold": true, "color": "#A78BFA" }, "space_after": 6 },
+            { "text": "Planner：大纲到设计锁（spec_lock）", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "Vision 回评：渲染截图到视觉模型修正", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "AutoLayout：18 布局模板 + 溢出自动修复", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" }
+          ]
+        },
+        {
+          "id": "s3-col-r",
+          "type": "body",
+          "rect": { "x": 52, "y": 24, "w": 42, "h": 62 },
+          "paragraphs": [
+            { "text": "设计系统层", "style": { "font_size": 19, "bold": true, "color": "#A78BFA" }, "space_after": 6 },
+            { "text": "7 种风格预设（swiss_minimal / dark_tech 等）", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "8 套色板（tech_neon / cool_corporate 等）", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "风格与色板组合成设计锁", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "space_after": 12 },
+            { "text": "渲染层", "style": { "font_size": 19, "bold": true, "color": "#A78BFA" }, "space_after": 6 },
+            { "text": "builder：Presentation JSON 编译为 OOXML", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "svgdecode：SVG 转原生矢量元素", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "renderer：LibreOffice / 浏览器截图 / 结构化降级", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" },
+            { "text": "template：现有 .pptx 设计 DNA 提取", "style": { "font_size": 14, "color": "#CBD5E1" }, "bullet": "•" }
+          ]
+        }
+      ],
+      "notes": "四层架构：接入、智能、设计系统、渲染。每层都可独立使用。"
+    },
+    {
+      "id": "s4",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s4-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "核心能力矩阵",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s4-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" }
+          }
+        },
+        {
+          "id": "s4-table",
+          "type": "table",
+          "rect": { "x": 7, "y": 24, "w": 86, "h": 62 },
+          "table": {
+            "headers": [
+              { "text": "能力域" },
+              { "text": "覆盖内容" },
+              { "text": "状态" }
+            ],
+            "rows": [
+              [
+                { "text": "原生图表", "style": { "bold": true } },
+                { "text": "13 种类型（含 3D / 组合 / 趋势线 / 误差线 / 次坐标轴）" },
+                { "text": "已完成", "style": { "color": "#22D3EE", "bold": true } }
+              ],
+              [
+                { "text": "形状语言", "style": { "bold": true } },
+                { "text": "渐变 / 透明度 / 阴影 / 发光 / 虚线 / 箭头 / freeform 自定义几何" },
+                { "text": "已完成", "style": { "color": "#22D3EE", "bold": true } }
+              ],
+              [
+                { "text": "媒体嵌入", "style": { "bold": true } },
+                { "text": "PNG / JPEG / GIF / SVG 图片、视频、音频、字体嵌入" },
+                { "text": "已完成", "style": { "color": "#22D3EE", "bold": true } }
+              ],
+              [
+                { "text": "动效", "style": { "bold": true } },
+                { "text": "7 种元素动画、3 种触发、5 方向 + 幻灯片切换" },
+                { "text": "已完成", "style": { "color": "#22D3EE", "bold": true } }
+              ],
+              [
+                { "text": "表格", "style": { "bold": true } },
+                { "text": "单元格样式 / 合并单元格 / 隔行变色" },
+                { "text": "已完成", "style": { "color": "#22D3EE", "bold": true } }
+              ],
+              [
+                { "text": "智能布局", "style": { "bold": true } },
+                { "text": "18 种布局模板 + 冲突检测 + 溢出自动修复" },
+                { "text": "已完成", "style": { "color": "#22D3EE", "bold": true } }
+              ],
+              [
+                { "text": "模板复用", "style": { "bold": true } },
+                { "text": "从现有 .pptx 提取色板 / 字体 / 版式并复用" },
+                { "text": "已完成", "style": { "color": "#22D3EE", "bold": true } }
+              ],
+              [
+                { "text": "SVG 导入", "style": { "bold": true } },
+                { "text": "SVG 转原生可编辑矢量元素（非贴图）" },
+                { "text": "已完成", "style": { "color": "#22D3EE", "bold": true } }
+              ]
+            ],
+            "header_color": "#141B2E",
+            "border_color": "#334155",
+            "alt_row_color": "#0F1524",
+            "font_size": 12
+          }
+        }
+      ],
+      "notes": "八项能力域全部落地。表格本身即由项目表格引擎渲染（含合并与隔行变色）。"
+    },
+    {
+      "id": "s5",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s5-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "AI 如何使用它：三层生成管线",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s5-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" }
+          }
+        },
+        {
+          "id": "s5-step1",
+          "type": "shape",
+          "rect": { "x": 7, "y": 26, "w": 26, "h": 34 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#22D3EE", "width": 1, "opacity": 0.6 },
+            "corner_radius": 0.08
+          }
+        },
+        {
+          "id": "s5-step1t",
+          "type": "body",
+          "rect": { "x": 9, "y": 29, "w": 22, "h": 28 },
+          "paragraphs": [
+            { "text": "01 规划", "style": { "font_size": 17, "bold": true, "color": "#22D3EE" }, "space_after": 6 },
+            { "text": "分析主题、拆分论点，从目录中选定风格与色板，产出设计锁", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "s5-arrow1",
+          "type": "connector",
+          "rect": { "x": 34, "y": 42.7, "w": 5, "h": 0.6 },
+          "connector": { "connector_type": "arrow", "color": "#A78BFA", "width": 2 }
+        },
+        {
+          "id": "s5-step2",
+          "type": "shape",
+          "rect": { "x": 40, "y": 26, "w": 26, "h": 34 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#A78BFA", "width": 1, "opacity": 0.6 },
+            "corner_radius": 0.08
+          }
+        },
+        {
+          "id": "s5-step2t",
+          "type": "body",
+          "rect": { "x": 42, "y": 29, "w": 22, "h": 28 },
+          "paragraphs": [
+            { "text": "02 生成", "style": { "font_size": 17, "bold": true, "color": "#A78BFA" }, "space_after": 6 },
+            { "text": "逐页调用 20 余个工具：add_slide / set_theme / add_chart / import_svg，智能布局实时校验修正", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "s5-arrow2",
+          "type": "connector",
+          "rect": { "x": 67, "y": 42.7, "w": 5, "h": 0.6 },
+          "connector": { "connector_type": "arrow", "color": "#F472B6", "width": 2 }
+        },
+        {
+          "id": "s5-step3",
+          "type": "shape",
+          "rect": { "x": 73, "y": 26, "w": 26, "h": 34 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#F472B6", "width": 1, "opacity": 0.6 },
+            "corner_radius": 0.08
+          }
+        },
+        {
+          "id": "s5-step3t",
+          "type": "body",
+          "rect": { "x": 75, "y": 29, "w": 22, "h": 28 },
+          "paragraphs": [
+            { "text": "03 回评", "style": { "font_size": 17, "bold": true, "color": "#F472B6" }, "space_after": 6 },
+            { "text": "render_slides 渲染截图，视觉模型审稿，定向修正，导出 .pptx 或实时预览", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "s5-foot",
+          "type": "body",
+          "rect": { "x": 7, "y": 72, "w": 86, "h": 6 },
+          "text": "规划 → 生成 → 回评，闭环迭代直到视觉质量达标",
+          "style": { "font_size": 13, "color": "#64748B", "align": "center" }
+        }
+      ],
+      "notes": "三层管线：规划（设计锁）、生成（工具调用+智能布局）、回评（渲染+视觉审稿）。"
+    },
+    {
+      "id": "s6",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s6-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "原生图表能力实测",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s6-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" }
+          }
+        },
+        {
+          "id": "s6-chart",
+          "type": "chart",
+          "rect": { "x": 7, "y": 24, "w": 55, "h": 60 },
+          "chart": {
+            "type": "bar",
+            "title": "各模块测试规模（用例数示意）",
+            "categories": ["builder", "svgdecode", "design", "server", "renderer", "template"],
+            "series": [
+              {
+                "name": "用例数",
+                "values": [42, 10, 8, 5, 4, 3],
+                "color": "#22D3EE"
+              }
+            ],
+            "show_legend": false,
+            "show_value": true,
+            "gridlines": false,
+            "font_size": 11
+          }
+        },
+        {
+          "id": "s6-note",
+          "type": "body",
+          "rect": { "x": 66, "y": 26, "w": 28, "h": 56 },
+          "paragraphs": [
+            { "text": "这是原生图表", "style": { "font_size": 16, "bold": true, "color": "#22D3EE" }, "space_after": 8 },
+            { "text": "非贴图：双击可编辑数据、改配色、换类型。", "style": { "font_size": 13, "color": "#CBD5E1" } },
+            { "space_after": 10 },
+            { "text": "支持 13 种", "style": { "font_size": 16, "bold": true, "color": "#A78BFA" }, "space_after": 8 },
+            { "text": "bar / column / line / pie / area / doughnut / scatter / combo 及 3D 系列，含趋势线、误差线、次坐标轴。", "style": { "font_size": 13, "color": "#CBD5E1" } }
+          ]
+        }
+      ],
+      "notes": "左图即由项目 add_chart 引擎生成的原生 OOXML 图表。"
+    },
+    {
+      "id": "s7",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s7-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "四种接入方式",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s7-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" }
+          }
+        },
+        {
+          "id": "s7-cards",
+          "type": "body",
+          "rect": { "x": 7, "y": 24, "w": 86, "h": 62 },
+          "paragraphs": [
+            { "text": "MCP Server（推荐）", "style": { "font_size": 17, "bold": true, "color": "#22D3EE" }, "space_after": 4 },
+            { "text": "otter-ppt mcp：Claude Code / Cursor 原生工具集成，20 余个设计工具直接暴露为函数调用", "style": { "font_size": 13, "color": "#CBD5E1" } },
+            { "space_after": 14 },
+            { "text": "HTTP REST", "style": { "font_size": 17, "bold": true, "color": "#A78BFA" }, "space_after": 4 },
+            { "text": "otter-ppt serve：POST /api/v1/* 全量工具 + 渲染截图 + Web 实时预览 /preview/:token", "style": { "font_size": 13, "color": "#CBD5E1" } },
+            { "space_after": 14 },
+            { "text": "STDIO JSON-RPC", "style": { "font_size": 17, "bold": true, "color": "#F472B6" }, "space_after": 4 },
+            { "text": "otter-ppt stdio：通用 Agent 的进程内工具服务器", "style": { "font_size": 13, "color": "#CBD5E1" } },
+            { "space_after": 14 },
+            { "text": "CLI", "style": { "font_size": 17, "bold": true, "color": "#E2E8F0" }, "space_after": 4 },
+            { "text": "otter-ppt gen：一条命令从主题直达 .pptx（内置规划与视觉回评）", "style": { "font_size": 13, "color": "#CBD5E1" } }
+          ]
+        }
+      ],
+      "notes": "四种接入：MCP（推荐）、REST（含实时预览）、STDIO、CLI。"
+    },
+    {
+      "id": "s8",
+      "layout": "section",
+      "background": {
+        "type": "gradient",
+        "gradient": {
+          "type": "linear",
+          "angle": 315,
+          "stops": [
+            { "color": "#0A0E1A", "position": 0 },
+            { "color": "#141B2E", "position": 100 }
+          ]
+        }
+      },
+      "elements": [
+        {
+          "id": "s8-deco",
+          "type": "shape",
+          "rect": { "x": -10, "y": -10, "w": 45, "h": 45 },
+          "shape": {
+            "shape_type": "ellipse",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "radial",
+                "stops": [
+                  { "color": "#22D3EE", "position": 0, "opacity": 0.25 },
+                  { "color": "#22D3EE", "position": 100, "opacity": 0 }
+                ]
+              }
+            }
+          },
+          "opacity": 0.5
+        },
+        {
+          "id": "s8-title",
+          "type": "title",
+          "rect": { "x": 10, "y": 36, "w": 80, "h": 16 },
+          "text": "让 AI 直接产出专业 PPT",
+          "style": { "font_size": 40, "bold": true, "color": "#E2E8F0", "align": "center", "shadow": true }
+        },
+        {
+          "id": "s8-sub",
+          "type": "subtitle",
+          "rect": { "x": 20, "y": 54, "w": 60, "h": 8 },
+          "text": "Otter PPT · 功能完成度约 98%",
+          "style": { "font_size": 18, "color": "#22D3EE", "align": "center" }
+        },
+        {
+          "id": "s8-meta",
+          "type": "body",
+          "rect": { "x": 15, "y": 70, "w": 70, "h": 6 },
+          "text": "感谢观看 · 源码： github.com/otter-ppt/otter-ppt",
+          "style": { "font_size": 12, "color": "#64748B", "align": "center" }
+        }
+      ],
+      "notes": "结尾页：项目愿景与完成度。"
+    }
+  ]
+}

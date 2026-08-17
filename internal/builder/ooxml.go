@@ -70,6 +70,12 @@ func colorXMLWithOpacity(color string, opacity float64) string {
 	return fmt.Sprintf(`<a:srgbClr val="%02X%02X%02X">%s</a:srgbClr>`, r, g, b, alpha)
 }
 
+// normalizeHex strips a leading "#" from a hex color string, uppercasing it.
+// OOXML srgbClr val must be pure hex without the "#" prefix.
+func normalizeHex(color string) string {
+	return strings.ToUpper(strings.TrimPrefix(color, "#"))
+}
+
 func solidFillXML(color string) string {
 	return solidFillOpacityXML(color, 0)
 }

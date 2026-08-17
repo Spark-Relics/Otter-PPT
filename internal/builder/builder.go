@@ -108,6 +108,8 @@ func (b *Builder) Write(w io.Writer) error {
 		b.writeSlideMasterRels,
 		b.writeSlideLayout,
 		b.writeSlideLayoutRels,
+		b.writeNotesMaster,
+		b.writeNotesMasterRels,
 	}
 
 	for _, fn := range writers {

@@ -300,6 +300,7 @@ func (b *Builder) writeTable(buf *strings.Builder, elem *model.Element) {
 			if textColor == "" {
 				textColor = "E2E8F0"
 			}
+			textColor = normalizeHex(textColor)
 			// Determine alignment: use cell style align, or default center
 			cellAlign := alignXML(cell.Style.Align)
 			if cellAlign == "" {
@@ -515,15 +516,17 @@ func buildRunXML(text string, style model.TextStyle, fontSize int) string {
 		fmt.Fprintf(&sb, ` spc="%d"`, int(style.LetterSpacing*100))
 	}
 	sb.WriteString(`>`)
-	if style.FontName != "" {
-		fontName := xmlEscape(style.FontName)
-		fmt.Fprintf(&sb, `<a:latin typeface="%s"/><a:ea typeface="%s"/><a:cs typeface="%s"/>`, fontName, fontName, fontName)
-	}
+	// Child order must follow CT_TextCharacterProperties schema:
+	// fill → effectLst → latin/ea/cs (PowerPoint enforces this order).
 	if style.Color != "" {
 		sb.WriteString(solidFillOpacityXML(style.Color, style.Opacity))
 	}
 	if style.Shadow {
 		sb.WriteString(`<a:effectLst><a:outerShdw blurRad="38100" dist="19050" dir="2700000"><a:srgbClr val="000000"><a:alpha val="35000"/></a:srgbClr></a:outerShdw></a:effectLst>`)
+	}
+	if style.FontName != "" {
+		fontName := xmlEscape(style.FontName)
+		fmt.Fprintf(&sb, `<a:latin typeface="%s"/><a:ea typeface="%s"/><a:cs typeface="%s"/>`, fontName, fontName, fontName)
 	}
 	sb.WriteString(`</a:rPr>`)
 	fmt.Fprintf(&sb, `<a:t>%s</a:t></a:r>`, xmlEscape(text))
