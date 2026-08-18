@@ -10,6 +10,7 @@ import (
 	"github.com/otter-ppt/otter-ppt/internal/model"
 	"github.com/otter-ppt/otter-ppt/internal/svgdecode"
 	"github.com/otter-ppt/otter-ppt/internal/template"
+	"github.com/otter-ppt/otter-ppt/internal/viz"
 )
 
 func elementIDs(elems []*model.Element) []string {
@@ -441,9 +442,28 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 			msg += fmt.Sprintf(" (%d constructs skipped/approximated: %s)",
 				len(res.Skipped), strings.Join(res.Skipped, "; "))
 		}
-		return ok(msg, map[string]any{
+		data := map[string]any{
 			"element_ids": elementIDs(res.Elements),
 			"skipped":     res.Skipped,
+		}
+		if res.PlotArea != nil {
+			data["plot_area"] = res.PlotArea
+			msg += fmt.Sprintf(" Chart plot area: x=%.1f%% y=%.1f%% w=%.1f%% h=%.1f%%.",
+				res.PlotArea.X, res.PlotArea.Y, res.PlotArea.W, res.PlotArea.H)
+		}
+		return ok(msg, data)
+
+	case "get_viz_template":
+		key, _ := args["template"].(string)
+		svg, kind, summary, found := viz.Get(key)
+		if !found {
+			return fail(fmt.Sprintf("unknown visualization template %q — use a key from the get_viz_template catalog", key))
+		}
+		return ok(fmt.Sprintf("Fetched %s template %q. %s\n\n%s", kind, key, summary, viz.PreviewHint(kind)), map[string]any{
+			"kind":    kind,
+			"key":     key,
+			"summary": summary,
+			"svg":     svg,
 		})
 
 	// ──────── State / Export ────────

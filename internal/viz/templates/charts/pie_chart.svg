@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <!-- Pie Chart Template: 3-6 simple proportions of one whole. -->
+    <rect width="1280" height="720" fill="#FFFFFF"/>
+
+    <g id="header" data-pptx-bounds="60 40 1160 100">
+        <text x="80" y="86" font-size="34" font-weight="800" fill="#0F172A">Market Share</text>
+        <text x="80" y="118" font-size="14" fill="#64748B">Proportions of one whole · four segments</text>
+    </g>
+
+    <g id="chartArea" data-pptx-bounds="100 160 1080 470" data-pptx-replace-with="chart">
+        <metadata type="application/json">
+            {"type":"pie","categories":["Segment A","Segment B","Segment C","Segment D"],"values":[42,28,18,12],"style":{"colors":["#2563EB","#0EA5E9","#14B8A6","#F59E0B"]}}
+        </metadata>
+        <!-- chart-plot-area: 300,180,640,380 -->
+        <g transform="translate(580,380)">
+            <path d="M0,0 L0,-260 A260,260 0 0 1 151.2,-211.5 Z" fill="#2563EB"/>
+            <path d="M0,0 L151.2,-211.5 A260,260 0 0 1 251.9,-64.7 Z" fill="#0EA5E9"/>
+            <path d="M0,0 L251.9,-64.7 A260,260 0 0 1 -214.9,-146.4 Z" fill="#14B8A6"/>
+            <path d="M0,0 L-214.9,-146.4 A260,260 0 0 1 0,-260 Z" fill="#F59E0B"/>
+        </g>
+        <g font-size="18" font-weight="800" fill="#0F172A" text-anchor="middle">
+            <text x="580" y="374">100%</text>
+            <text x="580" y="398" font-size="13" font-weight="600" fill="#64748B">Total share</text>
+        </g>
+    </g>
+
+    <g id="legend" data-pptx-bounds="900 250 320 200">
+        <g font-size="15" fill="#0F172A">
+            <circle cx="920" cy="290" r="7" fill="#2563EB"/>
+            <text x="940" y="295">Segment A · 42%</text>
+            <circle cx="920" cy="330" r="7" fill="#0EA5E9"/>
+            <text x="940" y="335">Segment B · 28%</text>
+            <circle cx="920" cy="370" r="7" fill="#14B8A6"/>
+            <text x="940" y="375">Segment C · 18%</text>
+            <circle cx="920" cy="410" r="7" fill="#F59E0B"/>
+            <text x="940" y="415">Segment D · 12%</text>
+        </g>
+    </g>
+
+    <g id="source" data-pptx-bounds="60 660 1160 30">
+        <text x="80" y="680" font-size="13" fill="#94A3B8">Source: Market analysis report</text>
+    </g>
+</svg>

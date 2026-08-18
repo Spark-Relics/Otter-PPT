@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <!-- Column Chart Template: single-series category comparison, 3-8 categories. -->
+    <rect width="1280" height="720" fill="#FFFFFF"/>
+
+    <g id="header" data-pptx-bounds="60 40 1160 100">
+        <text x="80" y="86" font-size="34" font-weight="800" fill="#0F172A">Category Comparison</text>
+        <text x="80" y="118" font-size="14" fill="#64748B">Single-series value comparison across categories · unit shown on axis</text>
+    </g>
+
+    <g id="chartArea" data-pptx-bounds="100 160 1080 470" data-pptx-replace-with="chart">
+        <metadata type="application/json">
+            {"type":"column","categories":["Category A","Category B","Category C","Category D","Category E"],"series":[{"name":"Value","values":[420,360,510,280,470]}],"style":{"color":"#2563EB"}}
+        </metadata>
+        <!-- chart-plot-area: 140,180,1040,380 -->
+        <g stroke="#E2E8F0" stroke-width="1">
+            <line x1="140" y1="220" x2="1180" y2="220"/>
+            <line x1="140" y1="300" x2="1180" y2="300"/>
+            <line x1="140" y1="380" x2="1180" y2="380"/>
+            <line x1="140" y1="460" x2="1180" y2="460"/>
+            <line x1="140" y1="540" x2="1180" y2="540"/>
+        </g>
+        <line x1="140" y1="180" x2="140" y2="560" stroke="#0F172A" stroke-width="2"/>
+        <line x1="140" y1="560" x2="1180" y2="560" stroke="#0F172A" stroke-width="2"/>
+        <g font-size="13" fill="#64748B">
+            <text x="120" y="184" text-anchor="end">500</text>
+            <text x="120" y="304" text-anchor="end">250</text>
+            <text x="120" y="464" text-anchor="end">0</text>
+        </g>
+        <g font-size="14" font-weight="600" fill="#475569" text-anchor="middle">
+            <text x="245" y="582">Category A</text>
+            <text x="453" y="582">Category B</text>
+            <text x="661" y="582">Category C</text>
+            <text x="869" y="582">Category D</text>
+            <text x="1077" y="582">Category E</text>
+        </g>
+        <g>
+            <rect x="190" y="392" width="110" height="168" fill="#2563EB"/>
+            <text x="245" y="380" font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">420</text>
+            <rect x="398" y="430" width="110" height="130" fill="#2563EB"/>
+            <text x="453" y="418" font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">360</text>
+            <rect x="606" y="370" width="110" height="190" fill="#2563EB"/>
+            <text x="661" y="358" font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">510</text>
+            <rect x="814" y="448" width="110" height="112" fill="#2563EB"/>
+            <text x="869" y="436" font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">280</text>
+            <rect x="1022" y="386" width="110" height="174" fill="#2563EB"/>
+            <text x="1077" y="374" font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">470</text>
+        </g>
+    </g>
+
+    <g id="source" data-pptx-bounds="60 660 1160 30">
+        <text x="80" y="680" font-size="13" fill="#94A3B8">Source: Internal reporting data</text>
+    </g>
+</svg>

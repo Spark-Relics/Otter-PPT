@@ -19,6 +19,9 @@ func TestRegistries(t *testing.T) {
 		if len(s.Rules) == 0 {
 			t.Errorf("style %s has no hard rules", k)
 		}
+		if len(s.Recipes) == 0 {
+			t.Errorf("style %s has no composition recipes", k)
+		}
 	}
 	for k, p := range palettes {
 		if p.Key != k {
@@ -52,7 +55,7 @@ func TestGetters(t *testing.T) {
 
 func TestLock(t *testing.T) {
 	lock := Lock("dark_tech", "tech_neon")
-	for _, want := range []string{"STYLE: dark_tech", "PALETTE: tech_neon", "#0A0E1A", "DESIGN LOCK"} {
+	for _, want := range []string{"STYLE: dark_tech", "PALETTE: tech_neon", "#0A0E1A", "DESIGN LOCK", "Composition recipes"} {
 		if !strings.Contains(lock, want) {
 			t.Errorf("lock missing %q", want)
 		}

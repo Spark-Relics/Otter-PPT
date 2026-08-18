@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <!-- Waterfall Chart Template: running total through sequential contributions. -->
+    <rect width="1280" height="720" fill="#FFFFFF"/>
+
+    <g id="header" data-pptx-bounds="60 40 1160 100">
+        <text x="80" y="86" font-size="34" font-weight="800" fill="#0F172A">Operating Income Bridge</text>
+        <text x="80" y="118" font-size="14" fill="#64748B">From revenue to net income through sequential contributions</text>
+    </g>
+
+    <g id="chartArea" data-pptx-bounds="100 160 1080 470" data-pptx-replace-with="chart">
+        <metadata type="application/json">
+            {"type":"waterfall","categories":["Revenue","COGS","Gross margin","Opex","Taxes","Net income"],"values":[1200,-500,700,-350,-90,260],"style":{"colors":["#2563EB","#E11D48","#2563EB","#E11D48","#E11D48","#059669"]}}
+        </metadata>
+        <!-- chart-plot-area: 160,180,1050,400 -->
+        <g stroke="#E2E8F0" stroke-width="1">
+            <line x1="160" y1="220" x2="1180" y2="220"/>
+            <line x1="160" y1="330" x2="1180" y2="330"/>
+            <line x1="160" y1="440" x2="1180" y2="440"/>
+            <line x1="160" y1="550" x2="1180" y2="550"/>
+        </g>
+        <line x1="160" y1="180" x2="160" y2="580" stroke="#0F172A" stroke-width="2"/>
+        <line x1="160" y1="580" x2="1180" y2="580" stroke="#0F172A" stroke-width="2"/>
+        <g font-size="13" fill="#64748B">
+            <text x="140" y="184" text-anchor="end">1,200</text>
+            <text x="140" y="334" text-anchor="end">600</text>
+            <text x="140" y="584" text-anchor="end">0</text>
+        </g>
+        <g font-size="13" font-weight="600" fill="#475569" text-anchor="middle">
+            <text x="248" y="602">Revenue</text>
+            <text x="418" y="602">COGS</text>
+            <text x="588" y="602">Gross</text>
+            <text x="758" y="602">Opex</text>
+            <text x="928" y="602">Taxes</text>
+            <text x="1098" y="602">Net income</text>
+        </g>
+        <g stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 3">
+            <line x1="333" y1="180" x2="333" y2="560"/>
+            <line x1="503" y1="200" x2="503" y2="460"/>
+            <line x1="673" y1="180" x2="673" y2="500"/>
+            <line x1="843" y1="240" x2="843" y2="480"/>
+            <line x1="1013" y1="260" x2="1013" y2="450"/>
+        </g>
+        <g>
+            <rect x="163" y="200" width="170" height="360" fill="#2563EB"/>
+            <rect x="333" y="460" width="170" height="120" fill="#E11D48"/>
+            <rect x="503" y="200" width="170" height="260" fill="#2563EB"/>
+            <rect x="673" y="360" width="170" height="140" fill="#E11D48"/>
+            <rect x="843" y="320" width="170" height="36" fill="#E11D48"/>
+            <rect x="1013" y="180" width="170" height="104" fill="#059669"/>
+        </g>
+        <g font-size="14" font-weight="700" fill="#0F172A" text-anchor="middle">
+            <text x="248" y="188">1,200</text>
+            <text x="418" y="448">-500</text>
+            <text x="588" y="188">700</text>
+            <text x="758" y="348">-350</text>
+            <text x="928" y="310">-90</text>
+            <text x="1098" y="168">260</text>
+        </g>
+    </g>
+
+    <g id="source" data-pptx-bounds="60 660 1160 30">
+        <text x="80" y="680" font-size="13" fill="#94A3B8">Source: Annual financial statements</text>
+    </g>
+</svg>

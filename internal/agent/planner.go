@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/otter-ppt/otter-ppt/internal/design"
+	"github.com/otter-ppt/otter-ppt/internal/viz"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -81,6 +82,9 @@ STYLE presets (shape language / composition discipline — color-free):
 %s
 PALETTE presets (six semantic color roles):
 %s
+%s
+VISUALIZATION templates (charts/tables — reference these keys in visual_needs for data slides):
+%s
 
 Then output JSON with this exact structure:
 {
@@ -112,7 +116,7 @@ Design Rules:
 - If the user's style hint matches a preset's rule, select that preset; otherwise pick by topic
 - Slide 1 is always "title" layout (cover page with hero image or gradient bg)
 - Slide 2 is "agenda" layout (table of contents)
-- For data-heavy slides, use "chart" or "stats" layouts
+- For data-heavy slides, use "chart" or "stats" layouts and reference a visualization template key in visual_needs (e.g. "chart:column_chart", "table:comparison_matrix") when the data shape matches its selection rule
 - For concept slides, use "three_cards", "four_cards", or "timeline"
 - For section breaks, use "section" layout
 - Last slide is "thank_you" or "contact"
@@ -120,7 +124,8 @@ Design Rules:
 - Keep image prompts detailed and professional (photographic, illustration style, mood, colors)
 - Vary layouts across slides — no more than 2 consecutive same-layout slides
 - Ensure content flows logically from introduction → problem → solution → details → conclusion`,
-		slideCount, topic, style, langName, design.StyleCatalog(), design.PaletteCatalog())
+		slideCount, topic, style, langName, design.StyleCatalog(), design.PaletteCatalog(),
+		design.StatusCatalog(), viz.Catalog())
 
 	resp, err := p.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 		Model: p.model,

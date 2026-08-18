@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <!-- Rating Matrix Template: criteria × alternatives using one repeated ordinal scale. -->
+    <rect width="1280" height="720" fill="#FFFFFF"/>
+
+    <g id="header" data-pptx-bounds="60 40 1160 90">
+        <text x="80" y="82" font-size="32" font-weight="800" fill="#0F172A">Vendor Rating</text>
+        <text x="80" y="112" font-size="14" fill="#64748B">Criteria × vendors on one repeated 1-5 scale</text>
+    </g>
+
+    <g id="rating-matrix" data-pptx-bounds="60 150 1160 500" data-pptx-replace-with="table">
+        <metadata type="application/json">
+            {"type":"rating","headers":["Criterion","Vendor A","Vendor B","Vendor C"],"rows":[["Delivery reliability",5,4,5],["Product quality",4,5,4],["Pricing",3,4,5],["Support responsiveness",4,3,4],["Integration ease",5,4,3]]}
+        </metadata>
+        <rect x="60" y="150" width="1160" height="60" fill="#E2E8F0"/>
+        <rect x="60" y="210" width="1160" height="64" fill="#FFFFFF"/>
+        <rect x="60" y="274" width="1160" height="64" fill="#F8FAFC"/>
+        <rect x="60" y="338" width="1160" height="64" fill="#FFFFFF"/>
+        <rect x="60" y="402" width="1160" height="64" fill="#F8FAFC"/>
+        <rect x="60" y="466" width="1160" height="64" fill="#FFFFFF"/>
+        <g stroke="#CBD5E1" stroke-width="1">
+            <line x1="60" y1="210" x2="1220" y2="210"/>
+            <line x1="60" y1="274" x2="1220" y2="274"/>
+            <line x1="60" y1="338" x2="1220" y2="338"/>
+            <line x1="60" y1="402" x2="1220" y2="402"/>
+            <line x1="60" y1="466" x2="1220" y2="466"/>
+            <line x1="60" y1="530" x2="1220" y2="530"/>
+            <line x1="640" y1="150" x2="640" y2="530"/>
+            <line x1="930" y1="150" x2="930" y2="530"/>
+        </g>
+        <g font-size="15" font-weight="700" fill="#334155">
+            <text x="80" y="188">CRITERION</text>
+            <text x="660" y="188" text-anchor="middle">VENDOR A</text>
+            <text x="950" y="188" text-anchor="middle">VENDOR B</text>
+            <text x="1130" y="188" text-anchor="middle">VENDOR C</text>
+        </g>
+        <g font-size="15" fill="#0F172A">
+            <text x="80" y="250">Delivery reliability</text>
+            <text x="80" y="314">Product quality</text>
+            <text x="80" y="378">Pricing</text>
+            <text x="80" y="442">Support responsiveness</text>
+            <text x="80" y="506">Integration ease</text>
+        </g>
+        <g>
+            <!-- Vendor A: 5,4,3,4,5 -->
+            <g fill="#2563EB"><circle cx="560" cy="246" r="9"/><circle cx="620" cy="246" r="9"/><circle cx="680" cy="246" r="9"/><circle cx="740" cy="246" r="9"/><circle cx="800" cy="246" r="9"/></g>
+            <g fill="#2563EB"><circle cx="560" cy="310" r="9"/><circle cx="620" cy="310" r="9"/><circle cx="680" cy="310" r="9"/><circle cx="740" cy="310" r="9"/><circle cx="800" cy="310" r="9" fill="#E2E8F0"/></g>
+            <g fill="#2563EB"><circle cx="560" cy="374" r="9"/><circle cx="620" cy="374" r="9"/><circle cx="680" cy="374" r="9"/><circle cx="740" cy="374" r="9" fill="#E2E8F0"/><circle cx="800" cy="374" r="9" fill="#E2E8F0"/></g>
+            <g fill="#2563EB"><circle cx="560" cy="438" r="9"/><circle cx="620" cy="438" r="9"/><circle cx="680" cy="438" r="9"/><circle cx="740" cy="438" r="9"/><circle cx="800" cy="438" r="9" fill="#E2E8F0"/></g>
+            <g fill="#2563EB"><circle cx="560" cy="502" r="9"/><circle cx="620" cy="502" r="9"/><circle cx="680" cy="502" r="9"/><circle cx="740" cy="502" r="9"/><circle cx="800" cy="502" r="9"/></g>
+            <!-- Vendor B: 4,5,4,3,4 -->
+            <g fill="#0EA5E9"><circle cx="850" cy="246" r="9"/><circle cx="910" cy="246" r="9"/><circle cx="970" cy="246" r="9"/><circle cx="1030" cy="246" r="9"/><circle cx="1090" cy="246" r="9" fill="#E2E8F0"/></g>
+            <g fill="#0EA5E9"><circle cx="850" cy="310" r="9"/><circle cx="910" cy="310" r="9"/><circle cx="970" cy="310" r="9"/><circle cx="1030" cy="310" r="9"/><circle cx="1090" cy="310" r="9"/></g>
+            <g fill="#0EA5E9"><circle cx="850" cy="374" r="9"/><circle cx="910" cy="374" r="9"/><circle cx="970" cy="374" r="9"/><circle cx="1030" cy="374" r="9"/><circle cx="1090" cy="374" r="9" fill="#E2E8F0"/></g>
+            <g fill="#0EA5E9"><circle cx="850" cy="438" r="9"/><circle cx="910" cy="438" r="9"/><circle cx="970" cy="438" r="9"/><circle cx="1030" cy="438" r="9" fill="#E2E8F0"/><circle cx="1090" cy="438" r="9" fill="#E2E8F0"/></g>
+            <g fill="#0EA5E9"><circle cx="850" cy="502" r="9"/><circle cx="910" cy="502" r="9"/><circle cx="970" cy="502" r="9"/><circle cx="1030" cy="502" r="9"/><circle cx="1090" cy="502" r="9" fill="#E2E8F0"/></g>
+            <!-- Vendor C: 5,4,5,4,3 -->
+            <g fill="#14B8A6"><circle cx="1040" cy="246" r="9"/><circle cx="1100" cy="246" r="9"/><circle cx="1160" cy="246" r="9"/><circle cx="1220" cy="246" r="9" fill="none" stroke="#E2E8F0"/></g>
+        </g>
+        <g fill="#14B8A6">
+            <circle cx="1040" cy="246" r="9"/><circle cx="1100" cy="246" r="9"/><circle cx="1160" cy="246" r="9"/>
+            <circle cx="1040" cy="310" r="9"/><circle cx="1100" cy="310" r="9"/><circle cx="1160" cy="310" r="9"/>
+            <circle cx="1040" cy="374" r="9"/><circle cx="1100" cy="374" r="9"/><circle cx="1160" cy="374" r="9"/>
+            <circle cx="1040" cy="438" r="9"/><circle cx="1100" cy="438" r="9"/><circle cx="1160" cy="438" r="9"/>
+            <circle cx="1040" cy="502" r="9"/><circle cx="1100" cy="502" r="9"/><circle cx="1160" cy="502" r="9"/>
+        </g>
+    </g>
+
+    <g id="legend" data-pptx-bounds="60 660 1160 30">
+        <text x="80" y="682" font-size="13" fill="#64748B">Scale: 1 (weakest) to 5 (strongest)</text>
+    </g>
+</svg>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <!-- Matrix 2x2 Template: x/y position + bubble radius inside a quadrant frame. -->
+    <rect width="1280" height="720" fill="#FFFFFF"/>
+
+    <defs>
+        <marker id="arrowX" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
+            <path d="M2,2 L12,7 L2,12 Z" fill="#0F172A"/>
+        </marker>
+        <marker id="arrowY" markerWidth="14" markerHeight="14" refX="7" refY="2" orient="auto">
+            <path d="M2,12 L7,2 L12,12 Z" fill="#0F172A"/>
+        </marker>
+    </defs>
+
+    <g id="header" data-pptx-bounds="60 40 1160 100">
+        <text x="80" y="86" font-size="34" font-weight="800" fill="#0F172A">Priority Matrix</text>
+        <text x="80" y="118" font-size="14" fill="#64748B">Impact vs effort · bubble size encodes resource cost</text>
+    </g>
+
+    <g id="chartArea" data-pptx-bounds="60 150 1130 500" data-pptx-replace-with="chart">
+        <metadata type="application/json">
+            {"type":"scatter","categories":["Feature A","Feature B","Feature C","Feature D","Feature E","Feature F"],"x":[92,35,88,75,40,28],"y":[82,30,88,70,40,25],"size":[55,70,42,38,30,45],"style":{"colors":["#2563EB","#0EA5E9","#059669","#059669","#F59E0B","#E11D48"]}}
+        </metadata>
+        <!-- chart-plot-area: 160,190,1080,520 -->
+        <rect x="320" y="210" width="460" height="220" fill="#ECFDF5"/>
+        <rect x="160" y="210" width="160" height="220" fill="#FFFBEB"/>
+        <rect x="160" y="430" width="160" height="220" fill="#FFF1F2"/>
+        <rect x="320" y="430" width="460" height="220" fill="#EFF6FF"/>
+        <line x1="160" y1="430" x2="960" y2="430" stroke="#0F172A" stroke-width="3" marker-end="url(#arrowX)"/>
+        <line x1="320" y1="190" x2="320" y2="650" stroke="#0F172A" stroke-width="3" marker-start="url(#arrowY)"/>
+        <text x="640" y="686" font-size="15" font-weight="700" fill="#0F172A" text-anchor="middle">Implementation Effort</text>
+        <text x="240" y="686" font-size="14" font-weight="600" fill="#64748B" text-anchor="middle">Low</text>
+        <text x="880" y="686" font-size="14" font-weight="600" fill="#64748B" text-anchor="middle">High</text>
+        <text x="80" y="430" font-size="15" font-weight="700" fill="#0F172A" text-anchor="middle" transform="rotate(-90,80,430)">Business Impact</text>
+        <text x="100" y="640" font-size="14" font-weight="600" fill="#64748B" text-anchor="end">Low</text>
+        <text x="100" y="210" font-size="14" font-weight="600" fill="#64748B" text-anchor="end">High</text>
+        <g>
+            <text x="185" y="245" font-size="22" font-weight="800" fill="#047857">Quick Wins</text>
+            <text x="345" y="245" font-size="22" font-weight="800" fill="#1D4ED8">Major Projects</text>
+            <text x="185" y="635" font-size="22" font-weight="800" fill="#B45309">Fill Ins</text>
+            <text x="345" y="635" font-size="22" font-weight="800" fill="#BE123C">Thankless Tasks</text>
+        </g>
+        <g font-weight="700" fill="#FFFFFF" text-anchor="middle">
+            <circle cx="840" cy="268" r="55" fill="#2563EB" opacity="0.95"/>
+            <text x="840" y="264" font-size="16">Feature A</text>
+            <text x="840" y="282" font-size="13">Score: 92</text>
+            <circle cx="356" cy="286" r="38" fill="#059669" opacity="0.95"/>
+            <text x="356" y="282" font-size="14">Feature C</text>
+            <text x="356" y="298" font-size="12">Score: 88</text>
+            <circle cx="420" cy="352" r="42" fill="#059669" opacity="0.95"/>
+            <text x="420" y="349" font-size="15">Feature D</text>
+            <text x="420" y="366" font-size="12">Score: 75</text>
+            <circle cx="240" cy="600" r="30" fill="#F59E0B" opacity="0.95"/>
+            <text x="240" y="598" font-size="13">Feature E</text>
+            <text x="240" y="613" font-size="12">Score: 40</text>
+            <circle cx="760" cy="528" r="45" fill="#E11D48" opacity="0.95"/>
+            <text x="760" y="525" font-size="15">Feature B</text>
+            <text x="760" y="542" font-size="13">Score: 35</text>
+            <circle cx="580" cy="470" r="35" fill="#0EA5E9" opacity="0.95"/>
+            <text x="580" y="467" font-size="14">Feature F</text>
+            <text x="580" y="483" font-size="12">Score: 28</text>
+        </g>
+    </g>
+
+    <g id="source" data-pptx-bounds="60 665 1160 30">
+        <text x="80" y="700" font-size="13" fill="#94A3B8">Source: Product prioritization workshop</text>
+    </g>
+</svg>

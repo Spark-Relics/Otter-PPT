@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <!-- Comparison Matrix Template: criteria × alternatives with exact facts. -->
+    <rect width="1280" height="720" fill="#FFFFFF"/>
+
+    <g id="header" data-pptx-bounds="60 40 1160 90">
+        <text x="80" y="82" font-size="32" font-weight="800" fill="#0F172A">Comparison Matrix</text>
+        <text x="80" y="112" font-size="14" fill="#64748B">Options compared through the same stable criteria and units</text>
+    </g>
+
+    <g id="comparison-matrix" data-pptx-bounds="60 150 1160 500" data-pptx-replace-with="table">
+        <metadata type="application/json">
+            {"type":"comparison","headers":["Criterion","Option A","Option B","Option C"],"rows":[["Annual capacity","120 units","160 units","140 units"],["Implementation time","12 weeks","8 weeks","10 weeks"],["Support coverage","Business hours","24 × 5","24 × 7"],["Operating model","Managed","Hybrid","Self-service"],["Estimated total","$240K","$210K","$225K"],["Overall fit","Conditional","Preferred","Alternative"]]}
+        </metadata>
+        <rect x="60" y="150" width="1160" height="60" fill="#E2E8F0"/>
+        <rect x="60" y="210" width="320" height="440" fill="#F8FAFC"/>
+        <rect x="700" y="150" width="260" height="500" fill="#EFF6FF"/>
+        <rect x="60" y="150" width="1160" height="500" fill="none" stroke="#CBD5E1" stroke-width="1.5"/>
+        <g stroke="#CBD5E1" stroke-width="1">
+            <line x1="380" y1="150" x2="380" y2="650"/>
+            <line x1="700" y1="150" x2="700" y2="650"/>
+            <line x1="960" y1="150" x2="960" y2="650"/>
+            <line x1="60" y1="210" x2="1220" y2="210"/>
+            <line x1="60" y1="300" x2="1220" y2="300"/>
+            <line x1="60" y1="390" x2="1220" y2="390"/>
+            <line x1="60" y1="480" x2="1220" y2="480"/>
+            <line x1="60" y1="560" x2="1220" y2="560"/>
+        </g>
+        <g font-size="14" font-weight="700" fill="#334155">
+            <text x="80" y="188">EVALUATION CRITERION</text>
+            <text x="540" y="188" text-anchor="middle">OPTION A</text>
+            <text x="830" y="188" text-anchor="middle" fill="#1D4ED8">OPTION B</text>
+            <text x="1090" y="188" text-anchor="middle">OPTION C</text>
+        </g>
+        <g font-size="15" font-weight="700" fill="#334155">
+            <text x="80" y="266">Annual capacity</text>
+            <text x="80" y="356">Implementation time</text>
+            <text x="80" y="446">Support coverage</text>
+            <text x="80" y="536">Operating model</text>
+            <text x="80" y="616">Estimated total</text>
+        </g>
+        <g font-size="16" fill="#0F172A" text-anchor="middle">
+            <text x="540" y="266">120 units</text>
+            <text x="830" y="266" font-weight="700">160 units</text>
+            <text x="1090" y="266">140 units</text>
+
+            <text x="540" y="356">12 weeks</text>
+            <text x="830" y="356" font-weight="700">8 weeks</text>
+            <text x="1090" y="356">10 weeks</text>
+
+            <text x="540" y="446">Business hours</text>
+            <text x="830" y="446" font-weight="700">24 × 5</text>
+            <text x="1090" y="446">24 × 7</text>
+
+            <text x="540" y="536">Managed</text>
+            <text x="830" y="536" font-weight="700">Hybrid</text>
+            <text x="1090" y="536">Self-service</text>
+
+            <text x="540" y="616">$240K</text>
+            <text x="830" y="616" font-weight="700">$210K</text>
+            <text x="1090" y="616">$225K</text>
+        </g>
+        <text x="540" y="630" font-size="14" font-weight="700" fill="#475569" text-anchor="middle">Conditional</text>
+        <text x="830" y="630" font-size="14" font-weight="700" fill="#1D4ED8" text-anchor="middle">Preferred</text>
+        <text x="1090" y="630" font-size="14" font-weight="700" fill="#475569" text-anchor="middle">Alternative</text>
+    </g>
+</svg>

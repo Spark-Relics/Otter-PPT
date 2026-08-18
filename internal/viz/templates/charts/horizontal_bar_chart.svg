@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <!-- Horizontal Bar Chart Template: ranking 5-12 items with long labels. -->
+    <rect width="1280" height="720" fill="#FFFFFF"/>
+
+    <g id="header" data-pptx-bounds="60 40 1160 100">
+        <text x="80" y="86" font-size="34" font-weight="800" fill="#0F172A">Ranked Comparison</text>
+        <text x="80" y="118" font-size="14" fill="#64748B">Ranked values with long category labels · sorted descending</text>
+    </g>
+
+    <g id="chartArea" data-pptx-bounds="100 150 1080 480" data-pptx-replace-with="chart">
+        <metadata type="application/json">
+            {"type":"bar","categories":["Solution architecture","Customer onboarding","Service reliability","Documentation quality","Integration depth"],"series":[{"name":"Score","values":[92,84,78,71,64]}],"style":{"color":"#2563EB"}}
+        </metadata>
+        <!-- chart-plot-area: 380,180,940,520 -->
+        <g stroke="#E2E8F0" stroke-width="1">
+            <line x1="380" y1="220" x2="1180" y2="220"/>
+            <line x1="380" y1="300" x2="1180" y2="300"/>
+            <line x1="380" y1="380" x2="1180" y2="380"/>
+            <line x1="380" y1="460" x2="1180" y2="460"/>
+            <line x1="380" y1="540" x2="1180" y2="540"/>
+        </g>
+        <line x1="380" y1="180" x2="380" y2="560" stroke="#0F172A" stroke-width="2"/>
+        <line x1="380" y1="560" x2="1180" y2="560" stroke="#0F172A" stroke-width="2"/>
+        <g font-size="14" font-weight="600" fill="#475569">
+            <text x="360" y="196" text-anchor="end">Solution architecture</text>
+            <text x="360" y="276" text-anchor="end">Customer onboarding</text>
+            <text x="360" y="356" text-anchor="end">Service reliability</text>
+            <text x="360" y="436" text-anchor="end">Documentation quality</text>
+            <text x="360" y="516" text-anchor="end">Integration depth</text>
+        </g>
+        <g font-size="13" fill="#64748B">
+            <text x="780" y="580">0</text>
+            <text x="980" y="580">50</text>
+            <text x="1180" y="580">100</text>
+        </g>
+        <g fill="#2563EB">
+            <rect x="380" y="192" width="368" height="28"/>
+            <rect x="380" y="272" width="336" height="28"/>
+            <rect x="380" y="352" width="312" height="28"/>
+            <rect x="380" y="432" width="284" height="28"/>
+            <rect x="380" y="512" width="256" height="28"/>
+        </g>
+        <g font-size="14" font-weight="700" fill="#0F172A">
+            <text x="756" y="212">92</text>
+            <text x="724" y="292">84</text>
+            <text x="700" y="372">78</text>
+            <text x="672" y="452">71</text>
+            <text x="644" y="532">64</text>
+        </g>
+    </g>
+
+    <g id="source" data-pptx-bounds="60 660 1160 30">
+        <text x="80" y="680" font-size="13" fill="#94A3B8">Source: Quarterly satisfaction survey</text>
+    </g>
+</svg>

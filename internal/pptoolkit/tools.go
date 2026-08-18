@@ -2,6 +2,7 @@ package pptoolkit
 
 import (
 	"github.com/otter-ppt/otter-ppt/internal/design"
+	"github.com/otter-ppt/otter-ppt/internal/viz"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -19,7 +20,7 @@ func ToolDefinitions() []openai.Tool {
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_theme",
-			Description: "Set the global color scheme and fonts for the entire presentation. Call this first before adding slides. Two modes: (a) pass style + palette preset keys from the catalog below for a professionally locked design system, or (b) pass explicit hex colors. Preset mode is strongly preferred.\n\nSTYLE presets (shape language / composition discipline):\n" + design.StyleCatalog() + "\nPALETTE presets (six semantic color roles):\n" + design.PaletteCatalog() + "\nWhen style/palette keys are given, individual color args are optional overrides.",
+			Description: "Set the global color scheme and fonts for the entire presentation. Call this first before adding slides. Two modes: (a) pass style + palette preset keys from the catalog below for a professionally locked design system, or (b) pass explicit hex colors. Preset mode is strongly preferred.\n\nSTYLE presets (shape language / composition discipline):\n" + design.StyleCatalog() + "\nPALETTE presets (six semantic color roles):\n" + design.PaletteCatalog() + "\n" + design.StatusCatalog() + "\nWhen style/palette keys are given, individual color args are optional overrides.",
 			Parameters: params(map[string]prop{
 				"name":             {typ: "string", desc: "Theme name"},
 				"style":            {typ: "string", desc: "Style preset key (e.g. dark_tech, swiss_minimal, glassmorphism)"},
@@ -379,10 +380,17 @@ func ToolDefinitions() []openai.Tool {
 		// ────────── AI Image Generation ──────────
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "import_svg",
-			Description: "Compile an SVG slide design into native editable PPTX elements on a slide. The SVG must use viewBox coordinates (e.g. viewBox=\"0 0 1280 720\"). Supported primitives map to native shapes: rect→rectangle/rounded-rectangle, circle/ellipse→ellipse, line/stroked 2-point path→connector, arbitrary path (curves flattened)→editable freeform (custom geometry), text→text box, image→picture. Gradient fills are approximated as solid gray. Transform support: translate/scale/rotate/matrix. Returns the number of created elements plus any skipped constructs.",
+			Description: "Compile an SVG slide design into native editable PPTX elements on a slide. The SVG must use viewBox coordinates (e.g. viewBox=\"0 0 1280 720\"). Supported primitives map to native shapes: rect→rectangle/rounded-rectangle, circle/ellipse→ellipse, line/stroked 2-point path→connector, arbitrary path (curves flattened)→editable freeform (custom geometry), text→text box, image→picture. Gradient fills are approximated as solid gray. Transform support: translate/scale/rotate/matrix. Optional semantic markers: data-pptx-bounds=\"x y w h\" pins a region's rect, and data-pptx-replace-with=\"chart|table\" plus embedded <metadata type=\"application/json\"> upgrades a region to a native PowerPoint chart/table instead of shape fallback.",
 			Parameters: params(map[string]prop{
 				"slide_id": {typ: "string", desc: "Target slide ID", req: true},
 				"svg":      {typ: "string", desc: "Complete SVG document markup", req: true},
+			}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "get_viz_template",
+			Description: "Fetch a canonical SVG visualization template (chart or table) to adapt. This is the preferred way to add charts/tables: get the skeleton, replace its placeholder data with the real numbers, then call import_svg. Templates use neutral reference colors; re-theme to the active design lock while preserving value-to-mark mapping and data-pptx-bounds / data-pptx-replace-with / chart-plot-area markers.\n\nSelection catalog (pick by data shape, not preference):\n" + viz.Catalog(),
+			Parameters: params(map[string]prop{
+				"template": {typ: "string", desc: "Template key (e.g. column_chart, horizontal_bar_chart, line_chart, pie_chart, donut_chart, funnel_chart, gantt_chart, radar_chart, matrix_2x2, waterfall_chart, record_table, metric_table, comparison_matrix, feature_matrix, rating_matrix, hierarchical_table)", req: true},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{

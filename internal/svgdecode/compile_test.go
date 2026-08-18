@@ -235,3 +235,24 @@ func TestCompileSkippedGradient(t *testing.T) {
 		t.Error("expected gradient fill to be reported as skipped/approximated")
 	}
 }
+
+func TestChartPlotAreaMarker(t *testing.T) {
+	svg := `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <!-- chart-plot-area: 300,180,640,380 -->
+  <rect x="100" y="160" width="1080" height="470" fill="#F8FAFC"/>
+</svg>`
+	res, err := Compile(svg, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.PlotArea == nil {
+		t.Fatal("expected chart-plot-area marker to be parsed")
+	}
+	// 300/1280*100 = 23.4375, 180/720*100 = 25, 640/1280*100 = 50, 380/720*100 ≈ 52.778
+	if math.Abs(res.PlotArea.X-23.4375) > 0.01 || math.Abs(res.PlotArea.Y-25) > 0.01 {
+		t.Errorf("plot area = %+v", res.PlotArea)
+	}
+	if math.Abs(res.PlotArea.W-50) > 0.01 || math.Abs(res.PlotArea.H-52.7778) > 0.1 {
+		t.Errorf("plot area = %+v", res.PlotArea)
+	}
+}

@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <!-- Hierarchical Table Template: grouped rows with subtotal/total hierarchy. -->
+    <rect width="1280" height="720" fill="#FFFFFF"/>
+
+    <g id="header" data-pptx-bounds="60 40 1160 90">
+        <text x="80" y="82" font-size="32" font-weight="800" fill="#0F172A">Revenue by Segment</text>
+        <text x="80" y="112" font-size="14" fill="#64748B">Grouped rows with subtotals and a grand total</text>
+    </g>
+
+    <g id="hierarchical-table" data-pptx-bounds="60 150 1160 500" data-pptx-replace-with="table">
+        <metadata type="application/json">
+            {"type":"hierarchical","headers":["Segment","Q1","Q2","Q3","Q4","Total"],"groups":[{"label":"Enterprise","rows":[["Acme","$80K","$85K","$90K","$95K","$350K"],["Globex","$70K","$75K","$80K","$85K","$310K"]],"subtotal":"$660K"},{"label":"SMB","rows":[["Initech","$30K","$35K","$40K","$45K","$150K"],["Umbrella","$25K","$30K","$35K","$40K","$130K"]],"subtotal":"$280K"}],"total":"$940K"}
+        </metadata>
+        <rect x="60" y="150" width="1160" height="56" fill="#E2E8F0"/>
+        <rect x="60" y="206" width="1160" height="50" fill="#0F172A"/>
+        <rect x="60" y="256" width="1160" height="48" fill="#FFFFFF"/>
+        <rect x="60" y="304" width="1160" height="48" fill="#F8FAFC"/>
+        <rect x="60" y="352" width="1160" height="48" fill="#FFFFFF"/>
+        <rect x="60" y="400" width="1160" height="48" fill="#0F172A"/>
+        <rect x="60" y="448" width="1160" height="48" fill="#F8FAFC"/>
+        <rect x="60" y="496" width="1160" height="48" fill="#FFFFFF"/>
+        <rect x="60" y="544" width="1160" height="52" fill="#1D4ED8"/>
+        <g stroke="#CBD5E1" stroke-width="1">
+            <line x1="60" y1="206" x2="1220" y2="206"/>
+            <line x1="60" y1="256" x2="1220" y2="256"/>
+            <line x1="60" y1="304" x2="1220" y2="304"/>
+            <line x1="60" y1="352" x2="1220" y2="352"/>
+            <line x1="60" y1="400" x2="1220" y2="400"/>
+            <line x1="60" y1="448" x2="1220" y2="448"/>
+            <line x1="60" y1="496" x2="1220" y2="496"/>
+            <line x1="60" y1="544" x2="1220" y2="544"/>
+            <line x1="420" y1="150" x2="420" y2="596"/>
+            <line x1="680" y1="150" x2="680" y2="596"/>
+            <line x1="940" y1="150" x2="940" y2="596"/>
+            <line x1="1060" y1="150" x2="1060" y2="596"/>
+        </g>
+        <g font-size="14" font-weight="700" fill="#334155">
+            <text x="80" y="186">SEGMENT</text>
+            <text x="440" y="186" text-anchor="end">Q1</text>
+            <text x="700" y="186" text-anchor="end">Q2</text>
+            <text x="960" y="186" text-anchor="end">Q3</text>
+            <text x="1080" y="186" text-anchor="end">Q4</text>
+            <text x="1200" y="186" text-anchor="end">TOTAL</text>
+        </g>
+        <g font-size="14" fill="#FFFFFF">
+            <text x="80" y="238" font-weight="700">Enterprise</text>
+            <text x="440" y="238" text-anchor="end">—</text>
+            <text x="700" y="238" text-anchor="end">—</text>
+            <text x="960" y="238" text-anchor="end">—</text>
+            <text x="1080" y="238" text-anchor="end">—</text>
+            <text x="1200" y="238" text-anchor="end" font-weight="700">$660K</text>
+        </g>
+        <g font-size="14" fill="#0F172A">
+            <text x="95" y="288">Acme</text>
+            <text x="440" y="288" text-anchor="end">$80K</text>
+            <text x="700" y="288" text-anchor="end">$85K</text>
+            <text x="960" y="288" text-anchor="end">$90K</text>
+            <text x="1080" y="288" text-anchor="end">$95K</text>
+            <text x="1200" y="288" text-anchor="end">$350K</text>
+
+            <text x="95" y="336">Globex</text>
+            <text x="440" y="336" text-anchor="end">$70K</text>
+            <text x="700" y="336" text-anchor="end">$75K</text>
+            <text x="960" y="336" text-anchor="end">$80K</text>
+            <text x="1080" y="336" text-anchor="end">$85K</text>
+            <text x="1200" y="336" text-anchor="end">$310K</text>
+        </g>
+        <g font-size="14" fill="#FFFFFF">
+            <text x="80" y="432" font-weight="700">SMB</text>
+            <text x="440" y="432" text-anchor="end">—</text>
+            <text x="700" y="432" text-anchor="end">—</text>
+            <text x="960" y="432" text-anchor="end">—</text>
+            <text x="1080" y="432" text-anchor="end">—</text>
+            <text x="1200" y="432" text-anchor="end" font-weight="700">$280K</text>
+        </g>
+        <g font-size="14" fill="#0F172A">
+            <text x="95" y="480">Initech</text>
+            <text x="440" y="480" text-anchor="end">$30K</text>
+            <text x="700" y="480" text-anchor="end">$35K</text>
+            <text x="960" y="480" text-anchor="end">$40K</text>
+            <text x="1080" y="480" text-anchor="end">$45K</text>
+            <text x="1200" y="480" text-anchor="end">$150K</text>
+
+            <text x="95" y="528">Umbrella</text>
+            <text x="440" y="528" text-anchor="end">$25K</text>
+            <text x="700" y="528" text-anchor="end">$30K</text>
+            <text x="960" y="528" text-anchor="end">$35K</text>
+            <text x="1080" y="528" text-anchor="end">$40K</text>
+            <text x="1200" y="528" text-anchor="end">$130K</text>
+        </g>
+        <g font-size="15" fill="#FFFFFF">
+            <text x="80" y="577" font-weight="800">Grand Total</text>
+            <text x="440" y="577" text-anchor="end">—</text>
+            <text x="700" y="577" text-anchor="end">—</text>
+            <text x="960" y="577" text-anchor="end">—</text>
+            <text x="1080" y="577" text-anchor="end">—</text>
+            <text x="1200" y="577" text-anchor="end" font-weight="800">$940K</text>
+        </g>
+    </g>
+
+    <g id="source" data-pptx-bounds="60 660 1160 30">
+        <text x="80" y="680" font-size="13" fill="#94A3B8">Source: Quarterly financial report</text>
+    </g>
+</svg>

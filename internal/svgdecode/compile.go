@@ -9,6 +9,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -53,6 +54,7 @@ type Result struct {
 	Elements []*model.Element
 	Skipped  []string // reasons for skipped nodes
 	Canvas   Canvas
+	PlotArea *model.Rect // parsed from chart-plot-area comment, in percentage coords
 }
 
 // Compile parses an SVG document and emits model elements positioned in
@@ -76,6 +78,7 @@ func Compile(svgText string, opts Options) (*Result, error) {
 
 	c := &compiler{opts: opts, canvas: canvas, res: &Result{Canvas: canvas}}
 	c.walk(&root, identityTransform())
+	c.res.PlotArea = parseChartPlotArea(svgText, c)
 	if len(c.res.Elements) == 0 {
 		return nil, fmt.Errorf("no compilable elements found (skipped: %s)", strings.Join(c.res.Skipped, "; "))
 	}
@@ -221,6 +224,11 @@ func (c *compiler) walk(n *svgNode, parent transform) {
 
 	switch n.XMLName.Local {
 	case "svg", "g", "a":
+		// A region carrying data-pptx-replace-with upgrades to one native
+		// PowerPoint chart/table instead of the shape fallback children.
+		if n.attr("data-pptx-replace-with") != "" && c.tryNativeObject(n) {
+			return
+		}
 		for i := range n.Children {
 			c.walk(&n.Children[i], tr)
 		}
@@ -812,6 +820,29 @@ func clamp01(v float64) float64 {
 		return 1
 	}
 	return v
+}
+
+var chartPlotAreaRE = regexp.MustCompile(`(?i)<!--\s*chart-plot-area\s*:\s*([^>]+?)\s*-->`)
+
+// parseChartPlotArea reads the chart-plot-area comment (viewBox units) and
+// returns it as a percentage-space rect. The marker lets a chart template
+// document exactly where the plot sits, so import_svg can report the native
+// plot region back to the agent even when the shape fallback is kept.
+func parseChartPlotArea(svgText string, c *compiler) *model.Rect {
+	m := chartPlotAreaRE.FindStringSubmatch(svgText)
+	if m == nil {
+		return nil
+	}
+	nums := ParseNumbers(m[1])
+	if len(nums) != 4 || nums[2] <= 0 || nums[3] <= 0 {
+		return nil
+	}
+	return &model.Rect{
+		X: c.pct(nums[0], c.canvas.ViewW),
+		Y: c.pct(nums[1], c.canvas.ViewH),
+		W: c.pct(nums[2], c.canvas.ViewW),
+		H: c.pct(nums[3], c.canvas.ViewH),
+	}
 }
 
 // DecodeDataURL extracts bytes from a data: URI (used by image elements).

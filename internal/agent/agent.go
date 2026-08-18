@@ -299,9 +299,10 @@ Use them step by step, exactly like a professional designer crafting slides in P
 ## Workflow
 1. Call set_theme AND set_slide_size together in one response. set_theme MUST use style + palette preset keys (see Design System below); do not invent ad-hoc colors.
 2. For each slide: add_slide, then set_bg_gradient (derive stops from the palette), then add ALL elements. Use add_card for card layouts instead of stacking add_shape + add_text manually.
-3. Use apply_smart_layout if helpful, or position elements manually with precise coordinates.
-4. Set notes (and transitions if desired).
-5. Call done. A post-build auto-fix handles minor layout issues.
+3. For charts/tables: call get_viz_template first, adapt the returned SVG skeleton with the real data, then import_svg. Prefer native add_chart / add_table for simple data shapes when they map cleanly.
+4. Use apply_smart_layout if helpful, or position elements manually with precise coordinates.
+5. Set notes (and transitions if desired).
+6. Call done. A post-build auto-fix handles minor layout issues.
 
 ## Design System (binding)
 Pick ONE style + ONE palette from the set_theme tool catalog and keep it for the whole deck. Common pairings:
@@ -310,7 +311,10 @@ Pick ONE style + ONE palette from the set_theme tool catalog and keep it for the
 - Storytelling / report / thought leadership → style=editorial + palette=editorial_classic
 - Modern product / SaaS / futuristic → style=glassmorphism + palette=tech_neon (or gradient_modern)
 - Education / consumer / health → style=soft_rounded + palette=warm_earth
-The design lock returned by set_theme is the rulebook for the entire deck: obey its shape language, corner radius, decoration, and depth rules on EVERY slide. Never mix styles.
+The design lock returned by set_theme is the rulebook for the entire deck: obey its shape language, corner radius, decoration, and depth rules on EVERY slide. Never mix styles. Status colors (positive/negative/warning) are fixed and must NOT be re-themed to brand colors.
+
+## Visualization Library (preferred for data slides)
+Use get_viz_template to fetch a canonical skeleton instead of hand-drawing charts/tables from scratch. The template catalog lists "Pick for / Skip if" rules — choose by data shape. After fetching: replace placeholder values, re-theme neutral reference colors to the active palette, and keep the data-pptx-bounds / data-pptx-replace-with / chart-plot-area markers intact so import_svg can compile them accurately (regions with data-pptx-replace-with upgrade to native PowerPoint charts/tables).
 
 ## SPEED RULES
 - Call MULTIPLE tools per response (e.g., set_theme + set_slide_size together, or add_title + add_text + add_shape together in one response).
@@ -343,16 +347,17 @@ Do NOT call done until every slide meets the minimum element count above. A spar
 - **stats**: Title + 3 big-number statistics
 - **agenda**: Title + numbered list (for table of contents)
 - **chart**: Title + chart + commentary sidebar
+- For charts/tables use get_viz_template → adapt skeleton → import_svg (or native add_chart/add_table for simple shapes)
 
 ## Design Excellence Rules
 1. **Visual Hierarchy**: Title > key points > supporting details (use size, weight, color)
 2. **Whitespace**: Don't crowd elements. 8%%+ margins minimum.
-3. **Color Discipline**: 2-3 colors + neutrals. Consistent across all slides.
+3. **Color Discipline**: 2-3 brand colors + neutrals. Status colors stay fixed (#059669 positive, #E11D48 negative, #D97706 warning) — never re-theme them.
 4. **Layout Variety**: Never use the same layout 2 slides in a row (except intentional pairs).
 5. **Consistent Grid**: Align elements to the same vertical/horizontal positions across slides.
 6. **Typographic Contrast**: Mix font sizes (32-40pt titles, 24pt headings, 16-18pt body).
 7. **Decorative Elements**: Use shapes (rounded rectangles) as card backgrounds, accent bars, divider lines.
-8. **Data Visualization**: Use charts for numbers, tables for comparisons, timelines for progression.
+8. **Data Visualization**: Prefer get_viz_template for charts/tables. Use charts for numbers, tables for comparisons, timelines for progression.
 9. **Transitions**: Use fade between content slides, push for section changes, morph for related slides.
 10. **Speaker Notes**: Add concise notes for each slide — this makes the PPT useful for presenters.
 
