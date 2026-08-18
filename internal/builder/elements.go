@@ -200,17 +200,15 @@ func (b *Builder) writeShape(buf *strings.Builder, elem *model.Element) {
 
 	// Text inside shape
 	if elem.Shape.Text != "" {
-		fontSize := elem.Shape.Style.FontSize
-		if fontSize == 0 {
-			fontSize = 14
-		}
-		align := alignXML(elem.Shape.Style.Align)
+		style := b.shapeTextStyle(elem)
+		fontSize := style.FontSize
+		align := alignXML(style.Align)
 		if align == "" {
 			align = "ctr"
 		}
-		buf.WriteString(`<p:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>`)
+		buf.WriteString(`<p:txBody>` + textBodyPropertiesXML(style) + `<a:lstStyle/>`)
 		fmt.Fprintf(buf, `<a:p><a:pPr algn="%s"/>`, align)
-		buf.WriteString(buildRunXML(elem.Shape.Text, elem.Shape.Style, fontSize))
+		buf.WriteString(buildRunXML(elem.Shape.Text, style, fontSize))
 		buf.WriteString(`</a:p></p:txBody>`)
 	} else {
 		buf.WriteString(`<p:txBody><a:bodyPr/><a:lstStyle/><a:p/></p:txBody>`)
@@ -427,6 +425,65 @@ func (b *Builder) textStyle(elementType model.ElementType, style model.TextStyle
 		}
 	}
 	return style
+}
+
+// shapeTextStyle derives a readable, theme-aware text style for text rendered
+// inside a shape. Card-like shapes frequently have dark or saturated fills, so
+// the text color is picked from fill luminance and comfortable insets are
+// applied so text never touches the shape edges.
+func (b *Builder) shapeTextStyle(elem *model.Element) model.TextStyle {
+	style := elem.Shape.Style
+	if style.FontName == "" {
+		style.FontName = b.pres.Theme.BodyFont
+	}
+	if style.FontSize == 0 {
+		style.FontSize = 14
+	}
+	if style.Color == "" {
+		fill := elem.Shape.FillColor
+		if fill == "" && elem.Shape.Fill != nil {
+			switch {
+			case elem.Shape.Fill.Color != "":
+				fill = elem.Shape.Fill.Color
+			case elem.Shape.Fill.Gradient != nil && len(elem.Shape.Fill.Gradient.Stops) > 0:
+				fill = elem.Shape.Fill.Gradient.Stops[0].Color
+			}
+		}
+		if fill != "" {
+			style.Color = contrastTextColor(fill)
+		} else {
+			style.Color = b.pres.Theme.TextColor
+		}
+	}
+	if style.VAlign == "" {
+		style.VAlign = "middle"
+	}
+	// Comfortable panel insets (pt → EMU conversion happens in
+	// textBodyPropertiesXML). Explicit user margins are preserved.
+	if style.MarginLeft == 0 {
+		style.MarginLeft = 6
+	}
+	if style.MarginRight == 0 {
+		style.MarginRight = 6
+	}
+	if style.MarginTop == 0 {
+		style.MarginTop = 4
+	}
+	if style.MarginBottom == 0 {
+		style.MarginBottom = 4
+	}
+	return style
+}
+
+// contrastTextColor returns a readable text color for the given fill color:
+// dark text on light fills, light text on dark fills.
+func contrastTextColor(hex string) string {
+	r, g, b := hexToRGB(hex)
+	lum := (0.299*float64(r) + 0.587*float64(g) + 0.114*float64(b)) / 255.0
+	if lum > 0.62 {
+		return "#0F172A"
+	}
+	return "#FFFFFF"
 }
 
 func textBodyPropertiesXML(style model.TextStyle) string {

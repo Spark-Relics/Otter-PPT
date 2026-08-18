@@ -834,3 +834,63 @@ func TestMultiLayoutPlaceholders(t *testing.T) {
 		}
 	}
 }
+
+func TestContrastTextColor(t *testing.T) {
+	if got := contrastTextColor("#0F172A"); got != "#FFFFFF" {
+		t.Errorf("dark fill should use light text, got %s", got)
+	}
+	if got := contrastTextColor("#F8FAFC"); got != "#0F172A" {
+		t.Errorf("light fill should use dark text, got %s", got)
+	}
+}
+
+func TestShapeTextStyleThemeAware(t *testing.T) {
+	pres := &model.Presentation{
+		Theme: model.Theme{BodyFont: "Microsoft YaHei", TextColor: "#E2E8F0"},
+		Slides: []*model.Slide{{ID: "s1"}},
+	}
+	b := New(pres)
+
+	// Dark fill without explicit text color → light readable text.
+	dark := &model.Element{ID: "shape-dark", Shape: &model.ShapeData{
+		ShapeType: model.ShapeRoundedRectangle,
+		FillColor: "#141B2E",
+		Text:      "卡牌",
+	}}
+	darkStyle := b.shapeTextStyle(dark)
+	if darkStyle.Color != "#FFFFFF" {
+		t.Errorf("dark fill text color = %s, want #FFFFFF", darkStyle.Color)
+	}
+	if darkStyle.FontName != "Microsoft YaHei" {
+		t.Errorf("font name = %s, want theme body font", darkStyle.FontName)
+	}
+	if darkStyle.MarginLeft == 0 || darkStyle.MarginRight == 0 {
+		t.Errorf("expected non-zero horizontal insets, got L=%v R=%v", darkStyle.MarginLeft, darkStyle.MarginRight)
+	}
+
+	// Light fill without explicit text color → dark readable text.
+	light := &model.Element{ID: "shape-light", Shape: &model.ShapeData{
+		ShapeType: model.ShapeRoundedRectangle,
+		FillColor: "#F8FAFC",
+		Text:      "卡牌",
+	}}
+	lightStyle := b.shapeTextStyle(light)
+	if lightStyle.Color != "#0F172A" {
+		t.Errorf("light fill text color = %s, want #0F172A", lightStyle.Color)
+	}
+
+	// Explicit text color must win over auto-contrast.
+	explicit := &model.Element{ID: "shape-explicit", Shape: &model.ShapeData{
+		ShapeType: model.ShapeRoundedRectangle,
+		FillColor: "#141B2E",
+		Text:      "卡牌",
+		Style:     model.TextStyle{Color: "#22D3EE", FontSize: 24, Bold: true},
+	}}
+	explicitStyle := b.shapeTextStyle(explicit)
+	if explicitStyle.Color != "#22D3EE" {
+		t.Errorf("explicit text color should win, got %s", explicitStyle.Color)
+	}
+	if explicitStyle.FontSize != 24 {
+		t.Errorf("explicit font size should win, got %d", explicitStyle.FontSize)
+	}
+}

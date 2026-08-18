@@ -209,6 +209,25 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 		}
 		return ok(fmt.Sprintf("Shape added (id=%s)", elemID), map[string]string{"element_id": elemID})
 
+	case "add_card":
+		id, _ := args["slide_id"].(string)
+		rect := mapToRect(args)
+		title, _ := args["title"].(string)
+		desc, _ := args["description"].(string)
+		accent, _ := args["accent"].(string)
+		panelID, titleID, descID, accentID, err := s.AddCard(id, rect, title, desc, accent)
+		if err != nil {
+			return fail(err.Error())
+		}
+		return ok(fmt.Sprintf("Card added (panel=%s, title=%s, desc=%s, accent=%s)",
+			panelID, titleID, descID, accentID),
+			map[string]any{
+				"panel_id":  panelID,
+				"title_id":  titleID,
+				"desc_id":   descID,
+				"accent_id": accentID,
+			})
+
 	case "add_table":
 		id, _ := args["slide_id"].(string)
 		rect := mapToRect(args)
@@ -638,6 +657,12 @@ func mapToShape(args map[string]any) *model.ShapeData {
 		ShapeType: model.ShapeType(strOr(args, "shape_type", "rectangle")), FillColor: strOr(args, "fill_color", ""),
 		BorderColor: strOr(args, "border_color", ""), BorderWidth: toFloat(args["border_width"]),
 		Text: strOr(args, "text", ""), CornerRadius: toFloat(args["corner_radius"]),
+		Style: model.TextStyle{
+			FontSize: int(toFloat(args["font_size"])),
+			Color:    strOr(args, "text_color", ""),
+			Bold:     boolOr(args, "bold"),
+			Align:    strOr(args, "align", ""),
+		},
 	}
 	if gradient := mapToGradient(args["gradient"]); gradient != nil {
 		shape.Fill = &model.FillStyle{Gradient: gradient, Opacity: toFloat(args["fill_opacity"])}

@@ -1,0 +1,26 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="arc" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#A78BFA"/>
+    </linearGradient>
+    <filter id="dotGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g opacity="0.95">
+    <path d="M230 690C360 520 600 420 840 430C1090 440 1280 570 1380 742" stroke="#1F2D49" stroke-width="2"/>
+    <circle cx="330" cy="714" r="170" stroke="#22D3EE" stroke-opacity="0.34" stroke-width="3"/>
+    <circle cx="330" cy="714" r="108" stroke="#A78BFA" stroke-opacity="0.34" stroke-width="3"/>
+    <circle cx="330" cy="714" r="54" stroke="#22D3EE" stroke-opacity="0.6" stroke-width="3"/>
+    <path d="M426 612C518 560 632 532 752 534" stroke="url(#arc)" stroke-opacity="0.72" stroke-width="3" stroke-linecap="round"/>
+    <path d="M884 552C1008 578 1116 642 1204 734" stroke="url(#arc)" stroke-opacity="0.52" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="752" cy="534" r="8" fill="#22D3EE" filter="url(#dotGlow)"/>
+    <circle cx="1204" cy="734" r="8" fill="#A78BFA" filter="url(#dotGlow)"/>
+  </g>
+</svg>

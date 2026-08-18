@@ -19,6 +19,8 @@ package pptoolkit
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/google/uuid"
@@ -299,11 +301,188 @@ func (s *Session) AddImage(slideID string, rect model.Rect, imagePath string) (s
 
 // AddShape adds a shape element.
 func (s *Session) AddShape(slideID string, rect model.Rect, shape *model.ShapeData) (string, error) {
+	if shape == nil {
+		return "", fmt.Errorf("shape data is required")
+	}
+	s.applyShapeDefaults(shape)
 	return s.addElement(slideID, &model.Element{
 		Type:  model.ElementShape,
 		Rect:  rect,
 		Shape: shape,
 	})
+}
+
+// applyShapeDefaults gives panel-like shapes a coherent look when the agent
+// omitted explicit colors. This keeps every card/panel on-palette instead of
+// rendering as a flat white/transparent box. Explicit fills/borders always win.
+func (s *Session) applyShapeDefaults(shape *model.ShapeData) {
+	isPanel := shape.ShapeType == model.ShapeRoundedRectangle || shape.ShapeType == model.ShapeRectangle
+	if !isPanel {
+		return
+	}
+	hasFill := shape.FillColor != "" || (shape.Fill != nil && (shape.Fill.Color != "" || shape.Fill.Gradient != nil))
+	hasLine := shape.BorderColor != "" || (shape.Line != nil && shape.Line.Color != "")
+	if hasFill || hasLine {
+		return
+	}
+	theme := s.pres.Theme
+	panel := theme.SecondaryColor
+	if panel == "" {
+		panel = "#0F172A"
+	}
+	if shape.Fill != nil && shape.Fill.Gradient == nil && shape.Fill.Color == "" {
+		// Preserve a requested translucency (fill_opacity) with the themed panel.
+		shape.Fill.Color = panel
+	} else {
+		shape.FillColor = panel
+	}
+	shape.BorderColor = theme.PrimaryColor
+	if shape.BorderWidth <= 0 {
+		shape.BorderWidth = 1
+	}
+	if shape.ShapeType == model.ShapeRoundedRectangle && shape.CornerRadius == 0 {
+		shape.CornerRadius = 0.08
+	}
+}
+
+// AddCard creates a professionally styled content card in one call: a rounded
+// panel with a subtle left accent bar, bold title, and muted description. This
+// is the building block for three_cards/four_cards/stats-style layouts and
+// keeps the deck visually coherent without requiring the agent to hand-tune
+// four separate elements.
+//
+// Returns panelID, titleID, descID, accentID.
+func (s *Session) AddCard(slideID string, rect model.Rect, title, description string, accent string) (string, string, string, string, error) {
+	theme := s.pres.Theme
+
+	panel := theme.SecondaryColor
+	if panel == "" {
+		panel = "#0F172A"
+	}
+	border := theme.PrimaryColor
+	if border == "" {
+		border = "#2563EB"
+	}
+	if accent == "" {
+		accent = theme.AccentColor
+	}
+	if accent == "" {
+		accent = border
+	}
+
+	text := readableOn(panel)
+	muted := "#94A3B8"
+	if text == "#0F172A" {
+		muted = "#64748B"
+	}
+
+	panelElem := &model.Element{
+		Type: model.ElementShape,
+		Rect: rect,
+		Shape: &model.ShapeData{
+			ShapeType:    model.ShapeRoundedRectangle,
+			FillColor:    panel,
+			BorderColor:  border,
+			BorderWidth:  1,
+			CornerRadius: 0.06,
+			Shadow:       &model.ShadowStyle{Color: "#000000", Opacity: 0.22, Blur: 6, Distance: 2, Angle: 45},
+		},
+	}
+
+	panelID, err := s.addElement(slideID, panelElem)
+	if err != nil {
+		return "", "", "", "", err
+	}
+
+	accentID := ""
+	if rect.H >= 14 {
+		accentElem := &model.Element{
+			Type: model.ElementShape,
+			Rect: model.Rect{X: rect.X, Y: rect.Y + 5, W: 1.2, H: rect.H - 10},
+			Shape: &model.ShapeData{
+				ShapeType: model.ShapeRectangle,
+				FillColor: accent,
+			},
+		}
+		accentID, err = s.addElement(slideID, accentElem)
+		if err != nil {
+			return "", "", "", "", err
+		}
+	}
+
+	insetX := rect.X + 5.0
+	if accentID != "" {
+		insetX = rect.X + 4.0
+	}
+	titleH := rect.H * 0.32
+	if titleH > 16 {
+		titleH = 16
+	}
+	if titleH < 8 {
+		titleH = 8
+	}
+	titleTop := rect.Y + 6
+	descTop := titleTop + titleH + 2
+	descH := rect.Y + rect.H - 5 - descTop
+	if descH < 4 {
+		descH = 4
+	}
+
+	titleElem := &model.Element{
+		Type: model.ElementBody,
+		Rect: model.Rect{X: insetX, Y: titleTop, W: rect.X + rect.W - insetX - 5, H: titleH},
+		Text: title,
+		Style: model.TextStyle{
+			FontSize: 18,
+			Bold:     true,
+			Color:    text,
+			FontName: theme.BodyFont,
+		},
+	}
+	titleID, err := s.addElement(slideID, titleElem)
+	if err != nil {
+		return "", "", "", "", err
+	}
+
+	descID := ""
+	if description != "" {
+		descElem := &model.Element{
+			Type: model.ElementBody,
+			Rect: model.Rect{X: insetX, Y: descTop, W: rect.X + rect.W - insetX - 5, H: descH},
+			Text: description,
+			Style: model.TextStyle{
+				FontSize: 12,
+				Color:    muted,
+				FontName: theme.BodyFont,
+			},
+		}
+		descID, err = s.addElement(slideID, descElem)
+		if err != nil {
+			return "", "", "", "", err
+		}
+	}
+
+	return panelID, titleID, descID, accentID, nil
+}
+
+// readableOn returns a readable text color for the given background color.
+func readableOn(hex string) string {
+	if hexLuminance(hex) > 0.62 {
+		return "#0F172A"
+	}
+	return "#FFFFFF"
+}
+
+// hexLuminance approximates relative luminance for a "#RRGGBB" color.
+func hexLuminance(hex string) float64 {
+	hex = strings.TrimPrefix(hex, "#")
+	if len(hex) != 6 {
+		return 0.5
+	}
+	r, _ := strconv.ParseInt(hex[0:2], 16, 32)
+	g, _ := strconv.ParseInt(hex[2:4], 16, 32)
+	b, _ := strconv.ParseInt(hex[4:6], 16, 32)
+	return (0.299*float64(r) + 0.587*float64(g) + 0.114*float64(b)) / 255.0
 }
 
 // AddTable adds a table element.

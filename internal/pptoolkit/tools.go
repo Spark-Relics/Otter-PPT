@@ -1,8 +1,8 @@
 package pptoolkit
 
 import (
-	"github.com/sashabaranov/go-openai"
 	"github.com/otter-ppt/otter-ppt/internal/design"
+	"github.com/sashabaranov/go-openai"
 )
 
 // ToolDefinitions returns all available tools in OpenAI function-calling format.
@@ -19,19 +19,19 @@ func ToolDefinitions() []openai.Tool {
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_theme",
-		Description: "Set the global color scheme and fonts for the entire presentation. Call this first before adding slides. Two modes: (a) pass style + palette preset keys from the catalog below for a professionally locked design system, or (b) pass explicit hex colors. Preset mode is strongly preferred.\n\nSTYLE presets (shape language / composition discipline):\n" + design.StyleCatalog() + "\nPALETTE presets (six semantic color roles):\n" + design.PaletteCatalog() + "\nWhen style/palette keys are given, individual color args are optional overrides.",
-		Parameters: params(map[string]prop{
-			"name":             {typ: "string", desc: "Theme name"},
-			"style":            {typ: "string", desc: "Style preset key (e.g. dark_tech, swiss_minimal, glassmorphism)"},
-			"palette":          {typ: "string", desc: "Palette preset key (e.g. tech_neon, cool_corporate)"},
-			"primary_color":    {typ: "string", desc: "Primary color hex, e.g. #1A73E8 (overrides palette)"},
-			"secondary_color":  {typ: "string", desc: "Secondary color hex"},
-			"accent_color":     {typ: "string", desc: "Accent/highlight color hex (overrides palette)"},
-			"background_color": {typ: "string", desc: "Default background color hex (overrides palette)"},
-			"text_color":       {typ: "string", desc: "Default body text color hex"},
-			"title_font":       {typ: "string", desc: "Title font name (overrides style)"},
-			"body_font":        {typ: "string", desc: "Body font name (overrides style)"},
-		}),
+			Description: "Set the global color scheme and fonts for the entire presentation. Call this first before adding slides. Two modes: (a) pass style + palette preset keys from the catalog below for a professionally locked design system, or (b) pass explicit hex colors. Preset mode is strongly preferred.\n\nSTYLE presets (shape language / composition discipline):\n" + design.StyleCatalog() + "\nPALETTE presets (six semantic color roles):\n" + design.PaletteCatalog() + "\nWhen style/palette keys are given, individual color args are optional overrides.",
+			Parameters: params(map[string]prop{
+				"name":             {typ: "string", desc: "Theme name"},
+				"style":            {typ: "string", desc: "Style preset key (e.g. dark_tech, swiss_minimal, glassmorphism)"},
+				"palette":          {typ: "string", desc: "Palette preset key (e.g. tech_neon, cool_corporate)"},
+				"primary_color":    {typ: "string", desc: "Primary color hex, e.g. #1A73E8 (overrides palette)"},
+				"secondary_color":  {typ: "string", desc: "Secondary color hex"},
+				"accent_color":     {typ: "string", desc: "Accent/highlight color hex (overrides palette)"},
+				"background_color": {typ: "string", desc: "Default background color hex (overrides palette)"},
+				"text_color":       {typ: "string", desc: "Default body text color hex"},
+				"title_font":       {typ: "string", desc: "Title font name (overrides style)"},
+				"body_font":        {typ: "string", desc: "Body font name (overrides style)"},
+			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "set_slide_size",
@@ -176,7 +176,7 @@ func ToolDefinitions() []openai.Tool {
 			Parameters: rectParams(map[string]prop{
 				"slide_id":      {typ: "string", desc: "Slide ID", req: true},
 				"shape_type":    {typ: "string", desc: "Shape type", req: true},
-				"fill_color":    {typ: "string", desc: "Fill color hex (empty = no fill)"},
+				"fill_color":    {typ: "string", desc: "Fill color hex (empty = transparent; rectangle/rounded_rectangle panels inherit themed panel fill + border when omitted)"},
 				"border_color":  {typ: "string", desc: "Border color hex"},
 				"border_width":  {typ: "number", desc: "Border width in pt"},
 				"corner_radius": {typ: "number", desc: "Corner radius 0-1 (rounded_rectangle)"},
@@ -184,6 +184,20 @@ func ToolDefinitions() []openai.Tool {
 				"fill_opacity":  {typ: "number", desc: "Fill opacity 0-1"},
 				"shadow":        {typ: "boolean", desc: "Add a subtle outer shadow"},
 				"text":          {typ: "string", desc: "Optional text inside shape"},
+				"font_size":     {typ: "integer", desc: "Text font size in pt (default 14; auto-contrast color)"},
+				"text_color":    {typ: "string", desc: "Text color hex (default: auto-contrast against fill)"},
+				"bold":          {typ: "boolean", desc: "Bold text"},
+				"align":         {typ: "string", desc: "Text align: left, center, right"},
+			}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "add_card",
+			Description: "Add a professionally designed content card in ONE call: rounded panel + left accent bar + bold title + muted description, all themed automatically. Use this instead of manually stacking add_shape + add_text for cards. Ideal for three_cards/four_cards/stats layouts.",
+			Parameters: rectParams(map[string]prop{
+				"slide_id":    {typ: "string", desc: "Slide ID", req: true},
+				"title":       {typ: "string", desc: "Card title (short, <18 chars)", req: true},
+				"description": {typ: "string", desc: "Card description / supporting text"},
+				"accent":      {typ: "string", desc: "Accent bar color hex (defaults to theme accent color)"},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
@@ -199,25 +213,25 @@ func ToolDefinitions() []openai.Tool {
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
-			Name:        "add_chart",
-		Description: "Add a native chart. Selection rules (pick by data shape, not preference): " +
-			"column: single-series category comparison, 3-8 categories; skip for >12 long labels (use bar) or multi-series (use grouped bar via multi-series column). " +
-			"bar (horizontal): ranking 5-12 items, especially long labels; skip for <=8 short labels (use column). " +
-			"line: 1-3 time-series showing direction; skip if cumulative volume matters (use area) or units differ (use combo with secondary axis). " +
-			"area: 1-2 cumulative trend series emphasizing volume; skip for >=3 series. " +
-			"pie: 3-6 simple proportions of one whole; skip for >=7 parts (use doughnut). " +
-			"doughnut: 3-6 proportions where a center KPI deserves emphasis. " +
-			"scatter: x-y correlation between two numeric variables; not for categories. " +
-			"combo: bar+line mix, or two metrics with different units/scales (line series on secondary axis). " +
-			"3D variants (bar_3d, column_3d, line_3d, pie_3d, area_3d): only when explicitly requested; 2D reads cleaner.",
-		Parameters: rectParams(map[string]prop{
-			"slide_id":    {typ: "string", desc: "Slide ID", req: true},
-			"chart_type":  {typ: "string", desc: "Chart type: bar, column, line, pie, area, doughnut, scatter, combo, bar_3d, column_3d, line_3d, pie_3d, area_3d", req: true},
-				"categories":  {typ: "array", desc: "Category labels (x-axis)", req: true},
-				"series":      {typ: "array", desc: "Series [{name, values:[num], color}]", req: true},
-				"title":       {typ: "string", desc: "Chart title"},
-				"show_legend":       {typ: "boolean", desc: "Show legend (default true)"},
-				"show_data_labels":  {typ: "boolean", desc: "Show data labels on chart"},
+			Name: "add_chart",
+			Description: "Add a native chart. Selection rules (pick by data shape, not preference): " +
+				"column: single-series category comparison, 3-8 categories; skip for >12 long labels (use bar) or multi-series (use grouped bar via multi-series column). " +
+				"bar (horizontal): ranking 5-12 items, especially long labels; skip for <=8 short labels (use column). " +
+				"line: 1-3 time-series showing direction; skip if cumulative volume matters (use area) or units differ (use combo with secondary axis). " +
+				"area: 1-2 cumulative trend series emphasizing volume; skip for >=3 series. " +
+				"pie: 3-6 simple proportions of one whole; skip for >=7 parts (use doughnut). " +
+				"doughnut: 3-6 proportions where a center KPI deserves emphasis. " +
+				"scatter: x-y correlation between two numeric variables; not for categories. " +
+				"combo: bar+line mix, or two metrics with different units/scales (line series on secondary axis). " +
+				"3D variants (bar_3d, column_3d, line_3d, pie_3d, area_3d): only when explicitly requested; 2D reads cleaner.",
+			Parameters: rectParams(map[string]prop{
+				"slide_id":         {typ: "string", desc: "Slide ID", req: true},
+				"chart_type":       {typ: "string", desc: "Chart type: bar, column, line, pie, area, doughnut, scatter, combo, bar_3d, column_3d, line_3d, pie_3d, area_3d", req: true},
+				"categories":       {typ: "array", desc: "Category labels (x-axis)", req: true},
+				"series":           {typ: "array", desc: "Series [{name, values:[num], color}]", req: true},
+				"title":            {typ: "string", desc: "Chart title"},
+				"show_legend":      {typ: "boolean", desc: "Show legend (default true)"},
+				"show_data_labels": {typ: "boolean", desc: "Show data labels on chart"},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
@@ -349,8 +363,8 @@ func ToolDefinitions() []openai.Tool {
 			Name:        "apply_smart_layout",
 			Description: "Apply a predefined smart layout template to a slide. Repositions existing elements to match professional spacing. Templates: title, title_content, two_column, image_left, image_right, image_full, section, bullets, quote, three_cards, four_cards, timeline, comparison, stats, chart, agenda, thank_you, contact.",
 			Parameters: params(map[string]prop{
-				"slide_id":  {typ: "string", desc: "Slide ID", req: true},
-				"template":  {typ: "string", desc: "Template ID (e.g. three_cards, two_column, image_left)", req: true},
+				"slide_id": {typ: "string", desc: "Slide ID", req: true},
+				"template": {typ: "string", desc: "Template ID (e.g. three_cards, two_column, image_left)", req: true},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{

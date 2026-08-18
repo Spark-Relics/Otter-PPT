@@ -194,7 +194,7 @@ func (a *Agent) runLoop(ctx context.Context, result *AgentResult) (*AgentResult,
 					}
 					generatedPath, err := a.cfg.ImageGenerator.Generate(ctx, imagePrompt)
 					if err != nil {
-					 errMsg := fmt.Sprintf("Image generation failed: %v", err)
+						errMsg := fmt.Sprintf("Image generation failed: %v", err)
 						a.messages = append(a.messages, openai.ChatCompletionMessage{
 							Role:       openai.ChatMessageRoleTool,
 							Content:    "Error: " + errMsg,
@@ -297,11 +297,20 @@ You have tools to build a complete, beautiful, editable PowerPoint presentation.
 Use them step by step, exactly like a professional designer crafting slides in PowerPoint.
 
 ## Workflow
-1. Call set_theme AND set_slide_size together in one response.
-2. For each slide: add_slide, then set_bg_gradient, then add ALL elements (title, text, shapes, etc.).
+1. Call set_theme AND set_slide_size together in one response. set_theme MUST use style + palette preset keys (see Design System below); do not invent ad-hoc colors.
+2. For each slide: add_slide, then set_bg_gradient (derive stops from the palette), then add ALL elements. Use add_card for card layouts instead of stacking add_shape + add_text manually.
 3. Use apply_smart_layout if helpful, or position elements manually with precise coordinates.
 4. Set notes (and transitions if desired).
 5. Call done. A post-build auto-fix handles minor layout issues.
+
+## Design System (binding)
+Pick ONE style + ONE palette from the set_theme tool catalog and keep it for the whole deck. Common pairings:
+- Tech / AI / dev tools / dark launch → style=dark_tech + palette=tech_neon
+- Corporate / consulting / data → style=swiss_minimal + palette=cool_corporate
+- Storytelling / report / thought leadership → style=editorial + palette=editorial_classic
+- Modern product / SaaS / futuristic → style=glassmorphism + palette=tech_neon (or gradient_modern)
+- Education / consumer / health → style=soft_rounded + palette=warm_earth
+The design lock returned by set_theme is the rulebook for the entire deck: obey its shape language, corner radius, decoration, and depth rules on EVERY slide. Never mix styles.
 
 ## SPEED RULES
 - Call MULTIPLE tools per response (e.g., set_theme + set_slide_size together, or add_title + add_text + add_shape together in one response).
@@ -312,7 +321,7 @@ Use them step by step, exactly like a professional designer crafting slides in P
 Every slide MUST be visually rich. A slide with only a title + one line of text is UNACCEPTABLE.
 
 **Cover slide** (minimum 5 elements): gradient/image background + large title + subtitle + accent line/shape + decorative shape or logo text.
-**Content slide** (minimum 8 elements): background + title + subtitle/intro text + 3-4 card shapes (rounded_rectangle with shadow) + title text in each card + description text in each card + optional accent shapes.
+**Content slide** (minimum 6 elements): background + title + subtitle/intro text + 3-4 cards built with add_card (each card = panel + accent bar + title + description in one call) + optional decorative shapes.
 **Stats slide** (minimum 8 elements): background + title + 3 big numbers (font 48-60pt) + 3 labels + optional shapes.
 **Timeline slide** (minimum 10 elements): background + title + arrow shape + 4-5 milestone shapes + dates + descriptions.
 **Section divider** (minimum 4 elements): distinctive background + large centered text + accent shapes.
@@ -350,7 +359,7 @@ Do NOT call done until every slide meets the minimum element count above. A spar
 ## Composition Patterns (like a real designer)
 - Cover: Full gradient/image bg + bold title + subtitle + accent line
 - Agenda: Numbered list with accent-colored numbers on the left
-- Content + Cards: 3 or 4 rounded_rectangle shapes with shadow, each containing a title + description
+- Content + Cards: use add_card for 3-4 themed cards (panel + left accent bar + bold title + muted description); lay them in a row with 2-3%% gaps, equal heights
 - Stats: Three big numbers (48-60pt) in accent color + small labels below
 - Quote: Large italic centered text with a subtle accent bar above
 - Timeline: Horizontal arrow shape with 4-5 milestone circles (ellipse shapes) with dates + labels
