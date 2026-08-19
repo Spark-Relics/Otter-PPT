@@ -369,6 +369,14 @@ func ToolDefinitions() []openai.Tool {
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "import_pptx",
+			Description: "Import an existing .pptx file into the current session as editable Presentation JSON — full reverse parsing (the inverse of export_pptx). Reconstructs theme, slide size, slides with all elements (text boxes, bullet lists, shapes, tables, charts with cached data, connectors, pictures), backgrounds, and speaker notes. Use this to edit or restyle an existing deck: import, then modify with update_text/update_style/update_position/delete_element, then export_pptx. Pictures are referenced as pptx:package paths and stay embedded on re-export. Unsupported constructs (custGeom freeforms, merged table cells) are approximated with warnings.",
+			Parameters: params(map[string]prop{
+				"pptx_path": {typ: "string", desc: "Path to an existing .pptx file", req: true},
+				"replace":   {typ: "boolean", desc: "Replace the current session's presentation entirely (default true). If false, only the theme and slide size are applied (like load_template)."},
+			}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "load_template",
 			Description: "Import the design DNA from an existing .pptx file: extracts the color palette, title/body fonts, slide size, and slide-layout inventory. With apply=true, immediately applies theme + slide size to the current session (call before adding slides). Always returns the extracted palette/fonts so you can blend them with explicit set_theme overrides.",
 			Parameters: params(map[string]prop{

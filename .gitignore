@@ -33,3 +33,8 @@ Thumbs.db
 .adnify
 officecli-ref/
 ppt-master/
+
+# Local test scratch files
+ceshi.json
+_probe*.txt
+_verify*.pptx

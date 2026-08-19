@@ -8,6 +8,7 @@ import (
 	"github.com/otter-ppt/otter-ppt/internal/design"
 	"github.com/otter-ppt/otter-ppt/internal/layout"
 	"github.com/otter-ppt/otter-ppt/internal/model"
+	"github.com/otter-ppt/otter-ppt/internal/parser"
 	"github.com/otter-ppt/otter-ppt/internal/svgdecode"
 	"github.com/otter-ppt/otter-ppt/internal/template"
 	"github.com/otter-ppt/otter-ppt/internal/viz"
@@ -386,6 +387,43 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 			return fail(err.Error())
 		}
 		return ok(msg)
+
+	// ──────── PPTX Import (reverse parsing) ────────
+	case "import_pptx":
+		pptxPath, _ := args["pptx_path"].(string)
+		if strings.TrimSpace(pptxPath) == "" {
+			return fail("pptx_path is required (path to an existing .pptx file)")
+		}
+		res, err := parser.ParseFile(pptxPath)
+		if err != nil {
+			return fail(fmt.Sprintf("import pptx failed: %v", err))
+		}
+		replace := true
+		if v, ok := args["replace"].(bool); ok {
+			replace = v
+		}
+		if replace {
+			s.mu.Lock()
+			s.pres = res.Presentation
+			s.mu.Unlock()
+			msg := fmt.Sprintf("Imported %d slides from %s (theme %q, %.2fx%.2f in). The deck is now fully editable — use get_state to inspect, update_* tools to modify, export_pptx to write.",
+				len(res.Presentation.Slides), pptxPath, res.Presentation.Theme.Name, res.Presentation.SlideWidth, res.Presentation.SlideHeight)
+			if len(res.Warnings) > 0 {
+				msg += fmt.Sprintf(" %d warnings: %s", len(res.Warnings), strings.Join(res.Warnings, "; "))
+			}
+			return ok(msg, map[string]any{
+				"slides":    len(res.Presentation.Slides),
+				"theme":     res.Presentation.Theme,
+				"warnings":  res.Warnings,
+			})
+		}
+		// Theme-only mode (same as load_template apply=true).
+		s.mu.Lock()
+		s.pres.Theme = res.Presentation.Theme
+		s.pres.SlideWidth = res.Presentation.SlideWidth
+		s.pres.SlideHeight = res.Presentation.SlideHeight
+		s.mu.Unlock()
+		return ok(fmt.Sprintf("Applied design from %s (slides not imported; use replace=true for full import)", pptxPath))
 
 	// ──────── Template Import ────────
 	case "load_template":

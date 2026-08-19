@@ -49,9 +49,10 @@ Build the binary, then register it as a stdio MCP server:
 The server exposes every granular presentation tool plus:
 
 - `export_pptx`: writes the current session to an editable `.pptx` file.
+- `import_pptx`: reverse-parses an existing `.pptx` into the session as editable Presentation JSON (all elements, theme, notes) for AI-driven editing or restyling.
 - `reset_session`: starts a clean presentation session.
 
-A typical agent flow is `set_theme` → `add_slide` → design tools → `export_pptx`. Session state lives for the lifetime of the MCP process, so each client process is isolated.
+A typical agent flow is `set_theme` → `add_slide` → design tools → `export_pptx`. To edit an existing deck: `import_pptx` → inspect with `get_state` → modify with `update_*` tools → `export_pptx`. Session state lives for the lifetime of the MCP process, so each client process is isolated.
 
 ## Generic STDIO JSON-RPC
 
