@@ -396,6 +396,47 @@ func PaletteCatalog() string {
 	return sb.String()
 }
 
+// TypeRole is one typography anchor row in the design lock. Borrowed from
+// ppt-master's spec_lock typography: each recurring text role maps to a
+// declared size anchor with a ±2px tolerance band, so same-role text stays
+// consistent deck-wide instead of drifting page by page.
+type TypeRole struct {
+	Role   string
+	Size   int
+	Weight string
+	Use    string
+}
+
+// TypeRoles derives the typography role anchors from a style's base sizes.
+// Ratios follow the shared leading convention: hero/display 2×, section 1.5×,
+// lead 1.2×, body 1×, caption 0.8×, footnote 0.65× of body size.
+func TypeRoles(s *StyleSpec) []TypeRole {
+	if s == nil {
+		return nil
+	}
+	b := s.BodySize
+	return []TypeRole{
+		{Role: "hero", Size: b * 2, Weight: "bold", Use: "cover headline / single big statement"},
+		{Role: "title", Size: s.TitleSize, Weight: "bold", Use: "per-slide titles"},
+		{Role: "section", Size: b * 3 / 2, Weight: "bold", Use: "section dividers / oversized numerals"},
+		{Role: "lead", Size: b * 6 / 5, Weight: "normal", Use: "subtitle / the one core claim per page"},
+		{Role: "body", Size: b, Weight: "normal", Use: "paragraphs, bullets, card copy"},
+		{Role: "caption", Size: b * 4 / 5, Weight: "normal", Use: "chart labels, card eyebrows, tag chips"},
+		{Role: "footnote", Size: b * 2 / 3, Weight: "normal", Use: "page numbers, sources, credits"},
+	}
+}
+
+// RhythmDiscipline is the page_rhythm contract (ppt-master concept): without
+// planned density variation every page degrades into card grids — the
+// "AI-generated" look. anchor/dense/breathing force deliberate rhythm.
+func RhythmDiscipline() string {
+	return `PAGE RHYTHM — plan density per slide before drawing it:
+- anchor   : structural page (cover / section / thank-you). One dominant visual move — oversized type, full-bleed shape, concentric rings. No card grids.
+- dense    : information-heavy page. Card grids, multi-column, tables, charts are allowed — this is the baseline, not the only mode.
+- breathing: impact page. FORBIDDEN to organize content as multiple parallel rounded containers (3-card rows, 2x2 grids). Use naked text, one big number + one-line interpretation, dividers, or whitespace as the structure.
+Without rhythm variation every page defaults to card grids — that is the "AI-generated" look. Mark each planned slide anchor/dense/breathing and obey its discipline.`
+}
+
 // Lock renders the full design lock: the immutable per-deck contract the
 // build agent must obey on every page. Borrowed from ppt-master's spec_lock
 // concept — a derived snapshot that prevents style drift across long decks.
@@ -420,6 +461,10 @@ func Lock(styleKey, paletteKey string) string {
 		for _, r := range s.Recipes {
 			fmt.Fprintf(&sb, "  * %s\n", r)
 		}
+		sb.WriteString("\nTYPOGRAPHY ROLES — map every text element to one role; deck-wide anchors, ±2px tolerance per occurrence (never invent new sizes):\n")
+		for _, r := range TypeRoles(s) {
+			fmt.Fprintf(&sb, "  * %-9s %2dpt %-6s %s\n", r.Role, r.Size, r.Weight, r.Use)
+		}
 	}
 	if p != nil {
 		fmt.Fprintf(&sb, "\nPALETTE: %s (%s)\n", p.Key, p.Name)
@@ -433,6 +478,7 @@ func Lock(styleKey, paletteKey string) string {
 			sb.WriteString("- Dark discipline: never place dark text on dark panels; borders and dividers use light tints\n")
 		}
 	}
-	sb.WriteString("\n" + StatusCatalog() + "\n")
+	sb.WriteString("\n" + StatusCatalog() + "\n\n")
+	sb.WriteString(RhythmDiscipline())
 	return sb.String()
 }

@@ -55,7 +55,8 @@ func TestGetters(t *testing.T) {
 
 func TestLock(t *testing.T) {
 	lock := Lock("dark_tech", "tech_neon")
-	for _, want := range []string{"STYLE: dark_tech", "PALETTE: tech_neon", "#0A0E1A", "DESIGN LOCK", "Composition recipes"} {
+	for _, want := range []string{"STYLE: dark_tech", "PALETTE: tech_neon", "#0A0E1A", "DESIGN LOCK", "Composition recipes",
+		"TYPOGRAPHY ROLES", "PAGE RHYTHM", "±2px", "breathing", "hero", "footnote"} {
 		if !strings.Contains(lock, want) {
 			t.Errorf("lock missing %q", want)
 		}
@@ -64,6 +65,35 @@ func TestLock(t *testing.T) {
 	// in a broken way.
 	if l := Lock("nope", "nope"); !strings.Contains(l, "DESIGN LOCK") {
 		t.Error("lock with unknown keys should still render header")
+	}
+	// Unknown keys must NOT print typography anchors derived from a nil style.
+	if l := Lock("nope", "nope"); strings.Contains(l, "TYPOGRAPHY ROLES") {
+		t.Error("lock with unknown style should not render typography roles")
+	}
+}
+
+func TestTypeRoles(t *testing.T) {
+	s := GetStyle("dark_tech")
+	roles := TypeRoles(s)
+	if len(roles) != 7 {
+		t.Fatalf("expected 7 typography roles, got %d", len(roles))
+	}
+	byRole := map[string]int{}
+	for _, r := range roles {
+		byRole[r.Role] = r.Size
+		if r.Size <= 0 {
+			t.Errorf("role %s has non-positive size %d", r.Role, r.Size)
+		}
+	}
+	// dark_tech: body=14, title=32 → hero=28, section=21, lead=16, caption=11, footnote=9
+	want := map[string]int{"hero": 28, "title": 32, "section": 21, "lead": 16, "body": 14, "caption": 11, "footnote": 9}
+	for role, size := range want {
+		if byRole[role] != size {
+			t.Errorf("role %s = %d, want %d", role, byRole[role], size)
+		}
+	}
+	if TypeRoles(nil) != nil {
+		t.Error("TypeRoles(nil) should return nil")
 	}
 }
 

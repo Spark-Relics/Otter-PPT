@@ -24,6 +24,7 @@ type SlidePlan struct {
 	Number      int      `json:"number"`
 	Title       string   `json:"title"`
 	Layout      string   `json:"layout"`
+	Rhythm      string   `json:"rhythm"` // anchor | dense | breathing — per-slide layout density discipline
 	KeyPoints   []string `json:"key_points"`
 	VisualNeeds string   `json:"visual_needs"` // e.g. "AI-generated hero image of...", "3-card layout with icons"
 	ImagePrompt string   `json:"image_prompt"` // ready-to-use prompt if image generation is needed
@@ -100,6 +101,7 @@ Then output JSON with this exact structure:
       "number": 1,
       "title": "Slide title (concise, <20 chars)",
       "layout": "title|title_content|two_column|image_left|image_right|image_full|section|bullets|quote|three_cards|four_cards|timeline|comparison|stats|chart|agenda|thank_you|contact",
+      "rhythm": "anchor|dense|breathing — layout density for this slide (see rhythm rules below)",
       "key_points": ["Main point 1", "Main point 2", "Main point 3"],
       "visual_needs": "What visual elements this slide needs (shapes, icons, decorative elements)",
       "image_prompt": "Detailed prompt for AI image generation if needed, empty string if no image needed",
@@ -123,6 +125,7 @@ Design Rules:
 - Only suggest image_prompt for slides that truly benefit from visuals (cover, section dividers, hero slides)
 - Keep image prompts detailed and professional (photographic, illustration style, mood, colors)
 - Vary layouts across slides — no more than 2 consecutive same-layout slides
+- RHYTHM (mandatory): tag every slide anchor/dense/breathing. Covers + section dividers + closing = "anchor". Vary density deliberately: at least one "breathing" slide per 4 content slides — a breathing slide must NOT be a card grid (use one big number, a pull-quote, or naked text + whitespace instead). Never let card-grid layouts run the whole deck — that is the "AI-generated" look
 - Ensure content flows logically from introduction → problem → solution → details → conclusion`,
 		slideCount, topic, style, langName, design.StyleCatalog(), design.PaletteCatalog(),
 		design.StatusCatalog(), viz.Catalog())
@@ -189,7 +192,7 @@ func FormatPlan(plan *DesignPlan) string {
 
 	sb.WriteString("SLIDE BREAKDOWN:\n")
 	for _, sp := range plan.Slides {
-		sb.WriteString(fmt.Sprintf("\nSlide %d [%s]: %s\n", sp.Number, sp.Layout, sp.Title))
+		sb.WriteString(fmt.Sprintf("\nSlide %d [%s] (%s): %s\n", sp.Number, sp.Layout, rhythmOrDefault(sp.Rhythm), sp.Title))
 		for _, kp := range sp.KeyPoints {
 			sb.WriteString(fmt.Sprintf("  • %s\n", kp))
 		}
@@ -210,7 +213,19 @@ func FormatPlan(plan *DesignPlan) string {
 
 	sb.WriteString("\nFollow this plan closely. Use the specified layouts, colors, and content for each slide.")
 	sb.WriteString("For slides with image_prompt, use that exact prompt in add_image.")
-	sb.WriteString(" Apply professional transitions between slides. Set speaker notes from the plan.\n")
+	sb.WriteString(" Apply professional transitions between slides. Set speaker notes from the plan.")
+	sb.WriteString(" Obey each slide's rhythm tag (see PAGE RHYTHM in the lock): breathing pages must not be card grids.\n")
 
 	return sb.String()
+}
+
+// rhythmOrDefault normalizes the planner's rhythm tag; unknown or empty
+// values fall back to "dense" (the safe baseline discipline).
+func rhythmOrDefault(r string) string {
+	switch r {
+	case "anchor", "dense", "breathing":
+		return r
+	default:
+		return "dense"
+	}
 }
