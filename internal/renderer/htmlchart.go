@@ -25,6 +25,19 @@ func seriesColor(cd *model.ChartData, i int) string {
 	return chartPalette[i%len(chartPalette)]
 }
 
+// chartInk returns text/grid colors adapted to the slide background:
+// on dark backgrounds use light ink so labels stay readable.
+func (g *htmlGenerator) chartInk() (title, axis, grid, val string) {
+	bg := ""
+	if g.pres != nil {
+		bg = g.pres.Theme.BackgroundColor
+	}
+	if isLight(bg) || bg == "" {
+		return "#333", "#999", "#e8e8e8", "#555"
+	}
+	return "#E2E8F0", "#94A3B8", "#334155", "#CBD5E1"
+}
+
 // chartSVG renders the chart into an SVG string sized w×h (px).
 func (g *htmlGenerator) chartSVG(cd *model.ChartData, w, h float64) string {
 	w = math.Max(w, 40)
@@ -38,15 +51,17 @@ func (g *htmlGenerator) chartSVG(cd *model.ChartData, w, h float64) string {
 	// Title
 	top := 6.0
 	if cd.Title != "" {
+		titleInk, _, _, _ := g.chartInk()
 		sb.WriteString(fmt.Sprintf(
-			`<text x="%.0f" y="18" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">%s</text>`,
-			w/2, escapeXML(cd.Title)))
+			`<text x="%.0f" y="18" text-anchor="middle" font-size="13" font-weight="bold" fill="%s">%s</text>`,
+			w/2, titleInk, escapeXML(cd.Title)))
 		top = 28
 	}
 
 	// Legend
 	legendH := 0.0
 	if cd.ShowLegend && len(cd.Series) > 1 {
+		_, _, _, legendInk := g.chartInk()
 		lx := 8.0
 		for i, s := range cd.Series {
 			label := s.Name
@@ -54,8 +69,8 @@ func (g *htmlGenerator) chartSVG(cd *model.ChartData, w, h float64) string {
 				label = fmt.Sprintf("Series %d", i+1)
 			}
 			sb.WriteString(fmt.Sprintf(
-				`<rect x="%.0f" y="%.1f" width="9" height="9" fill="%s"/><text x="%.0f" y="%.1f" font-size="9" fill="#555">%s</text>`,
-				lx, h-12, seriesColor(cd, i), lx+12, h-4, escapeXML(label)))
+				`<rect x="%.0f" y="%.1f" width="9" height="9" fill="%s"/><text x="%.0f" y="%.1f" font-size="9" fill="%s">%s</text>`,
+				lx, h-12, seriesColor(cd, i), lx+12, h-4, legendInk, escapeXML(label)))
 			lx += 18 + 5.2*float64(len([]rune(label)))
 		}
 		legendH = 16
@@ -146,8 +161,18 @@ func (g *htmlGenerator) axisChartSVG(sb *strings.Builder, cd *model.ChartData, c
 		return py + ph - (v-minV)/(maxV-minV)*ph
 	}
 
+	gridInk := "#e8e8e8"
+	axisInk := "#999"
+	tickInk := "#888"
+	if g.pres != nil {
+		_, ai, gi, _ := g.chartInk()
+		axisInk = ai
+		gridInk = gi
+		tickInk = ai
+	}
+
 	// Gridlines + Y axis labels (5 ticks)
-	sb.WriteString(`<g stroke="#e8e8e8" stroke-width="0.5">`)
+	sb.WriteString(`<g stroke="` + gridInk + `" stroke-width="0.5">`)
 	for i := 0; i <= 4; i++ {
 		v := minV + (maxV-minV)*float64(i)/4
 		y := yOf(v)
@@ -157,15 +182,15 @@ func (g *htmlGenerator) axisChartSVG(sb *strings.Builder, cd *model.ChartData, c
 	for i := 0; i <= 4; i++ {
 		v := minV + (maxV-minV)*float64(i)/4
 		sb.WriteString(fmt.Sprintf(
-			`<text x="%.1f" y="%.1f" text-anchor="end" font-size="8" fill="#888">%s</text>`,
-			px-3, yOf(v)+3, formatNum(v)))
+			`<text x="%.1f" y="%.1f" text-anchor="end" font-size="8" fill="%s">%s</text>`,
+			px-3, yOf(v)+3, tickInk, formatNum(v)))
 	}
 
 	// Axes
 	sb.WriteString(fmt.Sprintf(
-		`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#999" stroke-width="0.75"/>`+
-			`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#999" stroke-width="0.75"/>`,
-		px, py, px, py+ph, px, py+ph, px+pw, py+ph))
+		`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="0.75"/>`+
+			`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="0.75"/>`,
+		px, py, px, py+ph, axisInk, px, py+ph, px+pw, py+ph, axisInk))
 
 	n := len(cd.Categories)
 	if n == 0 {
@@ -173,12 +198,17 @@ func (g *htmlGenerator) axisChartSVG(sb *strings.Builder, cd *model.ChartData, c
 	}
 
 	// Category labels
+	catInk := "#666"
+	if g.pres != nil {
+		_, ai, _, _ := g.chartInk()
+		catInk = ai
+	}
 	catStep := pw / float64(n)
 	for i, c := range cd.Categories {
 		x := px + catStep*float64(i) + catStep/2
 		sb.WriteString(fmt.Sprintf(
-			`<text x="%.1f" y="%.1f" text-anchor="middle" font-size="8" fill="#666">%s</text>`,
-			x, py+ph+11, escapeXML(truncateLabel(c))))
+			`<text x="%.1f" y="%.1f" text-anchor="middle" font-size="8" fill="%s">%s</text>`,
+			x, py+ph+11, catInk, escapeXML(truncateLabel(c))))
 	}
 
 	switch ct {
@@ -211,12 +241,16 @@ func (g *htmlGenerator) axisChartSVG(sb *strings.Builder, cd *model.ChartData, c
 				if bh < 0.5 && v != 0 {
 					bh = 0.5
 				}
+				valInk := "#555"
+				if g.pres != nil {
+					_, _, _, valInk = g.chartInk()
+				}
 				sb.WriteString(fmt.Sprintf(`<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="%s"/>`,
 					x, y, barW*0.92, bh, seriesColor(cd, si)))
 				if cd.ShowDataLabels {
 					sb.WriteString(fmt.Sprintf(
-						`<text x="%.1f" y="%.1f" text-anchor="middle" font-size="7" fill="#555">%s</text>`,
-						x+barW*0.46, y-2, formatNum(v)))
+						`<text x="%.1f" y="%.1f" text-anchor="middle" font-size="7" fill="%s">%s</text>`,
+						x+barW*0.46, y-2, valInk, formatNum(v)))
 				}
 			}
 			bi++

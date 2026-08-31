@@ -160,7 +160,7 @@ func (g *htmlGenerator) textElementHTML(elem *model.Element) string {
 
 	return fmt.Sprintf(
 		"<div class=\"el text-el\" style=\"%s%s%sjustify-content:%s;\">%s</div>\n",
-		posStyle(elem.Rect), rotationStyle(elem.Rotation), style, valign, inner+align)
+		posStyle(elem.Rect), rotationStyle(elem.Rotation), style+align, valign, inner)
 }
 
 // textContentHTML renders paragraphs / plain text / bullet items.
