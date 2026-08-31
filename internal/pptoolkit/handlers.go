@@ -9,6 +9,7 @@ import (
 	"github.com/otter-ppt/otter-ppt/internal/layout"
 	"github.com/otter-ppt/otter-ppt/internal/model"
 	"github.com/otter-ppt/otter-ppt/internal/parser"
+	"github.com/otter-ppt/otter-ppt/internal/quality"
 	"github.com/otter-ppt/otter-ppt/internal/svgdecode"
 	"github.com/otter-ppt/otter-ppt/internal/template"
 	"github.com/otter-ppt/otter-ppt/internal/viz"
@@ -20,6 +21,38 @@ func elementIDs(elems []*model.Element) []string {
 		ids[i] = e.ID
 	}
 	return ids
+}
+// checkElements runs quality checks on a set of elements as part of a slide.
+// It returns a report scoped to the given elements only.
+func checkElements(pres *model.Presentation, slide *model.Slide, elems []*model.Element) *quality.Report {
+	slideNum := 1
+	for i, s := range pres.Slides {
+		if s == slide {
+			slideNum = i + 1
+			break
+		}
+	}
+	wIn, hIn := pres.SlideWidth, pres.SlideHeight
+	if wIn <= 0 {
+		wIn = 10.0
+	}
+	if hIn <= 0 {
+		hIn = 7.5
+	}
+	issues := quality.CheckSlide(&model.Slide{Elements: elems}, slideNum, wIn, hIn)
+	r := &quality.Report{Issues: issues}
+	errs := 0
+	for _, i := range issues {
+		if i.Severity == quality.SeverityError {
+			errs++
+		}
+	}
+	r.Pass = errs == 0
+	r.Score = 100 - errs*8 - (len(issues)-errs)*3
+	if r.Score < 0 {
+		r.Score = 0
+	}
+	return r
 }
 
 // ToolResult is the return value from executing a tool.
@@ -475,14 +508,26 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 		for _, elem := range res.Elements {
 			slide.Elements = append(slide.Elements, elem)
 		}
+		// Gate: run the quality checker on the just-imported elements.
+		gateReport := checkElements(s.Presentation(), slide, res.Elements)
 		msg := fmt.Sprintf("Imported %d elements from SVG", len(res.Elements))
 		if len(res.Skipped) > 0 {
 			msg += fmt.Sprintf(" (%d constructs skipped/approximated: %s)",
 				len(res.Skipped), strings.Join(res.Skipped, "; "))
 		}
+		if len(gateReport.Issues) > 0 {
+			msg += "\n⚠ QUALITY GATE: " + gateReport.Summary()
+			for _, i := range gateReport.Issues {
+				msg += fmt.Sprintf("\n  - [%s] %s", i.Severity, i.Message)
+			}
+		}
+		if !gateReport.Pass {
+			msg += "\nFix the errors (update_position/update_style/delete_element on the listed element ids), then re-export."
+		}
 		data := map[string]any{
 			"element_ids": elementIDs(res.Elements),
 			"skipped":     res.Skipped,
+			"gate":        gateReport,
 		}
 		if res.PlotArea != nil {
 			data["plot_area"] = res.PlotArea
@@ -528,11 +573,38 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 		if output == "" {
 			return fail("output_path is required")
 		}
+		strict, _ := args["strict"].(bool)
+		// Final gate: check the whole deck before writing.
+		report := quality.Check(s.Presentation())
+		if strict && !report.Pass {
+			msg := "FINAL GATE FAILED — export blocked (strict mode): " + report.Summary()
+			for _, i := range report.Issues {
+				if i.Severity == quality.SeverityError {
+					msg += fmt.Sprintf("\n  - slide %d [%s] %s: %s", i.Slide, i.ElementID, i.Kind, i.Message)
+				}
+			}
+			return fail(msg)
+		}
+		if !report.Pass {
+			// Non-strict: warn but still export.
+			msg := "⚠ Final quality check: " + report.Summary()
+			for _, i := range report.Issues {
+				if i.Severity == quality.SeverityError {
+					msg += fmt.Sprintf("\n  - slide %d [%s] %s: %s", i.Slide, i.ElementID, i.Kind, i.Message)
+				}
+			}
+			msg += "\nExport proceeding (pass strict=true to block on errors)."
+			if err := s.exportToPPTX(output); err != nil {
+				return fail(err.Error())
+			}
+			return ok(msg+"\nExported to "+output, map[string]any{"output_path": output, "gate": report})
+		}
 		// Use builder to export — handlers.go can import builder
 		if err := s.exportToPPTX(output); err != nil {
 			return fail(err.Error())
 		}
-		return ok(fmt.Sprintf("Exported to %s", output), map[string]string{"output_path": output})
+		return ok(fmt.Sprintf("Exported to %s (quality gate: %s)", output, report.Summary()),
+			map[string]any{"output_path": output, "gate": report})
 
 	case "done":
 		return ok("Presentation complete")

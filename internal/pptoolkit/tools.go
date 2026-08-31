@@ -388,7 +388,7 @@ func ToolDefinitions() []openai.Tool {
 		// ────────── AI Image Generation ──────────
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "import_svg",
-			Description: "Compile an SVG slide design into native editable PPTX elements on a slide. The SVG must use viewBox coordinates (e.g. viewBox=\"0 0 1280 720\"). Supported primitives map to native shapes: rect→rectangle/rounded-rectangle, circle/ellipse→ellipse, line/stroked 2-point path→connector, arbitrary path (curves flattened)→editable freeform (custom geometry), text→text box, image→picture. Gradient fills are approximated as solid gray. Transform support: translate/scale/rotate/matrix. Optional semantic markers: data-pptx-bounds=\"x y w h\" pins a region's rect, and data-pptx-replace-with=\"chart|table\" plus embedded <metadata type=\"application/json\"> upgrades a region to a native PowerPoint chart/table instead of shape fallback.",
+			Description: "Compile an SVG slide design into native editable PPTX elements on a slide. The SVG must use viewBox coordinates (e.g. viewBox=\"0 0 1280 720\"). Supported primitives map to native shapes: rect→rectangle/rounded-rectangle, circle/ellipse→ellipse, line/stroked 2-point path→connector, arbitrary path (curves flattened)→editable freeform (custom geometry), text→text box, image→picture. Gradient fills are approximated as solid gray. Transform support: translate/scale/rotate/matrix. A quality gate runs on the imported elements (text overflow, out-of-bounds, tiny fonts) and reports issues. Optional semantic markers: data-pptx-bounds=\"x y w h\" pins a region's rect, and data-pptx-replace-with=\"chart|table\" plus embedded <metadata type=\"application/json\"> upgrades a region to a native PowerPoint chart/table instead of shape fallback.",
 			Parameters: params(map[string]prop{
 				"slide_id": {typ: "string", desc: "Target slide ID", req: true},
 				"svg":      {typ: "string", desc: "Complete SVG document markup", req: true},
@@ -422,9 +422,10 @@ func ToolDefinitions() []openai.Tool {
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "export_pptx",
-			Description: "Export the current presentation to an editable .pptx file on disk.",
+			Description: "Export the current presentation to an editable .pptx file on disk. Runs a final quality gate (text overflow, out-of-bounds elements, tiny fonts, cover hero-title check) and reports issues in the result.",
 			Parameters: params(map[string]prop{
 				"output_path": {typ: "string", desc: "Destination .pptx file path", req: true},
+				"strict":      {typ: "boolean", desc: "If true, block export when the quality gate finds errors (recommended for final delivery)"},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
