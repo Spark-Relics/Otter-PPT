@@ -174,11 +174,7 @@ func writeSingleSlideHTML(pres *model.Presentation, slideIdx int, allHTMLPath, o
 	var sb strings.Builder
 	sb.WriteString("<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<style>\n")
 	sb.WriteString("* { margin:0; padding:0; box-sizing:border-box; }\n")
-	// Do NOT fix html/body to the viewport size: when html or body carries an
-	// explicit height, Chromium's headless screenshot path fails to paint the
-	// .slide background (it stays white) once the .stage transform layering
-	// kicks in. Letting the page size itself naturally avoids it.
-	sb.WriteString("body { margin:0; }\n")
+	sb.WriteString("html, body { width:" + fmt.Sprintf("%dpx", wPx) + "; height:" + fmt.Sprintf("%dpx", hPx) + "; overflow:hidden; }\n")
 	sb.WriteString(fmt.Sprintf(
 		".stage { width:%.4fin; height:%.4fin; transform:scale(%.6f); transform-origin:0 0; position:absolute; top:0; left:0; }\n",
 		g.slideWIn, g.slideHIn, float64(wPx)/(g.slideWIn*htmlDPI)))
@@ -190,7 +186,7 @@ func writeSingleSlideHTML(pres *model.Presentation, slideIdx int, allHTMLPath, o
 	// Background must live in <head>: a <style> element nested inside a <div>
 	// (the .stage wrapper) is not applied by Chromium's headless screenshot
 	// path, silently falling back to the white .slide default.
-	sb.WriteString(slideBackgroundCSS(g, slide))
+	sb.WriteString(slideBackgroundStyle(g, slide))
 	sb.WriteString("</style>\n</head>\n<body>\n<div class=\"stage\">\n")
 	sb.WriteString(g.slideBody(slide))
 	sb.WriteString("</div>\n</body>\n</html>\n")

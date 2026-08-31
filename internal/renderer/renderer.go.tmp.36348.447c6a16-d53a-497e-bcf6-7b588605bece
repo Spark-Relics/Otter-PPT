@@ -178,7 +178,7 @@ func writeSingleSlideHTML(pres *model.Presentation, slideIdx int, allHTMLPath, o
 	// explicit height, Chromium's headless screenshot path fails to paint the
 	// .slide background (it stays white) once the .stage transform layering
 	// kicks in. Letting the page size itself naturally avoids it.
-	sb.WriteString("body { margin:0; }\n")
+	sb.WriteString("body { margin:0; background:#fff; }\n")
 	sb.WriteString(fmt.Sprintf(
 		".stage { width:%.4fin; height:%.4fin; transform:scale(%.6f); transform-origin:0 0; position:absolute; top:0; left:0; }\n",
 		g.slideWIn, g.slideHIn, float64(wPx)/(g.slideWIn*htmlDPI)))
