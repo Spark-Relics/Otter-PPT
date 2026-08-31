@@ -1,7 +1,7 @@
 //go:build ignore
 
-// buildintro compiles examples/project_intro.json into a .pptx using the
-// project's own builder — dogfooding the full pipeline.
+// buildjson compiles an arbitrary Presentation JSON into a .pptx using the
+// project's own builder. Usage: go run tools/buildjson/main.go <input.json> [output.pptx]
 package main
 
 import (
@@ -14,7 +14,16 @@ import (
 )
 
 func main() {
-	data, err := os.ReadFile("examples/adnify_intro.json")
+	if len(os.Args) < 2 {
+		fmt.Fprintln(os.Stderr, "usage: buildjson <input.json> [output.pptx]")
+		os.Exit(1)
+	}
+	in := os.Args[1]
+	out := "output/presentation.pptx"
+	if len(os.Args) > 2 {
+		out = os.Args[2]
+	}
+	data, err := os.ReadFile(in)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "read:", err)
 		os.Exit(1)
@@ -24,7 +33,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, "parse json:", err)
 		os.Exit(1)
 	}
-	out := "output/OtterPPT-项目介绍.pptx"
 	if err := os.MkdirAll("output", 0o755); err != nil {
 		fmt.Fprintln(os.Stderr, "mkdir:", err)
 		os.Exit(1)

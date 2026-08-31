@@ -1,0 +1,1212 @@
+{
+  "title": "Adnify — AI Coding Assistant",
+  "theme": {
+    "name": "Dark Tech / Tech Neon",
+    "primary_color": "#22D3EE",
+    "secondary_color": "#141B2E",
+    "accent_color": "#A78BFA",
+    "background_color": "#0A0E1A",
+    "text_color": "#E2E8F0",
+    "title_font": "Noto Sans SC",
+    "body_font": "Noto Sans SC",
+    "style_key": "dark_tech",
+    "palette_key": "tech_neon"
+  },
+  "slides": [
+    {
+      "id": "p1",
+      "layout": "title",
+      "background": {
+        "type": "gradient",
+        "gradient": {
+          "type": "linear",
+          "angle": 135,
+          "stops": [
+            { "color": "#0A0E1A", "position": 0 },
+            { "color": "#141B2E", "position": 55 },
+            { "color": "#1E293B", "position": 100 }
+          ]
+        }
+      },
+      "elements": [
+        {
+          "id": "p1-rule",
+          "type": "shape",
+          "rect": { "x": 14, "y": 31, "w": 10, "h": 0.45 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          },
+          "animation": { "type": "wipe", "trigger": "after_previous", "duration": 0.8, "direction": "left" }
+        },
+        {
+          "id": "p1-title",
+          "type": "title",
+          "rect": { "x": 10, "y": 34, "w": 52, "h": 13 },
+          "text": "Adnify",
+          "style": { "font_size": 54, "bold": true, "color": "#F8FAFC", "shadow": true }
+        },
+        {
+          "id": "p1-sub",
+          "type": "subtitle",
+          "rect": { "x": 10, "y": 49, "w": 62, "h": 8 },
+          "text": "AI 编码助手 · 读懂你的仓库，写出像你写的代码",
+          "style": { "font_size": 19, "color": "#7DD3FC" }
+        },
+        {
+          "id": "p1-meta",
+          "type": "body",
+          "rect": { "x": 10, "y": 64, "w": 55, "h": 5 },
+          "text": "工具调用 Agent · 语义检索 · 仓库图谱 · 2026.08",
+          "style": { "font_size": 12, "color": "#94A3B8" }
+        },
+        {
+          "id": "p1-card1",
+          "type": "shape",
+          "rect": { "x": 66, "y": 22, "w": 26, "h": 24 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#155E75", "width": 1, "opacity": 1 },
+            "corner_radius": 0.08
+          },
+          "rotation": 5,
+          "opacity": 0.9
+        },
+        {
+          "id": "p1-card1t",
+          "type": "body",
+          "rect": { "x": 68, "y": 26, "w": 22, "h": 16 },
+          "rotation": 5,
+          "opacity": 0.9,
+          "paragraphs": [
+            { "text": "</>", "style": { "font_size": 20, "bold": true, "color": "#22D3EE", "align": "center" }, "space_after": 4 },
+            { "text": "Code", "style": { "font_size": 12, "color": "#CBD5E1", "align": "center" } }
+          ]
+        },
+        {
+          "id": "p1-card2",
+          "type": "shape",
+          "rect": { "x": 62, "y": 44, "w": 26, "h": 24 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#101830" },
+            "line": { "color": "#6D4FD8", "width": 1, "opacity": 1 },
+            "corner_radius": 0.08
+          },
+          "rotation": -4,
+          "opacity": 0.85
+        },
+        {
+          "id": "p1-card2t",
+          "type": "body",
+          "rect": { "x": 64, "y": 48, "w": 22, "h": 16 },
+          "rotation": -4,
+          "opacity": 0.85,
+          "paragraphs": [
+            { "text": "{}", "style": { "font_size": 20, "bold": true, "color": "#A78BFA", "align": "center" }, "space_after": 4 },
+            { "text": "Agent", "style": { "font_size": 12, "color": "#CBD5E1", "align": "center" } }
+          ]
+        },
+        {
+          "id": "p1-card3",
+          "type": "shape",
+          "rect": { "x": 70, "y": 66, "w": 24, "h": 20 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#155E75", "width": 1, "opacity": 1 },
+            "corner_radius": 0.08
+          },
+          "rotation": 3,
+          "opacity": 0.8
+        },
+        {
+          "id": "p1-hero-art",
+          "type": "image",
+          "rect": { "x": 58, "y": 16, "w": 40, "h": 72 },
+          "image_path": "examples/assets/hero_orbit.svg",
+          "image_fit": "contain",
+          "image_alt": "orbit network"
+        },
+        {
+          "id": "p1-card3t",
+          "type": "body",
+          "rect": { "x": 72, "y": 69, "w": 20, "h": 14 },
+          "rotation": 3,
+          "opacity": 0.8,
+          "paragraphs": [
+            { "text": "◈", "style": { "font_size": 18, "bold": true, "color": "#7DD3FC", "align": "center" }, "space_after": 4 },
+            { "text": "Repo Map", "style": { "font_size": 12, "color": "#CBD5E1", "align": "center" } }
+          ]
+        }
+      ],
+      "notes": "封面：Adnify 一句话定位——理解仓库语义的 AI 编码助手。"
+    },
+    {
+      "id": "p2",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "p2-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "为什么需要 Adnify",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "p2-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "p2-card1-bg",
+          "type": "shape",
+          "rect": { "x": 7, "y": 24, "w": 27, "h": 40 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#155E75", "width": 1, "opacity": 1 },
+            "corner_radius": 0.06
+          }
+        },
+        {
+          "id": "p2-card1-icon",
+          "type": "image",
+          "rect": { "x": 10, "y": 26.5, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_context.svg",
+          "image_fit": "contain",
+          "image_alt": "context icon"
+        },
+        {
+          "id": "p2-card1-t",
+          "type": "body",
+          "rect": { "x": 10, "y": 32, "w": 21, "h": 29 },
+          "paragraphs": [
+            { "text": "上下文太少", "style": { "font_size": 16, "bold": true, "color": "#E2E8F0" }, "space_after": 6 },
+            { "text": "通用 LLM 不了解你的项目约定、历史决策与依赖关系。", "style": { "font_size": 12, "color": "#94A3B8" } }
+          ]
+        },
+        {
+          "id": "p2-card2-bg",
+          "type": "shape",
+          "rect": { "x": 36.5, "y": 24, "w": 27, "h": 40 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#6D4FD8", "width": 1, "opacity": 1 },
+            "corner_radius": 0.06
+          }
+        },
+        {
+          "id": "p2-card2-icon",
+          "type": "image",
+          "rect": { "x": 39.5, "y": 26.5, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_search.svg",
+          "image_fit": "contain",
+          "image_alt": "search icon"
+        },
+        {
+          "id": "p2-card2-t",
+          "type": "body",
+          "rect": { "x": 39.5, "y": 32, "w": 21, "h": 29 },
+          "paragraphs": [
+            { "text": "检索不精准", "style": { "font_size": 16, "bold": true, "color": "#E2E8F0" }, "space_after": 6 },
+            { "text": "关键词搜索找不到「这段逻辑在哪实现」，语义级定位才是答案。", "style": { "font_size": 12, "color": "#94A3B8" } }
+          ]
+        },
+        {
+          "id": "p2-card3-bg",
+          "type": "shape",
+          "rect": { "x": 66, "y": 24, "w": 27, "h": 40 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#155E75", "width": 1, "opacity": 1 },
+            "corner_radius": 0.06
+          }
+        },
+        {
+          "id": "p2-card3-icon",
+          "type": "image",
+          "rect": { "x": 69, "y": 26.5, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_verify.svg",
+          "image_fit": "contain",
+          "image_alt": "verify icon"
+        },
+        {
+          "id": "p2-card3-t",
+          "type": "body",
+          "rect": { "x": 69, "y": 32, "w": 21, "h": 29 },
+          "paragraphs": [
+            { "text": "改动难验证", "style": { "font_size": 16, "bold": true, "color": "#E2E8F0" }, "space_after": 6 },
+            { "text": "改一处、崩三处。缺类型检查与调用链分析时，AI 改码像开盲盒。", "style": { "font_size": 12, "color": "#94A3B8" } }
+          ]
+        },
+        {
+          "id": "p2-answer-bg",
+          "type": "shape",
+          "rect": { "x": 7, "y": 68, "w": 86, "h": 16 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#141B2E", "position": 0 },
+                  { "color": "#1A2340", "position": 100 }
+                ]
+              }
+            },
+            "line": { "color": "#155E75", "width": 1, "opacity": 1 },
+            "corner_radius": 0.05
+          }
+        },
+        {
+          "id": "p2-answer-edge",
+          "type": "shape",
+          "rect": { "x": 7, "y": 68, "w": 0.5, "h": 16 },
+          "shape": { "shape_type": "rectangle", "fill": { "type": "solid", "color": "#22D3EE" } }
+        },
+        {
+          "id": "p2-answer-t",
+          "type": "body",
+          "rect": { "x": 11, "y": 71, "w": 78, "h": 11 },
+          "paragraphs": [
+            { "text": "Adnify 的回答", "style": { "font_size": 13, "bold": true, "color": "#22D3EE" }, "space_after": 4 },
+            { "text": "把编辑器级代码智能（LSP）+ 语义检索 + 仓库图谱，装进一个工具调用 Agent。", "style": { "font_size": 14, "color": "#E2E8F0" } }
+          ]
+        }
+      ],
+      "notes": "痛点：上下文不足、检索不准、改动难验证。方案：LSP + 语义检索 + 仓库图谱的 Agent。"
+    },
+    {
+      "id": "p3",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "p3-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "四层架构",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "p3-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "p3-l1",
+          "type": "shape",
+          "rect": { "x": 10, "y": 24, "w": 80, "h": 15 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#22D3EE", "width": 1.25, "opacity": 0.7 },
+            "corner_radius": 0.1
+          }
+        },
+        {
+          "id": "p3-l1-tag",
+          "type": "shape",
+          "rect": { "x": 12, "y": 28.2, "w": 9, "h": 6.5 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" },
+            "corner_radius": 0.25
+          }
+        },
+        {
+          "id": "p3-l1-tag-t",
+          "type": "body",
+          "rect": { "x": 12, "y": 30, "w": 9, "h": 3 },
+          "text": "交互层",
+          "style": { "font_size": 12, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p3-l1-t",
+          "type": "body",
+          "rect": { "x": 25, "y": 28.5, "w": 62, "h": 7 },
+          "text": "VS Code / JetBrains 插件 · Web UI · CLI · 远程 Shell（SSH 远程开发）",
+          "style": { "font_size": 13, "color": "#E2E8F0" }
+        },
+        {
+          "id": "p3-l1-icon",
+          "type": "image",
+          "rect": { "x": 83.5, "y": 28, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_terminal.svg",
+          "image_fit": "contain",
+          "image_alt": "terminal icon"
+        },
+        {
+          "id": "p3-l2",
+          "type": "shape",
+          "rect": { "x": 10, "y": 42, "w": 80, "h": 15 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#6D4FD8", "width": 1.25, "opacity": 0.7 },
+            "corner_radius": 0.1
+          }
+        },
+        {
+          "id": "p3-l2-tag",
+          "type": "shape",
+          "rect": { "x": 12, "y": 46.2, "w": 9, "h": 6.5 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#A78BFA" },
+            "corner_radius": 0.25
+          }
+        },
+        {
+          "id": "p3-l2-tag-t",
+          "type": "body",
+          "rect": { "x": 12, "y": 48, "w": 9, "h": 3 },
+          "text": "智能层",
+          "style": { "font_size": 12, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p3-l2-t",
+          "type": "body",
+          "rect": { "x": 25, "y": 46.5, "w": 62, "h": 7 },
+          "text": "Agent 循环 · 子任务编排（Task） · Hook 生命周期 · 流式工具调用解析",
+          "style": { "font_size": 13, "color": "#E2E8F0" }
+        },
+        {
+          "id": "p3-l2-icon",
+          "type": "image",
+          "rect": { "x": 83.5, "y": 46, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_brain.svg",
+          "image_fit": "contain",
+          "image_alt": "agent brain icon"
+        },
+        {
+          "id": "p3-l3",
+          "type": "shape",
+          "rect": { "x": 10, "y": 60, "w": 80, "h": 15 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#155E75", "width": 1.25, "opacity": 1 },
+            "corner_radius": 0.1
+          }
+        },
+        {
+          "id": "p3-l3-tag",
+          "type": "shape",
+          "rect": { "x": 12, "y": 64.2, "w": 11, "h": 6.5 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" },
+            "corner_radius": 0.25
+          }
+        },
+        {
+          "id": "p3-l3-tag-t",
+          "type": "body",
+          "rect": { "x": 12, "y": 66, "w": 11, "h": 3 },
+          "text": "代码智能层",
+          "style": { "font_size": 12, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p3-l3-t",
+          "type": "body",
+          "rect": { "x": 27, "y": 64.5, "w": 60, "h": 7 },
+          "text": "LSP 语义导航 · 语义检索 · PageRank 仓库图谱 · 增量索引（mtime 缓存）",
+          "style": { "font_size": 13, "color": "#E2E8F0" }
+        },
+        {
+          "id": "p3-l3-icon",
+          "type": "image",
+          "rect": { "x": 83.5, "y": 64, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_graph.svg",
+          "image_fit": "contain",
+          "image_alt": "repo graph icon"
+        },
+        {
+          "id": "p3-l4",
+          "type": "shape",
+          "rect": { "x": 10, "y": 78, "w": 80, "h": 15 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#475569", "width": 1, "opacity": 1 },
+            "corner_radius": 0.1
+          }
+        },
+        {
+          "id": "p3-l4-tag",
+          "type": "shape",
+          "rect": { "x": 12, "y": 82.2, "w": 9, "h": 6.5 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#475569" },
+            "corner_radius": 0.25
+          }
+        },
+        {
+          "id": "p3-l4-tag-t",
+          "type": "body",
+          "rect": { "x": 12, "y": 84, "w": 9, "h": 3 },
+          "text": "执行层",
+          "style": { "font_size": 12, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p3-l4-t",
+          "type": "body",
+          "rect": { "x": 25, "y": 82.5, "w": 62, "h": 7 },
+          "text": "Myers Diff · 检查点回滚 · 本地/远程 Shell · 后台终端管理",
+          "style": { "font_size": 13, "color": "#E2E8F0" }
+        },
+        {
+          "id": "p3-l4-icon",
+          "type": "image",
+          "rect": { "x": 83.5, "y": 82, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_experiment.svg",
+          "image_fit": "contain",
+          "image_alt": "execution icon"
+        }
+      ],
+      "notes": "四层架构：交互、智能、代码智能、执行。每层可独立替换。"
+    },
+    {
+      "id": "p4",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "p4-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "工具体系一览",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "p4-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "p4-table",
+          "type": "table",
+          "rect": { "x": 7, "y": 24, "w": 86, "h": 64 },
+          "table": {
+            "headers": [
+              { "text": "工具域" },
+              { "text": "代表工具" },
+              { "text": "解决的问题" }
+            ],
+            "rows": [
+              [
+                { "text": "语义理解", "style": { "bold": true } },
+                { "text": "find_symbol / get_document_symbols / codebase_search" },
+                { "text": "按名字或按意思定位代码", "style": { "color": "#22D3EE" } }
+              ],
+              [
+                { "text": "关系导航", "style": { "bold": true } },
+                { "text": "find_references / navigate_symbol / get_hover_info" },
+                { "text": "调用链、实现、类型定义一目了然", "style": { "color": "#22D3EE" } }
+              ],
+              [
+                { "text": "精准编辑", "style": { "bold": true } },
+                { "text": "edit_file / edit_symbol / rename_symbol" },
+                { "text": "小改走文本、整符号走语义、改名全仓自动", "style": { "color": "#22D3EE" } }
+              ],
+              [
+                { "text": "安全验证", "style": { "bold": true } },
+                { "text": "get_diagnostics / run_command（聚焦测试）" },
+                { "text": "改完即查诊断，最小范围跑测试", "style": { "color": "#22D3EE" } }
+              ],
+              [
+                { "text": "执行环境", "style": { "bold": true } },
+                { "text": "后台终端 / 远程 Shell / 环境快照" },
+                { "text": "长任务、远程服务器都能操作", "style": { "color": "#22D3EE" } }
+              ],
+              [
+                { "text": "知识沉淀", "style": { "bold": true } },
+                { "text": "remember / todo_write / 任务子代理" },
+                { "text": "项目记忆、任务追踪、复杂工作拆解", "style": { "color": "#22D3EE" } }
+              ]
+            ],
+            "header_color": "#1B2946",
+            "border_color": "#475569",
+            "alt_row_color": "#111827",
+            "font_size": 12
+          }
+        }
+      ],
+      "notes": "六大工具域：语义理解、关系导航、精准编辑、安全验证、执行环境、知识沉淀。"
+    },
+    {
+      "id": "p5",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "p5-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "一次修改是怎么完成的",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "p5-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "p5-step1",
+          "type": "shape",
+          "rect": { "x": 7, "y": 26, "w": 26, "h": 34 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#22D3EE", "width": 1, "opacity": 0.6 },
+            "corner_radius": 0.08
+          }
+        },
+        {
+          "id": "p5-step1-chip",
+          "type": "shape",
+          "rect": { "x": 10, "y": 30, "w": 5.5, "h": 5.5 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" },
+            "corner_radius": 0.25
+          }
+        },
+        {
+          "id": "p5-step1-num",
+          "type": "body",
+          "rect": { "x": 10, "y": 31.2, "w": 5.5, "h": 3.2 },
+          "text": "01",
+          "style": { "font_size": 15, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p5-step1-icon",
+          "type": "image",
+          "rect": { "x": 17.5, "y": 30, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_locate.svg",
+          "image_fit": "contain",
+          "image_alt": "locate icon"
+        },
+        {
+          "id": "p5-step1t",
+          "type": "body",
+          "rect": { "x": 10, "y": 38, "w": 20, "h": 19 },
+          "paragraphs": [
+            { "text": "定位", "style": { "font_size": 16, "bold": true, "color": "#E2E8F0" }, "space_after": 5 },
+            { "text": "语义检索找到相关文件，LSP 读出符号而非整文件", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "p5-arrow1",
+          "type": "connector",
+          "rect": { "x": 34, "y": 42.7, "w": 5, "h": 0.6 },
+          "connector": { "connector_type": "arrow", "color": "#475569", "width": 2 }
+        },
+        {
+          "id": "p5-step2",
+          "type": "shape",
+          "rect": { "x": 40, "y": 26, "w": 26, "h": 34 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#6D4FD8", "width": 1.25, "opacity": 1 },
+            "corner_radius": 0.08
+          }
+        },
+        {
+          "id": "p5-step2-chip",
+          "type": "shape",
+          "rect": { "x": 43, "y": 30, "w": 5.5, "h": 5.5 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#A78BFA" },
+            "corner_radius": 0.25
+          }
+        },
+        {
+          "id": "p5-step2-num",
+          "type": "body",
+          "rect": { "x": 43, "y": 31.2, "w": 5.5, "h": 3.2 },
+          "text": "02",
+          "style": { "font_size": 15, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p5-step2-icon",
+          "type": "image",
+          "rect": { "x": 50.5, "y": 30, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_edit.svg",
+          "image_fit": "contain",
+          "image_alt": "edit icon"
+        },
+        {
+          "id": "p5-step2t",
+          "type": "body",
+          "rect": { "x": 43, "y": 38, "w": 20, "h": 19 },
+          "paragraphs": [
+            { "text": "修改", "style": { "font_size": 16, "bold": true, "color": "#E2E8F0" }, "space_after": 5 },
+            { "text": "写前自动检查点，语义级替换完整符号，影响面可控", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "p5-arrow2",
+          "type": "connector",
+          "rect": { "x": 67, "y": 42.7, "w": 5, "h": 0.6 },
+          "connector": { "connector_type": "arrow", "color": "#475569", "width": 2 }
+        },
+        {
+          "id": "p5-step3",
+          "type": "shape",
+          "rect": { "x": 73, "y": 26, "w": 26, "h": 34 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#155E75", "width": 1.25, "opacity": 1 },
+            "corner_radius": 0.08
+          }
+        },
+        {
+          "id": "p5-step3-chip",
+          "type": "shape",
+          "rect": { "x": 76, "y": 30, "w": 5.5, "h": 5.5 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" },
+            "corner_radius": 0.25
+          }
+        },
+        {
+          "id": "p5-step3-num",
+          "type": "body",
+          "rect": { "x": 76, "y": 31.2, "w": 5.5, "h": 3.2 },
+          "text": "03",
+          "style": { "font_size": 15, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p5-step3-icon",
+          "type": "image",
+          "rect": { "x": 83.5, "y": 30, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_check.svg",
+          "image_fit": "contain",
+          "image_alt": "check icon"
+        },
+        {
+          "id": "p5-step3t",
+          "type": "body",
+          "rect": { "x": 76, "y": 38, "w": 20, "h": 19 },
+          "paragraphs": [
+            { "text": "验证", "style": { "font_size": 16, "bold": true, "color": "#E2E8F0" }, "space_after": 5 },
+            { "text": "LSP 诊断实时检查，聚焦测试最小验证，失败即修", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "p5-loop-bg",
+          "type": "shape",
+          "rect": { "x": 22, "y": 68, "w": 56, "h": 9 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#101830" },
+            "line": { "color": "#6D4FD8", "width": 1, "opacity": 1 },
+            "corner_radius": 0.5
+          }
+        },
+        {
+          "id": "p5-loop-t",
+          "type": "body",
+          "rect": { "x": 24, "y": 70.5, "w": 52, "h": 4.5 },
+          "text": "⟳  定位 → 修改 → 验证，每一步都有工具与安全网兜底",
+          "style": { "font_size": 13, "color": "#CBD5E1", "align": "center" }
+        }
+      ],
+      "notes": "三步闭环：定位（语义）、修改（检查点+语义编辑）、验证（诊断+聚焦测试）。"
+    },
+    {
+      "id": "p6",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "p6-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "效率提升实测（示意数据）",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "p6-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "p6-chart-card",
+          "type": "shape",
+          "rect": { "x": 7, "y": 24, "w": 55, "h": 60 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#111A2E" },
+            "line": { "color": "#475569", "width": 1, "opacity": 1 },
+            "corner_radius": 0.04
+          }
+        },
+        {
+          "id": "p6-chart",
+          "type": "chart",
+          "rect": { "x": 9, "y": 26, "w": 51, "h": 56 },
+          "chart": {
+            "chart_type": "column",
+            "title": "常见任务耗时对比（分钟，示意）",
+            "categories": ["定位实现", "修 Bug", "重构改名", "写单测", "代码评审"],
+            "series": [
+              {
+                "name": "手动",
+                "values": [25, 45, 40, 35, 30],
+                "color": "#475569"
+              },
+              {
+                "name": "Adnify",
+                "values": [3, 10, 4, 8, 6],
+                "color": "#22D3EE"
+              }
+            ],
+            "show_legend": true,
+            "show_data_labels": true
+          }
+        },
+        {
+          "id": "p6-note1",
+          "type": "shape",
+          "rect": { "x": 66, "y": 24, "w": 27, "h": 27 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#155E75", "width": 1, "opacity": 1 },
+            "corner_radius": 0.06
+          }
+        },
+        {
+          "id": "p6-note1-icon",
+          "type": "image",
+          "rect": { "x": 86.5, "y": 27, "w": 4, "h": 4 },
+          "image_path": "examples/assets/icon_doc.svg",
+          "image_fit": "contain",
+          "image_alt": "native chart icon"
+        },
+        {
+          "id": "p6-note1-t",
+          "type": "body",
+          "rect": { "x": 69, "y": 28, "w": 21, "h": 20 },
+          "paragraphs": [
+            { "text": "原生图表", "style": { "font_size": 15, "bold": true, "color": "#22D3EE" }, "space_after": 5 },
+            { "text": "此页图表由 Otter PPT 原生生成，双击可改数据。", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "p6-note2",
+          "type": "shape",
+          "rect": { "x": 66, "y": 57, "w": 27, "h": 27 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#6D4FD8", "width": 1, "opacity": 1 },
+            "corner_radius": 0.06
+          }
+        },
+        {
+          "id": "p6-grid-decor",
+          "type": "image",
+          "rect": { "x": 7, "y": 88, "w": 24, "h": 9 },
+          "image_path": "examples/assets/grid_decor.svg",
+          "image_fit": "contain",
+          "image_alt": "decor",
+          "opacity": 0.55
+        },
+        {
+          "id": "p6-note2-t",
+          "type": "body",
+          "rect": { "x": 69, "y": 61, "w": 21, "h": 20 },
+          "paragraphs": [
+            { "text": "平均提速约 5×", "style": { "font_size": 15, "bold": true, "color": "#A78BFA" }, "space_after": 5 },
+            { "text": "定位、重构、验证全链路工具化，节省的是来回切换。", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        }
+      ],
+      "notes": "示意数据：手动 vs Adnify 五类任务耗时对比。图表为原生可编辑 OOXML 图表。"
+    },
+    {
+      "id": "p7",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "p7-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 10 },
+          "text": "安全与信任",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "p7-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "p7-c1",
+          "type": "shape",
+          "rect": { "x": 7, "y": 24, "w": 42, "h": 21 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#155E75", "width": 1.25, "opacity": 1 },
+            "corner_radius": 0.06
+          }
+        },
+        {
+          "id": "p7-c1-chip",
+          "type": "shape",
+          "rect": { "x": 10, "y": 27.5, "w": 8, "h": 3 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" },
+            "corner_radius": 0.5
+          }
+        },
+        {
+          "id": "p7-c1-chip-t",
+          "type": "body",
+          "rect": { "x": 10, "y": 27.7, "w": 8, "h": 2.6 },
+          "text": "回滚",
+          "style": { "font_size": 11, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p7-c1-icon",
+          "type": "image",
+          "rect": { "x": 42, "y": 33.5, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_checkpoint.svg",
+          "image_fit": "contain",
+          "image_alt": "checkpoint icon"
+        },
+        {
+          "id": "p7-c1-t",
+          "type": "body",
+          "rect": { "x": 10, "y": 32, "w": 36, "h": 11 },
+          "paragraphs": [
+            { "text": "检查点系统", "style": { "font_size": 15, "bold": true, "color": "#E2E8F0" }, "space_after": 4 },
+            { "text": "每次写入前自动快照，文件级一键回滚，不依赖 Git", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "p7-c2",
+          "type": "shape",
+          "rect": { "x": 51, "y": 24, "w": 42, "h": 21 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#6D4FD8", "width": 1.25, "opacity": 1 },
+            "corner_radius": 0.06
+          }
+        },
+        {
+          "id": "p7-c2-chip",
+          "type": "shape",
+          "rect": { "x": 54, "y": 27.5, "w": 8, "h": 3 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#A78BFA" },
+            "corner_radius": 0.5
+          }
+        },
+        {
+          "id": "p7-c2-chip-t",
+          "type": "body",
+          "rect": { "x": 54, "y": 27.7, "w": 8, "h": 2.6 },
+          "text": "确认",
+          "style": { "font_size": 11, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p7-c2-icon",
+          "type": "image",
+          "rect": { "x": 86, "y": 33.5, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_shield_alert.svg",
+          "image_fit": "contain",
+          "image_alt": "approval icon"
+        },
+        {
+          "id": "p7-c2-t",
+          "type": "body",
+          "rect": { "x": 54, "y": 32, "w": 36, "h": 11 },
+          "paragraphs": [
+            { "text": "危险操作审批", "style": { "font_size": 15, "bold": true, "color": "#E2E8F0" }, "space_after": 4 },
+            { "text": "删除、生产变更等操作需人工批准，密钥永不外泄", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "p7-c3",
+          "type": "shape",
+          "rect": { "x": 7, "y": 47, "w": 42, "h": 21 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#6D4FD8", "width": 1.25, "opacity": 1 },
+            "corner_radius": 0.06
+          }
+        },
+        {
+          "id": "p7-c3-chip",
+          "type": "shape",
+          "rect": { "x": 10, "y": 50.5, "w": 8, "h": 3 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#A78BFA" },
+            "corner_radius": 0.5
+          }
+        },
+        {
+          "id": "p7-c3-chip-t",
+          "type": "body",
+          "rect": { "x": 10, "y": 50.7, "w": 8, "h": 2.6 },
+          "text": "隔离",
+          "style": { "font_size": 11, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p7-c3-icon",
+          "type": "image",
+          "rect": { "x": 42, "y": 56.5, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_isolation.svg",
+          "image_fit": "contain",
+          "image_alt": "isolation icon"
+        },
+        {
+          "id": "p7-c3-t",
+          "type": "body",
+          "rect": { "x": 10, "y": 55, "w": 36, "h": 11 },
+          "paragraphs": [
+            { "text": "Hook 错误隔离", "style": { "font_size": 15, "bold": true, "color": "#E2E8F0" }, "space_after": 4 },
+            { "text": "单个钩子失败不影响其他钩子，before* 可中断执行链", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "p7-c4",
+          "type": "shape",
+          "rect": { "x": 51, "y": 47, "w": 42, "h": 21 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#155E75", "width": 1.25, "opacity": 1 },
+            "corner_radius": 0.06
+          }
+        },
+        {
+          "id": "p7-c4-chip",
+          "type": "shape",
+          "rect": { "x": 54, "y": 50.5, "w": 8, "h": 3 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#22D3EE" },
+            "corner_radius": 0.5
+          }
+        },
+        {
+          "id": "p7-c4-chip-t",
+          "type": "body",
+          "rect": { "x": 54, "y": 50.7, "w": 8, "h": 2.6 },
+          "text": "追溯",
+          "style": { "font_size": 11, "bold": true, "color": "#0A0E1A", "align": "center" }
+        },
+        {
+          "id": "p7-c4-icon",
+          "type": "image",
+          "rect": { "x": 86, "y": 56.5, "w": 4.5, "h": 4.5 },
+          "image_path": "examples/assets/icon_diff.svg",
+          "image_fit": "contain",
+          "image_alt": "diff icon"
+        },
+        {
+          "id": "p7-c4-t",
+          "type": "body",
+          "rect": { "x": 54, "y": 55, "w": 36, "h": 11 },
+          "paragraphs": [
+            { "text": "Diff 可视化", "style": { "font_size": 15, "bold": true, "color": "#E2E8F0" }, "space_after": 4 },
+            { "text": "Myers 差异算法，改动统一 diff 呈现，逐行可审", "style": { "font_size": 12, "color": "#CBD5E1" } }
+          ]
+        },
+        {
+          "id": "p7-foot",
+          "type": "body",
+          "rect": { "x": 7, "y": 74, "w": 86, "h": 6 },
+          "text": "AI 动手，人掌握最终决定权",
+          "style": { "font_size": 13, "color": "#64748B", "align": "center" }
+        }
+      ],
+      "notes": "四大安全机制：检查点回滚、危险操作审批、Hook 错误隔离、Diff 可追溯。"
+    },
+    {
+      "id": "p8",
+      "layout": "section",
+      "background": {
+        "type": "gradient",
+        "gradient": {
+          "type": "linear",
+          "angle": 315,
+          "stops": [
+            { "color": "#0A0E1A", "position": 0 },
+            { "color": "#141B2E", "position": 100 }
+          ]
+        }
+      },
+      "elements": [
+        {
+          "id": "p8-rule",
+          "type": "shape",
+          "rect": { "x": 44, "y": 31.5, "w": 12, "h": 0.45 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "p8-title",
+          "type": "title",
+          "rect": { "x": 16, "y": 36, "w": 68, "h": 12 },
+          "text": "让 AI 真正读懂你的代码",
+          "style": { "font_size": 36, "bold": true, "color": "#F8FAFC", "align": "center", "shadow": true }
+        },
+        {
+          "id": "p8-sub",
+          "type": "subtitle",
+          "rect": { "x": 24, "y": 52, "w": 52, "h": 6 },
+          "text": "Adnify · 工具调用 Agent × 代码智能",
+          "style": { "font_size": 17, "color": "#7DD3FC", "align": "center" }
+        },
+        {
+          "id": "p8-grid-decor",
+          "type": "image",
+          "rect": { "x": 76, "y": 60, "w": 18, "h": 10.5 },
+          "image_path": "examples/assets/grid_decor.svg",
+          "image_fit": "contain",
+          "image_alt": "decor",
+          "opacity": 0.5
+        },
+        {
+          "id": "p8-meta",
+          "type": "body",
+          "rect": { "x": 20, "y": 67, "w": 60, "h": 5 },
+          "text": "感谢观看 · 本演示文稿由 Otter PPT 从 JSON 原生构建",
+          "style": { "font_size": 12, "color": "#94A3B8", "align": "center" }
+        }
+      ],
+      "notes": "结尾页：愿景与致谢。"
+    }
+  ]
+}

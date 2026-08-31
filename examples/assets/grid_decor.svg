@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 140" fill="none">
+  <defs>
+    <linearGradient id="fade" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="fadeR" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#A78BFA" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#A78BFA" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- perspective grid floor -->
+  <path d="M0 4h240M0 26h240M0 52h240M0 82h240M0 116h240" stroke="url(#fade)" stroke-width="0.8"/>
+  <path d="M30 0v140M80 0v140M130 0v140M180 0v140" stroke="url(#fadeR)" stroke-width="0.7"/>
+
+  <!-- rising data bar -->
+  <path d="M150 120h14v-22h-14zM176 120h14v-34h-14zM202 120h14v-46h-14z" stroke="#22D3EE" stroke-width="1.1"/>
+  <path d="M153 120v-14h8v14M179 120v-26h8v26M205 120v-38h8v38" fill="#22D3EE" fill-opacity="0.12"/>
+
+  <!-- trend arrow -->
+  <path d="M40 118l30-20 24 10 34-28" stroke="#A78BFA" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M120 80l10 2-3 9" stroke="#A78BFA" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="70" cy="98" r="2.4" fill="#A78BFA"/>
+  <circle cx="94" cy="108" r="2.4" fill="#A78BFA"/>
+  <circle cx="128" cy="80" r="2.8" fill="#22D3EE"/>
+
+  <!-- nodes -->
+  <circle cx="40" cy="118" r="2.4" fill="#22D3EE"/>
+</svg>
