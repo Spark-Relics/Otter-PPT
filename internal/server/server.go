@@ -68,6 +68,17 @@ func (s *Server) setupRoutes() {
 		api.POST("/fonts/install", s.handleInstallFont)
 		api.GET("/download", s.handleDownload)
 
+		// Stateful editing sessions (undo/redo + iterative editing without
+		// reshipping full presentation state each request)
+		api.POST("/session", s.handleSessionCreate)
+		api.GET("/session/:id", s.handleSessionGet)
+		api.POST("/session/:id/execute", s.handleSessionExecute)
+		api.POST("/session/:id/render", s.handleSessionRender)
+		api.POST("/session/:id/build", s.handleSessionBuild)
+		api.POST("/session/:id/undo", s.handleSessionUndo)
+		api.POST("/session/:id/redo", s.handleSessionRedo)
+		api.DELETE("/session/:id", s.handleSessionDelete)
+
 		// Live preview (viewer page is outside /api/v1)
 		api.POST("/preview", s.handlePreviewCreate)
 		api.POST("/preview/:token", s.handlePreviewUpdate)
@@ -255,7 +266,21 @@ type executeRequest struct {
 func (s *Server) handleExecute(c *gin.Context) {
 	var req executeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+			"example": gin.H{
+				"presentation": gin.H{"title": "My Deck", "slides": []any{}},
+				"calls": []gin.H{
+					{"name": "add_slide", "arguments": gin.H{"layout": "blank"}},
+					{"name": "add_text", "arguments": gin.H{
+						"slide_id": "REPLACE_WITH_SLIDE_ID",
+						"x": 10, "y": 10, "w": 80, "h": 10,
+						"text": "Hello world", "font_size": 24,
+					}},
+				},
+			},
+			"hint": "Tip: use POST /api/v1/session + /api/v1/session/:id/execute to avoid re-sending the full presentation every request",
+		})
 		return
 	}
 
@@ -322,10 +347,19 @@ func (s *Server) handleRender(c *gin.Context) {
 
 	var pres model.Presentation
 	if err := json.Unmarshal(raw, &pres); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid presentation JSON: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid presentation JSON: " + err.Error(),
+			"example": "POST a bare Presentation object, e.g. {\"title\":\"Deck\",\"slide_width\":13.333,\"slide_height\":7.5,\"slides\":[...]} — see GET /api/v1/tools or the README",
+		})
 		return
 	}
 
+	s.renderPresentation(c, &pres)
+}
+
+// renderPresentation renders the given presentation and writes the JSON
+// response shared by /render and /session/:id/render.
+func (s *Server) renderPresentation(c *gin.Context, pres *model.Presentation) {
 	if len(pres.Slides) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no slides to render"})
 		return
@@ -341,13 +375,13 @@ func (s *Server) handleRender(c *gin.Context) {
 	tmpFile.Close()
 	defer os.Remove(tmpPath)
 
-	if err := builder.New(&pres).Save(tmpPath); err != nil {
+	if err := builder.New(pres).Save(tmpPath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build PPTX: " + err.Error()})
 		return
 	}
 
 	// Render slides
-	images, err := s.renderer.RenderPresentation(tmpPath, &pres)
+	images, err := s.renderer.RenderPresentation(tmpPath, pres)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "render failed: " + err.Error()})
 		return

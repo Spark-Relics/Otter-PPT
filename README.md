@@ -146,26 +146,43 @@ export TEXT_MODEL_API_KEY="sk-your-key-here"
 ### Start HTTP Server
 
 ```bash
-export TEXT_MODEL_API_KEY="sk-your-key-here"
+export TEXT_MODEL_API_KEY="sk-your-key-here"   # only needed for /generate
 ./bin/otter-ppt serve --port 8080
 ```
+
+> **Agent-native note**: MCP (`otter-ppt mcp`) and STDIO (`otter-ppt stdio`) modes need **no API key** — your agent (Claude Code, Cursor, Codex…) brings its own LLM. The HTTP server is for web services and SDK integrations.
 
 API usage examples:
 
 ```bash
-# Generate PPT
+# Generate PPT (requires API key)
 curl -X POST http://localhost:8080/api/v1/generate \
   -H "Content-Type: application/json" \
   -d '{"topic":"Artificial Intelligence","slides":8,"language":"en","style":"tech"}'
 
-# Build PPTX from JSON
+# Build PPTX from JSON (no API key needed)
 curl -X POST http://localhost:8080/api/v1/build \
   -H "Content-Type: application/json" \
   -d @presentation.json \
   -o output.pptx
 
+# Stateful editing session: create → execute → undo, no state round-trips
+SESSION=$(curl -s -X POST http://localhost:8080/api/v1/session | jq -r .session_id)
+curl -X POST http://localhost:8080/api/v1/session/$SESSION/execute \
+  -H "Content-Type: application/json" \
+  -d '{"calls":[{"name":"add_slide","arguments":{"layout":"blank"}}]}'
+curl -X POST http://localhost:8080/api/v1/session/$SESSION/build -o output.pptx
+
 # List available tools
 curl http://localhost:8080/api/v1/tools
+```
+
+See [`INTEGRATION.md`](./INTEGRATION.md) for the full session workflow (undo/redo, render, self-healing 400 errors) and [`openapi.yaml`](./openapi.yaml) for the machine-readable contract.
+
+### Environment Check
+
+```bash
+./bin/otter-ppt doctor   # render backends, fonts, LLM config at a glance
 ```
 
 ## 🔧 Tool Reference
@@ -508,6 +525,17 @@ If the vision model's overall score ≥ threshold (default 75), the presentation
 MIT License
 
 ## 📋 Changelog
+
+### v0.5.1
+
+- **HTTP stateful sessions**: `POST /api/v1/session` + `/execute|render|build|undo|redo` — server-side state with 30-min TTL; undo/redo now works over HTTP and iterative agents stop re-shipping full presentation JSON (see INTEGRATION.md)
+- **Self-healing API errors**: `/execute` 400s now include a valid `example` payload + session-mode hint; agents can self-correct from the error alone
+- **Instant text overflow warnings**: `add_text` / `add_title` / `add_bullet_list` return `data.warnings` (quality gate moved from export time to add time)
+- **Style-aware `add_card` corner radius**: cards follow the active style preset (swiss_minimal → sharp 0, soft_rounded → 0.15), no more design-lock conflicts
+- **`otter-ppt doctor`**: environment capability check (render backends, fonts, LLM config)
+- **`serve` startup capability summary**: render backend degradation is surfaced up front
+- **Fixed `otter-ppt --help` / `-h`** (previously "Unknown command")
+- **OpenAPI**: session endpoints + `/api/v1/render` documented
 
 ### v0.5.0
 

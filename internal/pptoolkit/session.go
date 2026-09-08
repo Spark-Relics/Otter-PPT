@@ -25,7 +25,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/otter-ppt/otter-ppt/internal/builder"
+	"github.com/otter-ppt/otter-ppt/internal/design"
 	"github.com/otter-ppt/otter-ppt/internal/model"
+	"github.com/otter-ppt/otter-ppt/internal/quality"
 )
 
 // Session holds the in-progress presentation state.
@@ -372,6 +374,16 @@ func (s *Session) AddCard(slideID string, rect model.Rect, title, description st
 		accent = border
 	}
 
+	// Style-aware corner radius: follow the active style preset's shape
+	// language so cards don't violate the design lock (e.g. swiss_minimal
+	// forbids rounded corners entirely).
+	cornerRadius := 0.06 // neutral default
+	if spec := design.GetStyle(theme.StyleKey); spec != nil {
+		if spec.CornerRadius != nil {
+			cornerRadius = *spec.CornerRadius
+		}
+	}
+
 	text := readableOn(panel)
 	muted := "#94A3B8"
 	if text == "#0F172A" {
@@ -386,7 +398,7 @@ func (s *Session) AddCard(slideID string, rect model.Rect, title, description st
 			FillColor:    panel,
 			BorderColor:  border,
 			BorderWidth:  1,
-			CornerRadius: 0.06,
+			CornerRadius: cornerRadius,
 			Shadow:       &model.ShadowStyle{Color: "#000000", Opacity: 0.22, Blur: 6, Distance: 2, Angle: 45},
 		},
 	}
@@ -465,6 +477,40 @@ func (s *Session) AddCard(slideID string, rect model.Rect, title, description st
 	}
 
 	return panelID, titleID, descID, accentID, nil
+}
+
+// elementWarnings runs an inline quality check on one freshly added text
+// element and returns human-readable warnings (empty when clean). This moves
+// the quality gate left: callers learn about overflow at add time instead of
+// at export time.
+func (s *Session) elementWarnings(slideID, elemID string) []string {
+	slide := s.findSlide(slideID)
+	if slide == nil {
+		return nil
+	}
+	for _, e := range slide.Elements {
+		if e.ID != elemID {
+			continue
+		}
+		issues := quality.CheckSlide(slide, 1, s.pres.SlideWidth, s.pres.SlideHeight)
+		var warns []string
+		for _, iss := range issues {
+			if iss.ElementID == elemID {
+				warns = append(warns, fmt.Sprintf("%s: %s", iss.Kind, iss.Message))
+			}
+		}
+		return warns
+	}
+	return nil
+}
+
+func (s *Session) findSlide(slideID string) *model.Slide {
+	for _, sl := range s.pres.Slides {
+		if sl.ID == slideID {
+			return sl
+		}
+	}
+	return nil
 }
 
 // readableOn returns a readable text color for the given background color.

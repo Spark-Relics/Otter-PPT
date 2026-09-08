@@ -7,16 +7,19 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/otter-ppt/otter-ppt/internal/agent"
 	"github.com/otter-ppt/otter-ppt/internal/ai"
 	"github.com/otter-ppt/otter-ppt/internal/builder"
+	"github.com/otter-ppt/otter-ppt/internal/fonts"
 	"github.com/otter-ppt/otter-ppt/internal/integration"
 	"github.com/otter-ppt/otter-ppt/internal/model"
+	"github.com/otter-ppt/otter-ppt/internal/renderer"
 	"github.com/otter-ppt/otter-ppt/internal/server"
 )
 
-const version = "0.5.0"
+const version = "0.5.1"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -39,7 +42,9 @@ func main() {
 		}
 	case "version":
 		fmt.Printf("otter-ppt v%s\n", version)
-	case "help", "-h", "----help":
+	case "doctor":
+		cmdDoctor()
+	case "help", "-h", "--help", "-help":
 		printUsage()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", os.Args[1])
@@ -59,6 +64,7 @@ Commands:
   gen      Generate a PPTX from a topic prompt
   mcp      Start an MCP server over stdio (Claude Code / Cursor)
   stdio    Start the generic JSON-RPC server over stdio
+  doctor   Check environment capabilities (render backends, fonts, LibreOffice)
   version  Show version info
   help     Show this help
 
@@ -74,6 +80,60 @@ Environment:
   IMAGE_MODEL_API_KEY                       Optional image model API key
   IMAGE_MODEL_BASE_URL                      Optional OpenAI-compatible image endpoint
   IMAGE_MODEL_NAME                          Optional image model name`)
+}
+
+// ──────────────────────────────────────────────────────────────
+// doctor
+// ──────────────────────────────────────────────────────────────
+
+// cmdDoctor checks environment capabilities and prints a summary.
+func cmdDoctor() {
+	fmt.Println("otter-ppt environment check")
+	fmt.Println(strings.Repeat("─", 46))
+
+	// Render backends
+	r := renderer.NewRenderer()
+	fmt.Printf("Render backends:\n")
+	if r.IsAvailable() {
+		fmt.Printf("  ✅ LibreOffice (full-fidelity rendering available)\n")
+	} else {
+		fmt.Printf("  ⚠️  LibreOffice not found — render_slides falls back to HTML/browser\n")
+		fmt.Printf("     Install LibreOffice (soffice + pdftoppm on PATH) for best fidelity\n")
+	}
+	if renderer.FindBrowser() != nil {
+		fmt.Printf("  ✅ Headless browser (HTML rendering available)\n")
+	} else {
+		fmt.Printf("  ⚠️  No headless browser — render_slides falls back to structural text mode\n")
+	}
+
+	// Fonts
+	fmt.Printf("Fonts:\n")
+	reg := fonts.GetRegistry()
+	entries, _ := reg.Scan()
+	if len(entries) == 0 {
+		fmt.Printf("  ⚠️  No fonts found in assets/fonts — CJK text may not render in PPTX\n")
+	} else {
+		cjk := 0
+		for _, e := range entries {
+			if e.CJK {
+				cjk++
+			}
+		}
+		fmt.Printf("  ✅ %d fonts in registry", len(entries))
+		if cjk > 0 {
+			fmt.Printf(" (incl. %d CJK)", cjk)
+		}
+		fmt.Println()
+	}
+
+	// LLM config (for gen)
+	fmt.Printf("LLM (for gen command):\n")
+	if key := envOr("TEXT_MODEL_API_KEY", "OPENAI_API_KEY"); key != "" {
+		fmt.Printf("  ✅ API key configured (%s)\n", envOr("TEXT_MODEL_NAME", "OPENAI_MODEL"))
+	} else {
+		fmt.Printf("  ⚠️  No TEXT_MODEL_API_KEY / OPENAI_API_KEY — gen command unavailable\n")
+		fmt.Printf("     Note: mcp/stdio modes do NOT need an API key; the calling agent brings its own LLM\n")
+	}
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -96,7 +156,23 @@ func cmdServe(args []string) {
 	})
 
 	log.Printf("Otter PPT server starting on :%s", *port)
-	log.Printf("Endpoints: POST /api/v1/generate, POST /api/v1/execute, POST /api/v1/build, GET /api/v1/tools")
+
+	// Capability summary — surface render backend degradation up front.
+	r := renderer.NewRenderer()
+	browser := renderer.FindBrowser()
+	switch {
+	case r.IsAvailable():
+		log.Printf("Render backend: LibreOffice (full fidelity)")
+	case browser != nil:
+		log.Printf("Render backend: headless browser (HTML path) — install LibreOffice for full fidelity")
+	default:
+		log.Printf("Render backend: structural text fallback — install LibreOffice or a headless browser for image rendering (see: otter-ppt doctor)")
+	}
+	if entries, err := fonts.GetRegistry().Scan(); err == nil && len(entries) == 0 {
+		log.Printf("⚠ no fonts in assets/fonts — CJK text may not render correctly (see: otter-ppt doctor)")
+	}
+
+	log.Printf("Endpoints: POST /api/v1/generate, POST /api/v1/execute, POST /api/v1/build, POST /api/v1/render, POST /api/v1/session (stateful), GET /api/v1/tools")
 	log.Printf("Health check: GET /health")
 
 	if err := srv.Run(); err != nil {

@@ -91,7 +91,14 @@ type StyleSpec struct {
 	BodySize      int      `json:"body_size"`  // pt, body text anchor
 	Rules         []string `json:"rules"`      // hard discipline rules for the build agent
 	Recipes       []string `json:"recipes"`    // composition motifs / page recipes for the build agent
+
+	// CornerRadius is the style's canonical card corner radius (0-1).
+	// nil means "style has no strong opinion" (callers use their default).
+	CornerRadius *float64 `json:"corner_radius,omitempty"`
 }
+
+// fp is a helper for building *float64 style fields.
+func fp(v float64) *float64 { return &v }
 
 // ─────────────────────────────────────────────────────────────
 // Style registry
@@ -101,6 +108,7 @@ var styles = map[string]*StyleSpec{
 	"swiss_minimal": {
 		Key:           "swiss_minimal",
 		Name:          "Swiss Minimal",
+		CornerRadius:  fp(0),
 		Brief:         "Pick for corporate, consulting, data-driven decks. Skip for playful consumer or artistic topics (use soft_rounded or editorial).",
 		ShapeLanguage: "crisp rectangles, sharp corners (no rounding), thin hairline dividers (0.5-1pt); shapes carry structure, not decoration",
 		Composition:   "strict grid alignment; strong left-aligned axis; oversized headline anchoring the page; generous asymmetric whitespace",
@@ -127,6 +135,7 @@ var styles = map[string]*StyleSpec{
 	"dark_tech": {
 		Key:           "dark_tech",
 		Name:          "Dark Tech",
+		CornerRadius:  fp(0.04),
 		Brief:         "Pick for tech, AI, developer tools, launches on dark canvas. Skip for print-friendly or bright daylight contexts (use cool_corporate).",
 		ShapeLanguage: "crisp geometry; slightly rounded or sharp corners; hexagon/grid/circuit motifs used sparingly; thin glowing rules",
 		Composition:   "elements float on dark negative space; concentric rings or diagonal traces can stage a hero metric; oversized low-opacity numeral behind content",
@@ -153,6 +162,7 @@ var styles = map[string]*StyleSpec{
 	"editorial": {
 		Key:           "editorial",
 		Name:          "Editorial",
+		CornerRadius:  fp(0),
 		Brief:         "Pick for storytelling, reports, thought leadership, humanities. Skip for dense data dashboards (use swiss_minimal).",
 		ShapeLanguage: "classical rectangles, occasional thin rules; content sits in 'columns' like a magazine spread",
 		Composition:   "magazine spread: large serif headline, deck (subtitle), drop-cap or pull-quote potential; images framed with generous margins",
@@ -179,6 +189,7 @@ var styles = map[string]*StyleSpec{
 	"glassmorphism": {
 		Key:           "glassmorphism",
 		Name:          "Glassmorphism",
+		CornerRadius:  fp(0.12),
 		Brief:         "Pick for modern product, SaaS, futuristic UI-flavored decks. Skip for print or conservative corporate (use swiss_minimal).",
 		ShapeLanguage: "rounded cards (corner_radius 0.08-0.15) that read as frosted glass panels floating over a vivid background",
 		Composition:   "full-bleed gradient or photo background; 2-4 glass panels per page layered at different sizes; overlapping allowed",
@@ -205,6 +216,7 @@ var styles = map[string]*StyleSpec{
 	"soft_rounded": {
 		Key:           "soft_rounded",
 		Name:          "Soft Rounded",
+		CornerRadius:  fp(0.15),
 		Brief:         "Pick for education, consumer, health, friendly onboarding topics. Skip for finance/consulting formality (use swiss_minimal).",
 		ShapeLanguage: "large radii (corner_radius 0.12-0.2), pill shapes, soft circles; nothing sharp",
 		Composition:   "card-based layouts with breathing room; icons/numbers in soft circles; center- or card-aligned rather than strict grid",
@@ -231,6 +243,7 @@ var styles = map[string]*StyleSpec{
 	"gradient_modern": {
 		Key:           "gradient_modern",
 		Name:          "Gradient Modern",
+		CornerRadius:  fp(0.08),
 		Brief:         "Pick for product launches, startups, innovation showcases. Skip for conservative or data-dense decks (use swiss_minimal).",
 		ShapeLanguage: "clean rounded rectangles (corner_radius 0.06-0.1) with gradient fills; gradient text-panels; slanted accent bars",
 		Composition:   "hero gradient background; content in clean cards; diagonal energy lines or gradient bands as movement",
@@ -257,6 +270,7 @@ var styles = map[string]*StyleSpec{
 	"blueprint": {
 		Key:           "blueprint",
 		Name:          "Blueprint",
+		CornerRadius:  fp(0),
 		Brief:         "Pick for engineering, architecture, system design, technical deep-dives. Skip for marketing/storytelling (use editorial or gradient_modern).",
 		ShapeLanguage: "thin precise outlines (0.75-1.25pt strokes), technical rectangles, connector lines with small nodes; dashed guides",
 		Composition:   "schematic layouts: labeled blocks connected by thin lines; dimension-like annotations; grid background at low opacity",

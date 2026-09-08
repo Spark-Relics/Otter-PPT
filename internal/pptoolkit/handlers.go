@@ -148,7 +148,7 @@ func (s *Session) executeTool(name string, args map[string]any) ToolResult {
 	case "add_slide":
 		layout, _ := args["layout"].(string)
 		id := s.AddSlide(layout)
-		return ok(fmt.Sprintf("Slide added (id=%s, layout=%s)", id, layout), map[string]string{"slide_id": id})
+		return ok(fmt.Sprintf("Slide added (id=%s, layout=%s)", id, layout), map[string]any{"slide_id": id})
 
 	case "delete_slide":
 		id, _ := args["slide_id"].(string)
@@ -163,7 +163,7 @@ func (s *Session) executeTool(name string, args map[string]any) ToolResult {
 		if err != nil {
 			return fail(err.Error())
 		}
-		return ok(fmt.Sprintf("Slide duplicated (new id=%s)", newID), map[string]string{"slide_id": newID})
+		return ok(fmt.Sprintf("Slide duplicated (new id=%s)", newID), map[string]any{"slide_id": newID})
 
 	case "move_slide":
 		id, _ := args["slide_id"].(string)
@@ -230,17 +230,6 @@ func (s *Session) executeTool(name string, args map[string]any) ToolResult {
 		return ok("Transition set")
 
 	// ──────── Text ────────
-	case "add_title":
-		id, _ := args["slide_id"].(string)
-		rect := mapToRect(args)
-		text, _ := args["text"].(string)
-		style := mapToStyle(args)
-		elemID, err := s.AddTitle(id, rect, text, style)
-		if err != nil {
-			return fail(err.Error())
-		}
-		return ok(fmt.Sprintf("Title added (id=%s)", elemID), map[string]string{"element_id": elemID})
-
 	case "add_text":
 		id, _ := args["slide_id"].(string)
 		rect := mapToRect(args)
@@ -250,7 +239,20 @@ func (s *Session) executeTool(name string, args map[string]any) ToolResult {
 		if err != nil {
 			return fail(err.Error())
 		}
-		return ok(fmt.Sprintf("Text added (id=%s)", elemID), map[string]string{"element_id": elemID})
+		return ok(fmt.Sprintf("Text added (id=%s)", elemID),
+			map[string]any{"element_id": elemID, "warnings": s.elementWarnings(id, elemID)})
+
+	case "add_title":
+		id, _ := args["slide_id"].(string)
+		rect := mapToRect(args)
+		text, _ := args["text"].(string)
+		style := mapToStyle(args)
+		elemID, err := s.AddTitle(id, rect, text, style)
+		if err != nil {
+			return fail(err.Error())
+		}
+		return ok(fmt.Sprintf("Title added (id=%s)", elemID),
+			map[string]any{"element_id": elemID, "warnings": s.elementWarnings(id, elemID)})
 
 	case "add_bullet_list":
 		id, _ := args["slide_id"].(string)
@@ -261,7 +263,8 @@ func (s *Session) executeTool(name string, args map[string]any) ToolResult {
 		if err != nil {
 			return fail(err.Error())
 		}
-		return ok(fmt.Sprintf("Bullet list added (id=%s)", elemID), map[string]string{"element_id": elemID})
+		return ok(fmt.Sprintf("Bullet list added (id=%s)", elemID),
+			map[string]any{"element_id": elemID, "warnings": s.elementWarnings(id, elemID)})
 
 	// ──────── Visual ────────
 	case "add_image":

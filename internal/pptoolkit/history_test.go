@@ -18,7 +18,7 @@ func mustTool(t *testing.T, s *Session, name string, args map[string]any) ToolRe
 func TestUndoRedoAddSlide(t *testing.T) {
 	s := NewSession()
 	r := mustTool(t, s, "add_slide", map[string]any{"layout": "blank"})
-	sid := r.Data.(map[string]string)["slide_id"]
+	sid := r.Data.(map[string]any)["slide_id"].(string)
 
 	mustTool(t, s, "add_text", map[string]any{
 		"slide_id": sid, "x": 5, "y": 5, "w": 40, "h": 10, "text": "hello",
@@ -56,11 +56,11 @@ func TestUndoRedoAddSlide(t *testing.T) {
 func TestUndoRestoresElementContent(t *testing.T) {
 	s := NewSession()
 	r := mustTool(t, s, "add_slide", map[string]any{"layout": "blank"})
-	sid := r.Data.(map[string]string)["slide_id"]
+	sid := r.Data.(map[string]any)["slide_id"].(string)
 	r = mustTool(t, s, "add_text", map[string]any{
 		"slide_id": sid, "x": 5, "y": 5, "w": 40, "h": 10, "text": "before",
 	})
-	elemID := r.Data.(map[string]string)["element_id"]
+	elemID := r.Data.(map[string]any)["element_id"].(string)
 
 	mustTool(t, s, "update_text", map[string]any{
 		"slide_id": sid, "element_id": elemID, "text": "after",
@@ -101,7 +101,7 @@ func TestFailedToolDoesNotCheckpoint(t *testing.T) {
 func TestNewEditClearsRedoBranch(t *testing.T) {
 	s := NewSession()
 	r := mustTool(t, s, "add_slide", map[string]any{"layout": "blank"})
-	sid := r.Data.(map[string]string)["slide_id"]
+	sid := r.Data.(map[string]any)["slide_id"].(string)
 
 	// undo add_slide, redo it back, then undo again
 	// deep enough history: slide + title

@@ -29,7 +29,7 @@ Example external tool batch:
 }
 ```
 
-Pass the previous `presentation` back with the next batch to continue editing without server-side HTTP session state.
+Over HTTP you can pass the previous `presentation` back with each batch (stateless `/api/v1/execute`), or better, use the stateful session endpoints (see [REST and OpenAPI](#rest-and-openapi)) — the server keeps the state, undo/redo works, and payloads stay small.
 
 ## MCP: Claude Code, Cursor and compatible clients
 
@@ -89,13 +89,51 @@ otter-ppt serve --port 8080
 The machine-readable contract is [`openapi.yaml`](./openapi.yaml). Generate clients with any OpenAPI 3 generator. Stable entry points are:
 
 - `POST /api/v1/generate`: AI-driven generation.
-- `POST /api/v1/execute`: apply externally generated tool calls without an internal model.
+- `POST /api/v1/execute`: apply externally generated tool calls without an internal model (stateless — ship the full `presentation` each time).
+- `POST /api/v1/session` + `POST /api/v1/session/{id}/execute|render|build|undo|redo`: **stateful editing sessions** — the server keeps your state, undo/redo works, and you never re-send the presentation. Preferred for iterative agents.
 - `POST /api/v1/build`: deterministic Presentation JSON → PPTX.
+- `POST /api/v1/render`: presentation JSON → slide images (base64).
 - `GET /api/v1/tools`: portable tool definitions.
 - `GET /api/v1/download?id=...`: one-time download returned by `/generate`.
 - `GET /health`: readiness check.
 
 Use `/build` when your own software or model produces Presentation JSON; it does not require an LLM API key.
+
+### curl examples
+
+Create a session and run tool calls without shipping state back and forth:
+
+```bash
+# 1. create session (optionally seed with {"presentation": {...}})
+SESSION=$(curl -s -X POST localhost:8080/api/v1/session | jq -r .session_id)
+
+# 2. run tool calls — note the structured data.slide_id in the response
+curl -s -X POST localhost:8080/api/v1/session/$SESSION/execute -H 'Content-Type: application/json' -d '{
+  "calls": [{"name": "add_slide", "arguments": {"layout": "blank"}}]
+}'
+
+# 3. add text (returns element_id + instant overflow warnings in data)
+curl -s -X POST localhost:8080/api/v1/session/$SESSION/execute -H 'Content-Type: application/json' -d '{
+  "calls": [{"name": "add_text", "arguments": {"slide_id": "REPLACE", "x": 10, "y": 10, "w": 80, "h": 10, "text": "Hello", "font_size": 32}}]
+}'
+
+# 4. made a mistake? undo works over HTTP now
+curl -s -X POST localhost:8080/api/v1/session/$SESSION/undo
+
+# 5. render / build / fetch state
+curl -s -X POST localhost:8080/api/v1/session/$SESSION/render
+curl -s -X POST localhost:8080/api/v1/session/$SESSION/build -o deck.pptx
+curl -s localhost:8080/api/v1/session/$SESSION
+```
+
+Stateless one-shot build (no session needed):
+
+```bash
+curl -s -X POST localhost:8080/api/v1/build -H 'Content-Type: application/json' \
+  -d @presentation.json -o deck.pptx
+```
+
+On validation errors, `/execute` (both forms) returns HTTP 400 with a valid `example` payload — agents can self-correct from the error alone. Failed tool calls return 422 with `failed_call_index`, partial `results`, and (in session mode) a hint that server-side state is preserved.
 
 ## Local service
 

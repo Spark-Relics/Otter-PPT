@@ -40,7 +40,11 @@ paths:
   /api/v1/execute:
     post:
       operationId: executeToolCalls
-      summary: Apply externally generated tool calls without invoking an AI model
+      summary: Apply externally generated tool calls without invoking an AI model (stateless)
+      description: |
+        Stateless — pass the full `presentation` and the updated state is returned.
+        For iterative editing (and server-side undo/redo) prefer the stateful
+        session endpoints: POST /api/v1/session, then POST /api/v1/session/{id}/execute.
       requestBody:
         required: true
         content:
@@ -53,6 +57,178 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ExecuteResponse' }
         '400': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+  /api/v1/render:
+    post:
+      operationId: renderPresentation
+      summary: Render presentation JSON to slide images (base64)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Presentation' }
+      responses:
+        '200':
+          description: Rendered slide images
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  backend: { type: string }
+                  slide_count: { type: integer }
+                  slides:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        slide_num: { type: integer }
+                        width: { type: integer }
+                        height: { type: integer }
+                        image_base64: { type: string }
+                        description: { type: string }
+        '400': { $ref: '#/components/responses/Error' }
+        '500': { $ref: '#/components/responses/Error' }
+  /api/v1/session:
+    post:
+      operationId: createSession
+      summary: Create a stateful editing session (undo/redo without reshipping state)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                presentation: { $ref: '#/components/schemas/Presentation' }
+      responses:
+        '200':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [session_id]
+                properties:
+                  session_id: { type: string }
+                  expires_in: { type: string, example: 30m0s }
+                  slide_count: { type: integer }
+                  usage: { type: object, additionalProperties: true }
+  /api/v1/session/{id}:
+    get:
+      operationId: getSessionState
+      summary: Get current presentation state of a session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Session state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id: { type: string }
+                  presentation: { $ref: '#/components/schemas/Presentation' }
+                  slide_count: { type: integer }
+        '404': { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteSession
+      summary: Drop a session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Deleted }
+        '404': { $ref: '#/components/responses/Error' }
+  /api/v1/session/{id}/execute:
+    post:
+      operationId: executeSessionToolCalls
+      summary: Run tool calls against a server-side session (no state round-trip)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [calls]
+              properties:
+                calls:
+                  type: array
+                  minItems: 1
+                  items: { $ref: '#/components/schemas/ToolCall' }
+      responses:
+        '200':
+          description: Tool results and updated presentation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExecuteResponse' }
+        '400': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+  /api/v1/session/{id}/render:
+    post:
+      operationId: renderSession
+      summary: Render the session's current state to slide images
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Rendered slide images (same shape as /api/v1/render) }
+        '404': { $ref: '#/components/responses/Error' }
+  /api/v1/session/{id}/build:
+    post:
+      operationId: buildSession
+      summary: Build a PPTX from the session's current state
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: PPTX file
+          content:
+            application/vnd.openxmlformats-officedocument.presentationml.presentation:
+              schema: { type: string, format: binary }
+        '404': { $ref: '#/components/responses/Error' }
+  /api/v1/session/{id}/undo:
+    post:
+      operationId: undoSession
+      summary: Undo the last mutating tool call
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Undo result }
+        '404': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+  /api/v1/session/{id}/redo:
+    post:
+      operationId: redoSession
+      summary: Redo the last undone tool call
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Redo result }
+        '404': { $ref: '#/components/responses/Error' }
         '422': { $ref: '#/components/responses/Error' }
   /api/v1/build:
     post:
