@@ -274,14 +274,14 @@ func (a *Agent) buildSystemPrompt() string {
 	if hasImageModel {
 		imageInstruction = `
 ## Image Strategy
-- You have an AI image generation model available.
-- Use image_prompt in add_image to generate professional images inline.
-- For cover slides: generate abstract/professional backgrounds or hero imagery
-- For section dividers: generate mood-setting backgrounds
-- For content slides: generate relevant illustrations or diagrams when they add value
-- Write detailed English prompts for image generation (style, mood, composition, colors)
-- Example: "Modern abstract gradient background, deep blue to purple, geometric shapes, professional, 16:9"
-- Alternate between image slides and text-focused slides for visual rhythm`
+- You have an AI image generation model available. Use image_prompt in add_image to generate images inline.
+- EVERY AI image in this deck shares ONE rendering (style family) from the design plan's IMAGE RENDERING LOCK — obey it; never mix renderings.
+- Assemble each image_prompt as ONE coherent prose paragraph: the rendering's style paragraph (adapted) + subject and composition in prose + deck colors as guidance. NEVER write tag soup ("cute puppy, fluffy, 4k, professional" is a failure mode — the image model renders prose, not keyword lists).
+- HEX codes / color names are rendering guidance only — they must never appear as visible text in the image.
+- End every image_prompt with: "NO text of any kind anywhere in the image — no letters, numbers, signs, watermarks, or written symbols." All real text (titles, labels, numbers) is native PPT text, never baked into images.
+- Cover / section dividers: calm hero compositions with quiet regions reserved for title overlay. Content illustrations: supporting, never busy.
+- Reference fewshot: "Clean flat vector illustration backdrop. Bold geometric shapes in flat solid fills — primary deep navy forming a confident diagonal across the lower third, light gray occupying the upper two-thirds as calm breathing space, accent gold appearing only as one or two thin geometric lines..." — note it is prose describing composition, color roles, and what must stay calm; not a tag list.
+- Alternate between image slides and text-focused slides for visual rhythm.`
 	} else {
 		imageInstruction = `
 ## Image Strategy  

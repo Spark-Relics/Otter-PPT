@@ -37,6 +37,7 @@ type DesignPlan struct {
 	StyleDirection string      `json:"style_direction"` // overall visual style description
 	StyleKey       string      `json:"style_key"`       // design.StyleSpec preset key
 	PaletteKey     string      `json:"palette_key"`     // design.Palette preset key
+	ImageRendering string      `json:"image_rendering"` // design.Rendering preset key (deck-wide AI-image style family)
 	ColorPalette   string      `json:"color_palette"`
 	FontStrategy   string      `json:"font_strategy"`
 	TargetAudience string      `json:"target_audience"`
@@ -83,6 +84,8 @@ STYLE presets (shape language / composition discipline — color-free):
 %s
 PALETTE presets (six semantic color roles):
 %s
+IMAGE RENDERING presets (deck-wide visual style family for AI-generated images — orthogonal to style/palette):
+%s
 %s
 VISUALIZATION templates (charts/tables — reference these keys in visual_needs for data slides):
 %s
@@ -92,6 +95,7 @@ Then output JSON with this exact structure:
   "title": "Presentation title",
   "style_key": "the selected style preset key from the catalog above",
   "palette_key": "the selected palette preset key from the catalog above",
+  "image_rendering": "the selected image rendering preset key (required if any slide uses image_prompt; pick one that matches the style/palette mood, e.g. digital-dashboard only with dark palettes)",
   "style_direction": "Brief description of overall visual direction",
   "color_palette": "Specific hex colors and their usage",
   "font_strategy": "Font choices and hierarchy",
@@ -123,12 +127,12 @@ Design Rules:
 - For section breaks, use "section" layout
 - Last slide is "thank_you" or "contact"
 - Only suggest image_prompt for slides that truly benefit from visuals (cover, section dividers, hero slides)
-- Keep image prompts detailed and professional (photographic, illustration style, mood, colors)
+- When any image_prompt exists: set image_rendering to ONE key from the rendering catalog, and write each image_prompt as ONE coherent prose paragraph assembling the rendering's style + the subject/composition + deck colors as guidance — never tag soup like "cute puppy, fluffy, 4k, professional"; end every image_prompt with "NO text of any kind anywhere in the image — no letters, numbers, signs, watermarks, or written symbols"
 - Vary layouts across slides — no more than 2 consecutive same-layout slides
 - RHYTHM (mandatory): tag every slide anchor/dense/breathing. Covers + section dividers + closing = "anchor". Vary density deliberately: at least one "breathing" slide per 4 content slides — a breathing slide must NOT be a card grid (use one big number, a pull-quote, or naked text + whitespace instead). Never let card-grid layouts run the whole deck — that is the "AI-generated" look
 - Ensure content flows logically from introduction → problem → solution → details → conclusion`,
 		slideCount, topic, style, langName, design.StyleCatalog(), design.PaletteCatalog(),
-		design.StatusCatalog(), viz.Catalog())
+		design.RenderingCatalog(), design.StatusCatalog(), viz.Catalog())
 
 	resp, err := p.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 		Model: p.model,
@@ -169,6 +173,9 @@ Design Rules:
 	if design.GetPalette(plan.PaletteKey) == nil {
 		plan.PaletteKey = ""
 	}
+	if design.GetRendering(plan.ImageRendering) == nil {
+		plan.ImageRendering = ""
+	}
 
 	return &plan, nil
 }
@@ -188,6 +195,15 @@ func FormatPlan(plan *DesignPlan) string {
 	if plan.StyleKey != "" || plan.PaletteKey != "" {
 		sb.WriteString(design.Lock(plan.StyleKey, plan.PaletteKey))
 		sb.WriteString(fmt.Sprintf("\nWhen calling set_theme, pass style=\"%s\" palette=\"%s\" as the first and only theme call.\n\n", plan.StyleKey, plan.PaletteKey))
+	}
+
+	// Image rendering lock (ppt-master image-renderings concept): every AI
+	// image in the deck shares one rendering; prompts must assemble the
+	// rendering paragraph + deck color anchors + prose composition.
+	if plan.ImageRendering != "" {
+		sb.WriteString("\n")
+		sb.WriteString(design.FormatImagePromptGuidance(plan.ImageRendering, plan.PaletteKey))
+		sb.WriteString("\n")
 	}
 
 	sb.WriteString("SLIDE BREAKDOWN:\n")

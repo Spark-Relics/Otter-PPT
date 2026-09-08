@@ -164,11 +164,11 @@ func ToolDefinitions() []openai.Tool {
 		// ────────── Visual Elements ──────────
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "add_image",
-			Description: "Add an image to a slide. Provide image_path for an existing asset, or image_prompt when an image model is configured.",
+			Description: "Add an image to a slide. Provide image_path for an existing asset, or image_prompt when an image model is configured. image_prompt must be ONE coherent prose paragraph (rendering style + subject/composition + deck colors as guidance), never tag soup; end it with \"NO text of any kind anywhere in the image\". Follow the deck's IMAGE RENDERING LOCK — every AI image in the deck shares one rendering.",
 			Parameters: rectParams(map[string]prop{
 				"slide_id":     {typ: "string", desc: "Slide ID", req: true},
 				"image_path":   {typ: "string", desc: "Existing local path or URL"},
-				"image_prompt": {typ: "string", desc: "Prompt for the configured image model"},
+				"image_prompt": {typ: "string", desc: "Prose prompt for the configured image model: rendering style paragraph + subject/composition in prose + color guidance. Not a tag list. Ends with NO-text clause."},
 			}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
@@ -403,9 +403,9 @@ func ToolDefinitions() []openai.Tool {
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "generate_image",
-			Description: "Generate a professional AI image from a text prompt and return the local path. Use this to create backgrounds, illustrations, and visual assets before adding them to slides.",
+			Description: "Generate a professional AI image from a text prompt and return the local path. Use this to create backgrounds, illustrations, and visual assets before adding them to slides. The prompt must be ONE coherent prose paragraph — rendering style + subject + composition + color roles in flowing sentences — never a keyword tag list (\"cute puppy, fluffy, 4k, professional\" produces bad images). Hex codes and color names are guidance for the renderer, never visible text. End every prompt with: \"NO text of any kind anywhere in the image — no letters, numbers, signs, watermarks, or written symbols.\"",
 			Parameters: params(map[string]prop{
-				"image_prompt": {typ: "string", desc: "Detailed English prompt for image generation (describe style, mood, composition, colors)", req: true},
+				"image_prompt": {typ: "string", desc: "One coherent prose paragraph: rendering style, subject, composition, color roles as guidance, ending with the NO-text clause", req: true},
 			}),
 		}},
 
