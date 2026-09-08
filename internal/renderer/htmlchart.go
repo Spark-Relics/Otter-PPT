@@ -182,7 +182,7 @@ func (g *htmlGenerator) axisChartSVG(sb *strings.Builder, cd *model.ChartData, c
 	for i := 0; i <= 4; i++ {
 		v := minV + (maxV-minV)*float64(i)/4
 		sb.WriteString(fmt.Sprintf(
-			`<text x="%.1f" y="%.1f" text-anchor="end" font-size="8" fill="%s">%s</text>`,
+			`<text x="%.1f" y="%.1f" text-anchor="end" font-size="10" fill="%s">%s</text>`,
 			px-3, yOf(v)+3, tickInk, formatNum(v)))
 	}
 
@@ -207,10 +207,9 @@ func (g *htmlGenerator) axisChartSVG(sb *strings.Builder, cd *model.ChartData, c
 	for i, c := range cd.Categories {
 		x := px + catStep*float64(i) + catStep/2
 		sb.WriteString(fmt.Sprintf(
-			`<text x="%.1f" y="%.1f" text-anchor="middle" font-size="8" fill="%s">%s</text>`,
-			x, py+ph+11, catInk, escapeXML(truncateLabel(c))))
+			`<text x="%.1f" y="%.1f" text-anchor="middle" font-size="10" fill="%s">%s</text>`,
+			x, py+ph+12, catInk, escapeXML(truncateLabel(c))))
 	}
-
 	switch ct {
 	case model.ChartColumn, model.ChartCombo:
 		// Columns (bar-series only in combo)

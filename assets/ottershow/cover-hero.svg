@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A0E1A"/>
+      <stop offset="60%" stop-color="#141B2E"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+    <linearGradient id="waveA" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
+      <stop offset="30%" stop-color="#22D3EE"/>
+      <stop offset="70%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#A78BFA" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="waveB" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#A78BFA" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#A78BFA" stop-opacity="0.7"/>
+      <stop offset="80%" stop-color="#22D3EE" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="78%" cy="38%" r="45%">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="60%" cy="70%" r="40%">
+      <stop offset="0%" stop-color="#A78BFA" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#A78BFA" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bgGrad)"/>
+  <rect width="1600" height="900" fill="url(#glowA)"/>
+  <rect width="1600" height="900" fill="url(#glowB)"/>
+
+  <!-- subtle grid -->
+  <g stroke="#334155" stroke-width="1" stroke-opacity="0.16">
+    <path d="M0 150 H1600 M0 300 H1600 M0 450 H1600 M0 600 H1600 M0 750 H1600"/>
+    <path d="M200 0 V900 M400 0 V900 M600 0 V900 M800 0 V900 M1000 0 V900 M1200 0 V900 M1400 0 V900"/>
+  </g>
+
+  <!-- concentric rings right side -->
+  <g fill="none" stroke-linecap="round" transform="translate(1180 420)">
+    <circle r="150" stroke="#22D3EE" stroke-opacity="0.35" stroke-width="2"/>
+    <circle r="230" stroke="#A78BFA" stroke-opacity="0.22" stroke-width="1.5" stroke-dasharray="4 10"/>
+    <circle r="320" stroke="#64748B" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="2 14"/>
+    <circle r="405" stroke="#475569" stroke-opacity="0.14" stroke-width="1"/>
+    <circle cx="150" cy="0" r="8" fill="#22D3EE"/>
+    <circle cx="-163" cy="-163" r="6" fill="#A78BFA"/>
+    <circle cx="0" cy="-230" r="5" fill="#38BDF8" fill-opacity="0.8"/>
+    <circle cx="205" cy="205" r="4" fill="#A78BFA" fill-opacity="0.7"/>
+  </g>
+
+  <!-- flowing waves lower area -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M-50 700 C 300 620, 550 780, 900 700 S 1450 610, 1650 690" stroke="url(#waveA)" stroke-width="3"/>
+    <path d="M-50 745 C 320 665, 560 820, 930 740 S 1430 660, 1650 735" stroke="url(#waveB)" stroke-width="2"/>
+    <path d="M-50 660 C 280 590, 570 735, 890 660 S 1420 580, 1650 650" stroke="#475569" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="1 8"/>
+  </g>
+
+  <!-- scattered particles -->
+  <g>
+    <circle cx="240" cy="180" r="2.5" fill="#22D3EE" fill-opacity="0.7"/>
+    <circle cx="420" cy="520" r="2" fill="#A78BFA" fill-opacity="0.6"/>
+    <circle cx="700" cy="240" r="3" fill="#38BDF8" fill-opacity="0.5"/>
+    <circle cx="980" cy="560" r="2" fill="#22D3EE" fill-opacity="0.6"/>
+    <circle cx="1320" cy="200" r="2.5" fill="#A78BFA" fill-opacity="0.55"/>
+    <circle cx="1480" cy="640" r="2" fill="#38BDF8" fill-opacity="0.5"/>
+    <circle cx="560" cy="690" r="1.5" fill="#94A3B8" fill-opacity="0.5"/>
+    <circle cx="1150" cy="770" r="2" fill="#94A3B8" fill-opacity="0.45"/>
+  </g>
+</svg>

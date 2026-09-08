@@ -249,13 +249,24 @@ func (g *htmlGenerator) shapeElementHTML(elem *model.Element) string {
 		style += fmt.Sprintf("border:%.2fpt solid %s;", math.Max(lineWidth, 0.25), cssColor(lineColor))
 	}
 
-	// Radius
+	// Radius — OOXML semantics: corner radius is relative to the shorter side,
+	// so CSS needs separate horizontal/vertical percentages to avoid pill-like
+	// distortion on wide or tall shapes.
 	if sd.ShapeType == model.ShapeRoundedRectangle || sd.CornerRadius > 0 {
 		r := sd.CornerRadius
 		if r <= 0 {
 			r = 0.1
 		}
-		style += fmt.Sprintf("border-radius:%.1f%%;", math.Min(r*100, 50))
+		rc := math.Min(r, 0.5) * 100
+		// Keep the physical radius equal along both axes: rx% of width and
+		// ry% of height must resolve to the same length.
+		aspect := 1.0
+		if elem.Rect.H > 0 {
+			aspect = elem.Rect.W / elem.Rect.H
+		}
+		rx := math.Min(rc, rc/aspect)
+		ry := math.Min(rc, rc*aspect)
+		style += fmt.Sprintf("border-radius:%.2f%% / %.2f%%;", rx, ry)
 	}
 
 	// Shadow

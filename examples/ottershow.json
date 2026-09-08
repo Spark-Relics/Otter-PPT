@@ -1,0 +1,851 @@
+{"title":"Otter PPT — AI 原生演示文稿引擎","theme":{"name":"Dark Tech / Tech Neon","primary_color":"#22D3EE","secondary_color":"#141B2E","accent_color":"#A78BFA","background_color":"#0A0E1A","text_color":"#E2E8F0","title_font":"Noto Sans SC","body_font":"Noto Sans SC","style_key":"dark_tech","palette_key":"tech_neon"},"slides":[
+    {
+      "id": "s1",
+      "layout": "title",
+      "background": {
+        "type": "gradient",
+        "gradient": {
+          "type": "linear",
+          "angle": 135,
+          "stops": [
+            { "color": "#0A0E1A", "position": 0 },
+            { "color": "#141B2E", "position": 60 },
+            { "color": "#1E293B", "position": 100 }
+          ]
+        }
+      },
+      "elements": [
+        {
+          "id": "s1-hero",
+          "type": "image",
+          "rect": { "x": 0, "y": 0, "w": 100, "h": 100 },
+          "image_path": "assets/ottershow/cover-hero.svg",
+          "image_fit": "stretch",
+          "image_alt": "封面科技风主视觉"
+        },
+        {
+          "id": "s1-rule",
+          "type": "shape",
+          "rect": { "x": 10, "y": 30, "w": 9, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "s1-title",
+          "type": "title",
+          "rect": { "x": 10, "y": 33, "w": 60, "h": 14 },
+          "text": "Otter PPT",
+          "style": { "font_size": 52, "bold": true, "color": "#F8FAFC", "shadow": true }
+        },
+        {
+          "id": "s1-sub",
+          "type": "subtitle",
+          "rect": { "x": 10, "y": 49, "w": 56, "h": 8 },
+          "text": "AI 原生演示文稿引擎 · 纯代码生成 PowerPoint",
+          "style": { "font_size": 20, "color": "#7DD3FC" }
+        },
+        {
+          "id": "s1-meta",
+          "type": "body",
+          "rect": { "x": 10, "y": 66, "w": 46, "h": 5 },
+          "text": "单二进制 · MCP / HTTP / CLI 三种接入 · 2026.09",
+          "style": { "font_size": 12, "color": "#94A3B8" }
+        }
+      ],
+      "notes": "封面：AI 通过工具调用直接产出原生 PPTX，无 COM、无 Java、无浏览器依赖。"
+    },
+    {
+      "id": "s2",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s2-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 9 },
+          "text": "三大核心机制",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s2-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "s2-c1bg",
+          "type": "shape",
+          "rect": { "x": 7, "y": 23, "w": 27.5, "h": 44 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#1E293B", "width": 1 }
+          }
+        },
+        {
+          "id": "s2-c1num",
+          "type": "shape",
+          "rect": { "x": 10, "y": 27, "w": 6, "h": 6 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#0E7490" }
+          }
+        },
+        {
+          "id": "s2-c1numt",
+          "type": "body",
+          "rect": { "x": 10, "y": 27.6, "w": 6, "h": 5 },
+          "text": "01",
+          "style": { "font_size": 16, "bold": true, "color": "#F8FAFC", "align": "center", "valign": "middle" },
+          "word_wrap": false
+        },
+        {
+          "id": "s2-c1t",
+          "type": "title",
+          "rect": { "x": 10, "y": 36, "w": 22, "h": 6 },
+          "text": "SVG 整页授权",
+          "style": { "font_size": 17, "bold": true, "color": "#F1F5F9" }
+        },
+        {
+          "id": "s2-c1b",
+          "type": "body",
+          "rect": { "x": 10, "y": 43, "w": 22, "h": 20 },
+          "text": "AI 直接书写整页 SVG，编译为原生 PPTX 图元：矩形、圆、连线与自定义几何，像素级控制布局。",
+          "style": { "font_size": 12, "color": "#94A3B8" }
+        },
+        {
+          "id": "s2-c2bg",
+          "type": "shape",
+          "rect": { "x": 36.25, "y": 23, "w": 27.5, "h": 44 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#1E293B", "width": 1 }
+          }
+        },
+        {
+          "id": "s2-c2num",
+          "type": "shape",
+          "rect": { "x": 39.25, "y": 27, "w": 6, "h": 6 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#6D28D9" }
+          }
+        },
+        {
+          "id": "s2-c2numt",
+          "type": "body",
+          "rect": { "x": 39.25, "y": 27.6, "w": 6, "h": 5 },
+          "text": "02",
+          "style": { "font_size": 16, "bold": true, "color": "#F8FAFC", "align": "center", "valign": "middle" },
+          "word_wrap": false
+        },
+        {
+          "id": "s2-c2t",
+          "type": "title",
+          "rect": { "x": 39.25, "y": 36, "w": 22, "h": 6 },
+          "text": "设计锁",
+          "style": { "font_size": 17, "bold": true, "color": "#F1F5F9" }
+        },
+        {
+          "id": "s2-c2b",
+          "type": "body",
+          "rect": { "x": 39.25, "y": 43, "w": 22, "h": 20 },
+          "text": "排版角色锚点与页面节奏纪律注入构建提示，消除「AI 生成感」，保持全篇视觉一致。",
+          "style": { "font_size": 12, "color": "#94A3B8" }
+        },
+        {
+          "id": "s2-c3bg",
+          "type": "shape",
+          "rect": { "x": 65.5, "y": 23, "w": 27.5, "h": 44 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#1E293B", "width": 1 }
+          }
+        },
+        {
+          "id": "s2-c3num",
+          "type": "shape",
+          "rect": { "x": 68.5, "y": 27, "w": 6, "h": 6 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#0E7490" }
+          }
+        },
+        {
+          "id": "s2-c3numt",
+          "type": "body",
+          "rect": { "x": 68.5, "y": 27.6, "w": 6, "h": 5 },
+          "text": "03",
+          "style": { "font_size": 16, "bold": true, "color": "#F8FAFC", "align": "center", "valign": "middle" },
+          "word_wrap": false
+        },
+        {
+          "id": "s2-c3t",
+          "type": "title",
+          "rect": { "x": 68.5, "y": 36, "w": 22, "h": 6 },
+          "text": "质量门禁",
+          "style": { "font_size": 17, "bold": true, "color": "#F1F5F9" }
+        },
+        {
+          "id": "s2-c3b",
+          "type": "body",
+          "rect": { "x": 68.5, "y": 43, "w": 22, "h": 20 },
+          "text": "文本宽度估算与模块边界检测自动拦截越界、溢出与过小字号，不合格不放行。",
+          "style": { "font_size": 12, "color": "#94A3B8" }
+        }
+      ],
+      "notes": "借鉴 ppt-master 的三大核心机制已全部移植：SVG 整页授权、spec_lock 设计锁、质量门禁。"
+    },
+    {
+      "id": "s3",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s3-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 9 },
+          "text": "四层架构",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s3-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": {
+              "type": "gradient",
+              "gradient": {
+                "type": "linear",
+                "angle": 0,
+                "stops": [
+                  { "color": "#22D3EE", "position": 0 },
+                  { "color": "#A78BFA", "position": 100 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "s3-l1",
+          "type": "shape",
+          "rect": { "x": 7, "y": 26, "w": 86, "h": 12 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#0E7490" }
+          }
+        },
+        {
+          "id": "s3-l1t",
+          "type": "title",
+          "rect": { "x": 10, "y": 28.5, "w": 80, "h": 7 },
+          "text": "接入层 — MCP · STDIO · REST / HTTP",
+          "style": { "font_size": 16, "bold": true, "color": "#F8FAFC" }
+        },
+        {
+          "id": "s3-l2",
+          "type": "shape",
+          "rect": { "x": 7, "y": 40.5, "w": 86, "h": 12 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#6D28D9" }
+          }
+        },
+        {
+          "id": "s3-l2t",
+          "type": "title",
+          "rect": { "x": 10, "y": 43, "w": 80, "h": 7 },
+          "text": "工具层 — 40+ 工具 · planner / builder / quality",
+          "style": { "font_size": 16, "bold": true, "color": "#F8FAFC" }
+        },
+        {
+          "id": "s3-l3",
+          "type": "shape",
+          "rect": { "x": 7, "y": 55, "w": 86, "h": 12 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#334155" }
+          }
+        },
+        {
+          "id": "s3-l3t",
+          "type": "title",
+          "rect": { "x": 10, "y": 57.5, "w": 80, "h": 7 },
+          "text": "渲染层 — builder · svgdecode · renderer 三级降级",
+          "style": { "font_size": 16, "bold": true, "color": "#F8FAFC" }
+        },
+        {
+          "id": "s3-l4",
+          "type": "shape",
+          "rect": { "x": 7, "y": 69.5, "w": 86, "h": 12 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#1E293B" },
+            "line": { "color": "#475569", "width": 1 }
+          }
+        },
+        {
+          "id": "s3-l4t",
+          "type": "title",
+          "rect": { "x": 10, "y": 72, "w": 80, "h": 7 },
+          "text": "数据层 — model · 13 种图表 · 模板 / 解析双向",
+          "style": { "font_size": 16, "bold": true, "color": "#E2E8F0" }
+        }
+      ],
+      "notes": "四层横向架构：接入 → 工具 → 渲染 → 数据。"
+    },
+    {
+      "id": "s4",
+      "layout": "twoColumn",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s4-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 9 },
+          "text": "能力全景",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s4-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": {
+            "shape_type": "rectangle",
+            "fill": { "type": "gradient", "gradient": { "type": "linear", "angle": 0, "stops": [ { "color": "#22D3EE", "position": 0 }, { "color": "#A78BFA", "position": 100 } ] } }
+          }
+        },
+        {
+          "id": "s4-grid1",
+          "type": "shape",
+          "rect": { "x": 7, "y": 24, "w": 20.5, "h": 18 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s4-g1t",
+          "type": "title",
+          "rect": { "x": 9, "y": 26.5, "w": 17, "h": 5 },
+          "text": "原生图表",
+          "style": { "font_size": 15, "bold": true, "color": "#22D3EE" }
+        },
+        {
+          "id": "s4-g1b",
+          "type": "body",
+          "rect": { "x": 9, "y": 32, "w": 17, "h": 9 },
+          "text": "13 种图表类型，含 3D、趋势线与误差线",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        },
+        {
+          "id": "s4-grid2",
+          "type": "shape",
+          "rect": { "x": 29.75, "y": 24, "w": 20.5, "h": 18 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s4-g2t",
+          "type": "title",
+          "rect": { "x": 31.75, "y": 26.5, "w": 17, "h": 5 },
+          "text": "智能布局",
+          "style": { "font_size": 15, "bold": true, "color": "#A78BFA" }
+        },
+        {
+          "id": "s4-g2b",
+          "type": "body",
+          "rect": { "x": 31.75, "y": 32, "w": 17, "h": 9 },
+          "text": "18 个布局模板 + 自动修复验证器",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        },
+        {
+          "id": "s4-grid3",
+          "type": "shape",
+          "rect": { "x": 52.5, "y": 24, "w": 20.5, "h": 18 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s4-g3t",
+          "type": "title",
+          "rect": { "x": 54.5, "y": 26.5, "w": 17, "h": 5 },
+          "text": "设计系统",
+          "style": { "font_size": 15, "bold": true, "color": "#22D3EE" }
+        },
+        {
+          "id": "s4-g3b",
+          "type": "body",
+          "rect": { "x": 54.5, "y": 32, "w": 17, "h": 9 },
+          "text": "7 种风格 × 8 种色板二级设计系统",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        },
+        {
+          "id": "s4-grid4",
+          "type": "shape",
+          "rect": { "x": 75.25, "y": 24, "w": 17.75, "h": 18 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s4-g4t",
+          "type": "title",
+          "rect": { "x": 77.25, "y": 26.5, "w": 14, "h": 5 },
+          "text": "模板双向",
+          "style": { "font_size": 15, "bold": true, "color": "#A78BFA" }
+        },
+        {
+          "id": "s4-g4b",
+          "type": "body",
+          "rect": { "x": 77.25, "y": 32, "w": 14, "h": 9 },
+          "text": "load_template 导入 / import_pptx 反解析",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        },
+        {
+          "id": "s4-grid5",
+          "type": "shape",
+          "rect": { "x": 7, "y": 44.5, "w": 43.25, "h": 18 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s4-g5t",
+          "type": "title",
+          "rect": { "x": 9, "y": 47, "w": 39, "h": 5 },
+          "text": "富媒体与动画",
+          "style": { "font_size": 15, "bold": true, "color": "#22D3EE" }
+        },
+        {
+          "id": "s4-g5b",
+          "type": "body",
+          "rect": { "x": 9, "y": 53, "w": 39, "h": 8 },
+          "text": "7 种元素动画 · 视频 / 音频 / SVG 嵌入 · 表格合并",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        },
+        {
+          "id": "s4-grid6",
+          "type": "shape",
+          "rect": { "x": 52.5, "y": 44.5, "w": 40.5, "h": 18 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s4-g6t",
+          "type": "title",
+          "rect": { "x": 54.5, "y": 47, "w": 36, "h": 5 },
+          "text": "实时预览",
+          "style": { "font_size": 15, "bold": true, "color": "#A78BFA" }
+        },
+        {
+          "id": "s4-g6b",
+          "type": "body",
+          "rect": { "x": 54.5, "y": 53, "w": 36, "h": 8 },
+          "text": "Web 会话预览 · 渲染截图回传外部 AI 视觉优化",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        },
+        {
+          "id": "s4-strip",
+          "type": "shape",
+          "rect": { "x": 7, "y": 66, "w": 86, "h": 14 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#0E7490", "width": 1.25 }
+          }
+        },
+        {
+          "id": "s4-stript",
+          "type": "body",
+          "rect": { "x": 10, "y": 69, "w": 80, "h": 8 },
+          "text": "零依赖哲学：单 Go 二进制，LibreOffice 仅在已安装时使用，浏览器截图自动降级，无需 Java / COM。",
+          "style": { "font_size": 12, "color": "#7DD3FC", "valign": "middle" }
+        }
+      ],
+      "notes": "能力全景 2×3 卡片 + 底部零依赖条。"
+    },
+    {
+      "id": "s5",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s5-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 9 },
+          "text": "原生图表引擎",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s5-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": { "shape_type": "rectangle", "fill": { "type": "gradient", "gradient": { "type": "linear", "angle": 0, "stops": [ { "color": "#22D3EE", "position": 0 }, { "color": "#A78BFA", "position": 100 } ] } } }
+        },
+        {
+          "id": "s5-chartbg",
+          "type": "shape",
+          "rect": { "x": 7, "y": 24, "w": 55, "h": 56 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s5-chart",
+          "type": "chart",
+          "rect": { "x": 9.5, "y": 27, "w": 50, "h": 50 },
+          "chart": {
+            "chart_type": "column",
+            "title": "各图表类型使用频次（示意）",
+            "font_size": 11,
+            "categories": ["柱状", "条形", "折线", "饼图", "散点", "组合"],
+            "series": [
+              {
+                "name": "使用频次",
+                "values": [92, 74, 68, 55, 38, 26]
+              }
+            ]
+          }
+        },
+        {
+          "id": "s5-r1bg",
+          "type": "shape",
+          "rect": { "x": 64.5, "y": 24, "w": 28.5, "h": 26.5 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s5-r1t",
+          "type": "title",
+          "rect": { "x": 67, "y": 27, "w": 23, "h": 5 },
+          "text": "13 种图表类型",
+          "style": { "font_size": 15, "bold": true, "color": "#22D3EE" }
+        },
+        {
+          "id": "s5-r1b",
+          "type": "body",
+          "rect": { "x": 67, "y": 33, "w": 23, "h": 15 },
+          "text": "bar / column / line / pie / area / doughnut / scatter / combo + 3D 变体",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        },
+        {
+          "id": "s5-r2bg",
+          "type": "shape",
+          "rect": { "x": 64.5, "y": 53.5, "w": 28.5, "h": 26.5 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s5-r2t",
+          "type": "title",
+          "rect": { "x": 67, "y": 56.5, "w": 23, "h": 5 },
+          "text": "高级特性",
+          "style": { "font_size": 15, "bold": true, "color": "#A78BFA" }
+        },
+        {
+          "id": "s5-r2b",
+          "type": "body",
+          "rect": { "x": 67, "y": 62.5, "w": 23, "h": 15 },
+          "text": "次坐标轴 · 平滑曲线 · 趋势线 · 误差线 · numCache 缓存",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        }
+      ],
+      "notes": "图表卡片化：左侧 column 图表示意，右侧双卡列特性。"
+    },
+    {
+      "id": "s6",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s6-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 9 },
+          "text": "质量闭环",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s6-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": { "shape_type": "rectangle", "fill": { "type": "gradient", "gradient": { "type": "linear", "angle": 0, "stops": [ { "color": "#22D3EE", "position": 0 }, { "color": "#A78BFA", "position": 100 } ] } } }
+        },
+        {
+          "id": "s6-step1",
+          "type": "shape",
+          "rect": { "x": 7, "y": 28, "w": 25, "h": 34 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s6-s1chip",
+          "type": "shape",
+          "rect": { "x": 10, "y": 32, "w": 7, "h": 7 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#0E7490" } }
+        },
+        {
+          "id": "s6-s1chipt",
+          "type": "body",
+          "rect": { "x": 10, "y": 32.8, "w": 7, "h": 6 },
+          "text": "1",
+          "style": { "font_size": 18, "bold": true, "color": "#F8FAFC", "align": "center", "valign": "middle" },
+          "word_wrap": false
+        },
+        {
+          "id": "s6-s1t",
+          "type": "title",
+          "rect": { "x": 10, "y": 42, "w": 19, "h": 6 },
+          "text": "规划",
+          "style": { "font_size": 16, "bold": true, "color": "#F1F5F9" }
+        },
+        {
+          "id": "s6-s1b",
+          "type": "body",
+          "rect": { "x": 10, "y": 48.5, "w": 19, "h": 12 },
+          "text": "planner 产出幻灯片计划，标注 anchor / dense / breathing 节奏",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        },
+        {
+          "id": "s6-step2",
+          "type": "shape",
+          "rect": { "x": 37.5, "y": 28, "w": 25, "h": 34 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s6-s2chip",
+          "type": "shape",
+          "rect": { "x": 40.5, "y": 32, "w": 7, "h": 7 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#6D28D9" } }
+        },
+        {
+          "id": "s6-s2chipt",
+          "type": "body",
+          "rect": { "x": 40.5, "y": 32.8, "w": 7, "h": 6 },
+          "text": "2",
+          "style": { "font_size": 18, "bold": true, "color": "#F8FAFC", "align": "center", "valign": "middle" },
+          "word_wrap": false
+        },
+        {
+          "id": "s6-s2t",
+          "type": "title",
+          "rect": { "x": 40.5, "y": 42, "w": 19, "h": 6 },
+          "text": "构建",
+          "style": { "font_size": 16, "bold": true, "color": "#F1F5F9" }
+        },
+        {
+          "id": "s6-s2b",
+          "type": "body",
+          "rect": { "x": 40.5, "y": 48.5, "w": 19, "h": 12 },
+          "text": "builder 按设计锁渲染 OOXML，排版角色锚点约束字号层级",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        },
+        {
+          "id": "s6-step3",
+          "type": "shape",
+          "rect": { "x": 68, "y": 28, "w": 25, "h": 34 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#141B2E" }, "line": { "color": "#1E293B", "width": 1 } }
+        },
+        {
+          "id": "s6-s3chip",
+          "type": "shape",
+          "rect": { "x": 71, "y": 32, "w": 7, "h": 7 },
+          "shape": { "shape_type": "rounded_rectangle", "fill": { "type": "solid", "color": "#0E7490" } }
+        },
+        {
+          "id": "s6-s3chipt",
+          "type": "body",
+          "rect": { "x": 71, "y": 32.8, "w": 7, "h": 6 },
+          "text": "3",
+          "style": { "font_size": 18, "bold": true, "color": "#F8FAFC", "align": "center", "valign": "middle" },
+          "word_wrap": false
+        },
+        {
+          "id": "s6-s3t",
+          "type": "title",
+          "rect": { "x": 71, "y": 42, "w": 19, "h": 6 },
+          "text": "门禁",
+          "style": { "font_size": 16, "bold": true, "color": "#F1F5F9" }
+        },
+        {
+          "id": "s6-s3b",
+          "type": "body",
+          "rect": { "x": 71, "y": 48.5, "w": 19, "h": 12 },
+          "text": "quality 检查越界 / 溢出 / 小字号，strict 模式下不达标拒绝导出",
+          "style": { "font_size": 11, "color": "#94A3B8" }
+        },
+        {
+          "id": "s6-loop",
+          "type": "shape",
+          "rect": { "x": 7, "y": 68, "w": 86, "h": 12 },
+          "shape": {
+            "shape_type": "rounded_rectangle",
+            "fill": { "type": "solid", "color": "#141B2E" },
+            "line": { "color": "#6D28D9", "width": 1.25 }
+          }
+        },
+        {
+          "id": "s6-loopt",
+          "type": "body",
+          "rect": { "x": 10, "y": 70.5, "w": 80, "h": 7 },
+          "text": "渲染截图回传外部 AI 视觉检查 → 发现问题 → 修改 → 再验证，形成自我修复闭环。",
+          "style": { "font_size": 12, "color": "#C4B5FD" }
+        }
+      ],
+      "notes": "规划 → 构建 → 门禁三步流程 + 视觉闭环条。"
+    },
+    {
+      "id": "s7",
+      "layout": "titleContent",
+      "background": { "type": "solid", "color": "#0A0E1A" },
+      "elements": [
+        {
+          "id": "s7-title",
+          "type": "title",
+          "rect": { "x": 7, "y": 6, "w": 86, "h": 9 },
+          "text": "路线图",
+          "style": { "font_size": 34, "bold": true, "color": "#E2E8F0" }
+        },
+        {
+          "id": "s7-bar",
+          "type": "shape",
+          "rect": { "x": 7, "y": 16.5, "w": 4, "h": 0.5 },
+          "shape": { "shape_type": "rectangle", "fill": { "type": "gradient", "gradient": { "type": "linear", "angle": 0, "stops": [ { "color": "#22D3EE", "position": 0 }, { "color": "#A78BFA", "position": 100 } ] } } }
+        },
+        {
+          "id": "s7-timeline",
+          "type": "shape",
+          "rect": { "x": 12, "y": 38, "w": 67.2, "h": 0.4 },
+          "shape": { "shape_type": "rectangle", "fill": { "type": "gradient", "gradient": { "type": "linear", "angle": 0, "stops": [ { "color": "#22D3EE", "position": 0 }, { "color": "#A78BFA", "position": 100 } ] } } }
+        },
+        {
+          "id": "s7-d1",
+          "type": "shape",
+          "rect": { "x": 18.05, "y": 34.9, "w": 1.125, "h": 2 },
+          "shape": { "shape_type": "ellipse", "fill": { "type": "solid", "color": "#22D3EE" } }
+        },
+        {
+          "id": "s7-d1t",
+          "type": "title",
+          "rect": { "x": 9.6, "y": 24, "w": 18, "h": 5 },
+          "text": "已完成 ✓",
+          "style": { "font_size": 14, "bold": true, "color": "#22D3EE", "align": "center" }
+        },
+        {
+          "id": "s7-d1b",
+          "type": "body",
+          "rect": { "x": 9.6, "y": 42, "w": 18, "h": 16 },
+          "text": "13 种图表 · 设计锁 · 质量门禁 · SVG 编译 · 模板双向 · 实时预览",
+          "style": { "font_size": 11, "color": "#94A3B8", "align": "center" }
+        },
+        {
+          "id": "s7-d2",
+          "type": "shape",
+          "rect": { "x": 48.05, "y": 34.9, "w": 1.125, "h": 2 },
+          "shape": { "shape_type": "ellipse", "fill": { "type": "solid", "color": "#A78BFA" } }
+        },
+        {
+          "id": "s7-d2t",
+          "type": "title",
+          "rect": { "x": 39.6, "y": 24, "w": 18, "h": 5 },
+          "text": "进行中",
+          "style": { "font_size": 14, "bold": true, "color": "#A78BFA", "align": "center" }
+        },
+        {
+          "id": "s7-d2b",
+          "type": "body",
+          "rect": { "x": 39.6, "y": 42, "w": 18, "h": 16 },
+          "text": "动画时间轴编辑 · 组合变换 · 视觉示例库",
+          "style": { "font_size": 11, "color": "#94A3B8", "align": "center" }
+        },
+        {
+          "id": "s7-d3",
+          "type": "shape",
+          "rect": { "x": 78.05, "y": 34.9, "w": 1.125, "h": 2 },
+          "shape": { "shape_type": "ellipse", "fill": { "type": "solid", "color": "#475569" } }
+        },
+        {
+          "id": "s7-d3t",
+          "type": "title",
+          "rect": { "x": 69.6, "y": 24, "w": 18, "h": 5 },
+          "text": "探索中",
+          "style": { "font_size": 14, "bold": true, "color": "#94A3B8", "align": "center" }
+        },
+        {
+          "id": "s7-d3b",
+          "type": "body",
+          "rect": { "x": 69.6, "y": 42, "w": 18, "h": 16 },
+          "text": "多 Agent 协作排版 · 云端渲染集群",
+          "style": { "font_size": 11, "color": "#94A3B8", "align": "center" }
+        }
+      ],
+      "notes": "路线图三节点时间轴。"
+    },
+    {
+      "id": "s8",
+      "layout": "title",
+      "background": {
+        "type": "gradient",
+        "gradient": {
+          "type": "linear",
+          "angle": 135,
+          "stops": [
+            { "color": "#0A0E1A", "position": 0 },
+            { "color": "#141B2E", "position": 60 },
+            { "color": "#1E293B", "position": 100 }
+          ]
+        }
+      },
+      "elements": [
+        {
+          "id": "s8-hero",
+          "type": "image",
+          "rect": { "x": 0, "y": 0, "w": 100, "h": 100 },
+          "image_path": "assets/ottershow/cover-hero.svg",
+          "image_fit": "stretch",
+          "image_alt": "结尾页主视觉"
+        },
+        {
+          "id": "s8-title",
+          "type": "title",
+          "rect": { "x": 12, "y": 34, "w": 76, "h": 12 },
+          "text": "让 AI 写出可用的幻灯片",
+          "style": { "font_size": 40, "bold": true, "color": "#F8FAFC", "shadow": true }
+        },
+        {
+          "id": "s8-sub",
+          "type": "subtitle",
+          "rect": { "x": 12, "y": 48, "w": 70, "h": 8 },
+          "text": "Otter PPT · github.com/ad-naan · gitee.com/adnaan",
+          "style": { "font_size": 16, "color": "#7DD3FC" }
+        },
+        {
+          "id": "s8-rule",
+          "type": "shape",
+          "rect": { "x": 12, "y": 60, "w": 8, "h": 0.4 },
+          "shape": { "shape_type": "rectangle", "fill": { "type": "gradient", "gradient": { "type": "linear", "angle": 0, "stops": [ { "color": "#22D3EE", "position": 0 }, { "color": "#A78BFA", "position": 100 } ] } } }
+        },
+        {
+          "id": "s8-meta",
+          "type": "body",
+          "rect": { "x": 12, "y": 65, "w": 60, "h": 5 },
+          "text": "本演示由 Otter PPT 自身生成 · 质量门禁 PASS",
+          "style": { "font_size": 12, "color": "#94A3B8" }
+        }
+      ],
+      "notes": "结尾页：强调自我生成 + 仓库地址。"
+    }
+  ],"meta":{"author":"Otter PPT","version":"0.4.0"}}
