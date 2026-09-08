@@ -11,6 +11,7 @@
 [![CI](https://github.com/Spark-Relics/Otter-PPT/actions/workflows/ci.yml/badge.svg)](https://github.com/Spark-Relics/Otter-PPT/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-0.5.0-blue)]()
 
 </div>
 
@@ -51,7 +52,7 @@ Otter PPT 是一个基于 Go 语言的服务，使用 **AI Agent 工具调用** 
 
 | 决策 | 原因 |
 |---|---|
-| **工具调用 Agent**（非一次性 JSON） | AI 像人类设计师一样逐步操作，可以随时添加、移动、修改元素 |
+| **工具调用 Agent**（非一次性 JSON） | AI 像人类设计师一样逐步操作，可以随时添加、移动、修改元素，支持撤销重做 |
 | **原生 OOXML 生成**（不依赖第三方 PPT 库） | 完全控制 PPTX 的每个特性：渐变、形状、表格、切换动画 |
 | **百分比坐标系**（0-100） | 分辨率无关的布局，适配任何幻灯片尺寸 |
 | **结构化 JSON 中间层** | 演示文稿状态可检查、可调试、可序列化 |
@@ -60,7 +61,7 @@ Otter PPT 是一个基于 Go 语言的服务，使用 **AI Agent 工具调用** 
 
 ## 功能特性
 
-### 🎨 设计工具（30+ 个）
+### 🎨 设计工具（42 个）
 
 AI Agent 可以使用以下所有操作：
 
@@ -70,11 +71,14 @@ AI Agent 可以使用以下所有操作：
 | **幻灯片** | `add_slide`（添加）、`delete_slide`（删除）、`duplicate_slide`（复制）、`move_slide`（移动）、`set_notes`（备注） |
 | **背景** | `set_bg_color`（纯色）、`set_bg_gradient`（渐变）、`set_bg_image`（图片） |
 | **文本** | `add_title`（标题）、`add_text`（正文）、`add_bullet_list`（项目符号列表） |
-| **视觉元素** | `add_image`（图片）、`add_shape`（形状）、`add_table`（表格）、`add_chart`（图表）、`add_connector`（连接线） |
+| **视觉元素** | `add_image`（图片）、`add_shape`（形状）、`add_card`（卡片）、`add_table`（表格）、`add_chart`（图表）、`add_connector`（连接线） |
 | **元素操作** | `update_text`（改文本）、`update_style`（改样式）、`update_position`（改位置）、`delete_element`（删除） |
-| **特效** | `set_transition`（切换）、`set_animation`（动画）、`set_rotation`（旋转）、`set_opacity`（透明度） |
-| **层级** | `bring_to_front`（置顶）、`send_to_back`（置底）、`group_elements`（组合） |
-| **控制** | `get_state`（查看状态）、`done`（完成） |
+| **特效** | `set_transition`（切换）、`set_animation`（动画，含时间轴）、`set_rotation`（旋转）、`set_opacity`（透明度） |
+| **层级** | `bring_to_front`（置顶）、`send_to_back`（置底） |
+| **导入** | `import_pptx`（反向解析 .pptx）、`load_template`（提取模板）、`import_svg`（SVG 编译为原生几何） |
+| **设计** | `get_viz_template`（可视化模板）、`generate_image`（AI 生成图）、`get_design_guide`（风格/色板/渲染指南） |
+| **布局** | `validate_layout`（校验）、`auto_fix_layout`（自动修复）、`apply_smart_layout`（智能布局） |
+| **控制** | `get_state`（查看状态）、`render_slides`（渲染截图）、`export_pptx`（导出，含质量门禁）、`undo`（撤销）、`redo`（重做）、`done`（完成） |
 
 ### 支持的元素类型
 
@@ -242,7 +246,7 @@ otter-ppt/
 │   │   └── layout.go            # 幻灯片布局类型
 │   ├── pptoolkit/               # ★ 核心创新：工具调用层
 │   │   ├── session.go           # 会话状态（"画布"）
-│   │   ├── tools.go             # OpenAI 工具定义（30+ 个）
+│   │   ├── tools.go             # OpenAI 工具定义（42 个）
 │   │   ├── handlers.go          # 工具分发 + map→struct 转换
 │   │   └── schema.go            # JSON schema 构建辅助
 │   ├── agent/                   # AI Agent + 多阶段工作流
@@ -352,10 +356,33 @@ export OPENAI_MODEL="moonshot-v1-32k"
 - [x] 智能布局自动排列（validate_layout / auto_fix_layout / apply_smart_layout，18 种智能模板）
 - [x] 模板系统（load_template：从现有 .pptx 导入色板/字体/尺寸/版式清单）
 - [x] Web UI 实时预览（/preview/:token 查看页 + 轮询自动刷新 + 工具调用推送）
+- [x] 二级设计系统（7 风格 × 8 色板预设 + 设计锁 spec_lock：排版角色锚点 / 页面节奏纪律）
+- [x] .pptx 反向解析（import_pptx：导入现有 .pptx 转为可编辑会话，全元素类型）
+- [x] 质量门禁（文本溢出 / 越界 / 小字号检测 + 首页 hero 门 + 导出终门，strict 模式可拒绝导出）
+- [x] AI 图像渲染预设（8 种渲染风格锁，散文式提示词工程，消灭 tag soup）
+- [x] undo/redo 操作历史（快照栈，容量 50，所有变更类工具自动入栈）
+- [x] Golden snapshot 回归测试（31 个 OOXML 部件基线比对，UPDATE_GOLDEN=1 刷新）
+- [x] 组合/分组变换、动画时间轴增强（时长/延迟/顺序）、字体子集嵌入
+- [x] 视觉风格画廊（7 风格 specimen deck，scripts/ 生成）
 
 ---
 
-## 🔬 视觉评审架构
+## 版本日志
+
+### v0.5.0
+
+- **undo/redo 操作历史**：所有变更类工具自动快照（容量 50），`undo` / `redo` 通过 MCP / STDIO / REST / Agent 工具调用均可用
+- **质量门禁**：文本溢出 / 越界 / 小字号检测 + 首页 hero 门；`export_pptx` strict 模式可拒绝带错误的导出
+- **.pptx 反向解析**：`import_pptx` 将现有 .pptx（全元素类型、主题、备注、图表）导入为可编辑会话
+- **SVG 导入**：`import_svg` 将 SVG 编译为原生 PPTX 自由形状几何
+- **模板提取**：`load_template` 从现有 .pptx 提取色板/字体/尺寸/版式清单
+- **二级设计系统**：7 风格 × 8 色板预设 + 设计锁（排版角色锚点、页面节奏纪律）
+- **AI 图像渲染预设**：8 种渲染风格锁 + 散文式提示词工程（矢量、水彩、3D 等距等）
+- **add_card 工具**、形状文本主题感知配色、深色主题图表墨色自适应
+- **Golden snapshot 回归测试**：31 个 OOXML 部件基线保护构建器
+- **组合变换、动画时间轴（时长/延迟/顺序）、字体子集嵌入**
+- **视觉风格画廊**：每风格一份 specimen deck
+- 修复 PowerPoint「需要修复」错误（缺失 notesMaster 部件）
 
 Otter PPT 支持**多阶段工作流**（`--mode workflow`），在初始构建后加入 AI 视觉评审环节：
 
@@ -375,10 +402,10 @@ Otter PPT 支持**多阶段工作流**（`--mode workflow`），在初始构建�
 | 层级 | 后端 | 输出质量 | 依赖 | 适用场景 |
 |------|------|---------|------|---------|
 | **1** | LibreOffice 无头模式 | ⭐⭐⭐ 完美（真实 PPTX 渲染） | `soffice` + `pdftoppm` 在 PATH 中 | 已安装 LibreOffice 的服务器/桌面 |
-| **2** | Go 原生渲染器 | ⭐⭐ 良好（形状 + 文字 + 渐变） | 无（使用内置 TTF 字体） | 任何环境，零安装 |
+| **2** | HTML + 系统 headless 浏览器截图 | ⭐⭐ 良好（完整 CSS 渲染） | 系统上的 Chrome/Edge/Chromium/Firefox | 任何桌面环境，零下载 |
 | **3** | 结构化文本描述 | ⭐ 可用（类 JSON 元素信息） | 无 | 视觉模型不支持图片时的兜底 |
 
-**自动检测**：渲染器在启动时探测 `soffice`/`libreoffice` 和 `pdftoppm`。找到则使用 Tier 1；否则降级到 Tier 2（Go 原生渲染，使用 `golang.org/x/image/font`）；如果视觉模型不支持图片输入，则降级到 Tier 3 发送结构化文本。
+**自动检测**：渲染器在启动时探测 `soffice`/`libreoffice` 和 `pdftoppm`。找到则使用 Tier 1；否则降级到 Tier 2（生成自包含 HTML，调用系统 headless 浏览器截图——Windows 上自动使用自带的 Edge）；如果视觉模型不支持图片输入，则降级到 Tier 3 发送结构化文本。
 
 #### 安装 LibreOffice（可选，获得最佳质量）
 

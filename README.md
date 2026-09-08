@@ -45,14 +45,18 @@ Presentation Object → PPTX Builder → Editable .pptx File
 
 | Feature | Description |
 |---------|-------------|
-| 🔧 **30+ Design Tools** | A comprehensive toolset covering all PPT capabilities |
+| 🔧 **42 Design Tools** | A comprehensive toolset covering all PPT capabilities |
 | 🎨 **Themes & Styles** | Color schemes, fonts, gradient backgrounds |
 | 📝 **Text & Typography** | Titles, body text, bullet lists, rich text |
 | 🖼️ **Visual Elements** | Images, shapes (14 types), tables, charts, connectors |
-| ✨ **Animations & Transitions** | Element animations, slide transition effects |
+| ✨ **Animations & Transitions** | Element animations with timeline control, slide transition effects |
+| ↩️ **Undo / Redo** | Full operation history (50 steps) for every mutating tool |
+| 🛡️ **Quality Gates** | Text overflow / bounds / tiny-text detection, cover hero gate, strict export mode |
+| 📥 **PPTX Import** | Reverse-parse existing .pptx files into editable sessions; template extraction |
+| 🖋️ **SVG Import** | Compile SVG drawings into native PPTX geometry (freeform custGeom) |
 | 📐 **Precise Positioning** | Percentage-based coordinate system, resolution-independent |
 | 🏗️ **Native PPTX** | Direct OOXML generation, fully editable |
-| 🔤 **Font embedding** | Curated Google Fonts + CJK system fonts, embeddable into PPTX |
+| 🔤 **Font embedding** | Curated Google Fonts + CJK system fonts, subset embedding into PPTX |
 | 🌐 **HTTP API** | Built-in Gin server with REST API support |
 | 🔌 **Multi-Protocol Integration** | MCP, STDIO JSON-RPC, OpenAPI — works with Claude Code, Cursor, Codex, and custom software |
 | 📦 **Python SDK** | Lightweight Python client for automation |
@@ -271,7 +275,7 @@ otter-ppt/
 │   │   └── layout.go         # SlideLayout
 │   ├── pptoolkit/            # ★ Core: PPT toolset
 │   │   ├── session.go        # Session (thread-safe canvas)
-│   │   ├── tools.go          # OpenAI tool definitions (30+)
+│   │   ├── tools.go          # OpenAI tool definitions (42)
 │   │   ├── handlers.go       # Tool dispatch and execution
 │   │   └── schema.go         # JSON Schema build helpers
 │   ├── agent/                # AI Agent + Workflow pipeline
@@ -424,10 +428,10 @@ The renderer converts PPTX slides into images for the vision model to evaluate. 
 | Tier | Backend | Output Quality | Dependencies | When to Use |
 |------|---------|---------------|-------------|-------------|
 | **1** | LibreOffice headless | ⭐⭐⭐ Perfect (true PPTX render) | `soffice` + `pdftoppm` in PATH | Server/Desktop with LibreOffice |
-| **2** | Native Go renderer | ⭐⭐ Good (shapes + text + gradients) | None (uses bundled TTF fonts) | Any environment, zero install |
+| **2** | HTML + system headless browser screenshot | ⭐⭐ Good (full CSS rendering) | Chrome/Edge/Chromium/Firefox on system | Any desktop environment, zero download |
 | **3** | Structural text description | ⭐ Functional (JSON-like element dump) | None | Fallback when image API unsupported |
 
-**Auto-detection**: The renderer probes for `soffice`/`libreoffice` and `pdftoppm` at startup. If found, Tier 1 is used. If not, it falls back to Tier 2 (Go native rendering with `golang.org/x/image/font`). If the vision model rejects images, Tier 3 sends structured text.
+**Auto-detection**: The renderer probes for `soffice`/`libreoffice` and `pdftoppm` at startup. If found, Tier 1 is used. If not, it falls back to Tier 2 (self-contained HTML rendering via the system's headless browser — Chrome/Edge on Windows, Chromium on Linux). If the vision model rejects images, Tier 3 sends structured text.
 
 #### Installing LibreOffice (optional, for best quality)
 
@@ -480,6 +484,42 @@ PPTX → Best available renderer → Slide images (PNG, base64)
 
 If the vision model's overall score ≥ threshold (default 75), the presentation is accepted. Otherwise, feedback is fed back to the agent for up to `MaxRefineRounds` (default 2) iterations.
 
+## 🗺️ Development Roadmap
+
+- [x] Real image embedding (PNG/JPEG/GIF/SVG, local & data: URIs)
+- [x] Native chart XML (13 chart types, incl. 3D, trendlines, error bars, secondary axis)
+- [x] Speaker notes (notesSlide XML parts)
+- [x] Animation XML rendering (7 types × triggers × directions)
+- [x] SVG → native PPTX compilation (import_svg, freeform custGeom)
+- [x] Smart layout (validate_layout / auto_fix_layout / apply_smart_layout, 18 templates)
+- [x] Template system (load_template: extract palette/fonts/size/layouts from existing .pptx)
+- [x] Live web preview (/preview/:token viewer + polling auto-refresh)
+- [x] Two-level design system (7 styles × 8 palettes + design lock: typography roles / rhythm discipline)
+- [x] PPTX reverse parsing (import_pptx: import existing .pptx as editable session, all element types)
+- [x] Quality gates (overflow / bounds / tiny-text detection + cover hero gate + strict export mode)
+- [x] AI image rendering presets (8 rendering styles, prose prompt engineering)
+- [x] Undo/redo operation history (snapshot stack, 50 deep, all mutating tools)
+- [x] Golden snapshot regression tests (31 OOXML part baselines, UPDATE_GOLDEN=1 to refresh)
+- [x] Group transforms, animation timeline (duration/delay/order), font subsetting on embed
+- [x] Visual style gallery (specimen decks per design style)
+
 ## 📄 License
 
 MIT License
+
+## 📋 Changelog
+
+### v0.5.0
+
+- **Undo/redo operation history**: every mutating tool call is snapshotted (50-deep stack); `undo` / `redo` available via MCP, STDIO, REST, and agent tool calls
+- **Quality gates**: text overflow / out-of-bounds / tiny-text detection with cover hero gate; `export_pptx` strict mode rejects decks with errors
+- **PPTX import**: `import_pptx` reverse-parses existing .pptx files (all element types, theme, notes, charts) into editable sessions
+- **SVG import**: `import_svg` compiles SVG drawings into native PPTX freeform geometry
+- **Template extraction**: `load_template` pulls palette/fonts/slide size/layout list from existing .pptx
+- **Two-level design system**: 7 style × 8 palette presets with design lock (typography role anchors, page rhythm discipline)
+- **AI image rendering presets**: 8 deck-wide rendering styles with prose prompt engineering (vector, watercolor, 3D isometric, etc.)
+- **add_card tool**, theme-aware shape text styling, chart ink adaptation for dark themes
+- **Golden snapshot regression tests**: 31 OOXML part baselines protect the builder against rendering regressions
+- **Group transforms, animation timeline (duration/delay/order), font subsetting** on PPTX embed
+- **Visual style gallery**: specimen decks per design style
+- Fixed PowerPoint "needs repair" errors caused by missing notesMaster part
