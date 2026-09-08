@@ -79,6 +79,15 @@ func (r *Renderer) IsAvailable() bool {
 	return r.libreOfficePath != "" && r.pdftoppmPath != ""
 }
 
+// ForceBrowserOnly disables the LibreOffice path so RenderPresentation
+// goes straight to the HTML + headless browser path (or structural
+// fallback). Useful for testing and for working around LibreOffice
+// conversion quirks (e.g. dropped slide backgrounds).
+func (r *Renderer) ForceBrowserOnly() {
+	r.libreOfficePath = ""
+	r.pdftoppmPath = ""
+}
+
 // RenderPresentation takes a PPTX file path and returns slide images.
 // Rendering priority: LibreOffice (highest fidelity, if already installed)
 // → HTML + headless browser screenshot (zero-download, fast) → Go structural
@@ -160,6 +169,11 @@ func (r *Renderer) renderWithBrowser(pres *model.Presentation) ([]SlideImage, er
 	return images, nil
 }
 
+// WriteSingleSlideHTMLForDebug exposes writeSingleSlideHTML for testing/debugging.
+func WriteSingleSlideHTMLForDebug(pres *model.Presentation, slideIdx int, outPath string, wPx, hPx int) error {
+	return writeSingleSlideHTML(pres, slideIdx, "", outPath, wPx, hPx)
+}
+
 // writeSingleSlideHTML writes a wrapper HTML page that shows exactly one
 // slide (via CSS isolation of the Nth .slide) scaled to fill the viewport.
 func writeSingleSlideHTML(pres *model.Presentation, slideIdx int, allHTMLPath, outPath string, wPx, hPx int) error {
@@ -191,9 +205,9 @@ func writeSingleSlideHTML(pres *model.Presentation, slideIdx int, allHTMLPath, o
 	// (the .stage wrapper) is not applied by Chromium's headless screenshot
 	// path, silently falling back to the white .slide default.
 	sb.WriteString(slideBackgroundCSS(g, slide))
-	sb.WriteString("</style>\n</head>\n<body>\n<div class=\"stage\">\n")
+	sb.WriteString("</style>\n</head>\n<body>\n<div class=\"stage\">\n<div class=\"slide\">\n")
 	sb.WriteString(g.slideBody(slide))
-	sb.WriteString("</div>\n</body>\n</html>\n")
+	sb.WriteString("</div>\n</div>\n</body>\n</html>\n")
 	return os.WriteFile(outPath, []byte(sb.String()), 0644)
 }
 
