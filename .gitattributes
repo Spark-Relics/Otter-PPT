@@ -1,0 +1,3 @@
+# Golden test baselines must stay byte-identical across platforms —
+# force LF so Windows checkouts (core.autocrlf=true) don't rewrite them.
+internal/builder/testdata/golden/** text eol=lf

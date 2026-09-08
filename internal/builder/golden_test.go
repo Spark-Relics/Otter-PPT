@@ -237,7 +237,9 @@ func TestGoldenPPTX(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if string(want) != content {
+		// Normalize CRLF: Windows CI checkouts with core.autocrlf=true rewrite
+		// the golden files to CRLF even though they are stored as LF.
+		if strings.ReplaceAll(string(want), "\r\n", "\n") != content {
 			t.Errorf("golden mismatch for %s\n--- want (first 300 chars)\n%s\n--- got (first 300 chars)\n%s",
 				f.Name, truncate(string(want), 300), truncate(content, 300))
 		}
