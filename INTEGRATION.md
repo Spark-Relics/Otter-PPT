@@ -90,7 +90,7 @@ The machine-readable contract is [`openapi.yaml`](./openapi.yaml). Generate clie
 
 - `POST /api/v1/generate`: AI-driven generation.
 - `POST /api/v1/execute`: apply externally generated tool calls without an internal model (stateless — ship the full `presentation` each time).
-- `POST /api/v1/session` + `POST /api/v1/session/{id}/execute|render|build|undo|redo`: **stateful editing sessions** — the server keeps your state, undo/redo works, and you never re-send the presentation. Preferred for iterative agents.
+- `POST /api/v1/session` + `POST /api/v1/session/{id}/execute|render|build|undo|redo`: **stateful editing sessions** — the server keeps your state, undo/redo works, and you never re-send the presentation. Preferred for iterative agents. `/execute` batches are **atomic** (a failed call rolls the whole batch back, `rolled_back: true`) and support **idempotent retries** via an optional `idempotency_key`.
 - `POST /api/v1/build`: deterministic Presentation JSON → PPTX.
 - `POST /api/v1/render`: presentation JSON → slide images (base64).
 - `GET /api/v1/tools`: portable tool definitions.
@@ -134,6 +134,8 @@ curl -s -X POST localhost:8080/api/v1/build -H 'Content-Type: application/json' 
 ```
 
 On validation errors, `/execute` (both forms) returns HTTP 400 with a valid `example` payload — agents can self-correct from the error alone. Failed tool calls return 422 with `failed_call_index`, partial `results`, and (in session mode) a hint that server-side state is preserved.
+
+Session-mode `/execute` batches are **atomic**: if any call fails, the session is rolled back to its pre-request state (no partial edits survive) and the response carries `rolled_back: true` — fix the failed call and resend the whole batch. A successful batch counts as a single undo step. Network-retry safety: send an `idempotency_key` (any unique string per logical batch); a retried request with the same key returns the original cached response (`idempotent_replay: true`) without re-executing.
 
 ## Local service
 

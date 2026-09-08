@@ -37,6 +37,8 @@ type Session struct {
 	pres      *model.Presentation
 	undoStack []string
 	redoStack []string
+	// suppressHistory disables per-call undo commits while a batch runs.
+	suppressHistory bool
 }
 
 // NewSession creates a new empty session.

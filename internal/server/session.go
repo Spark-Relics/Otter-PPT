@@ -30,10 +30,19 @@ import (
 const sessionTTL = 30 * time.Minute
 
 type editingSession struct {
-	mu         sync.Mutex
-	session    *pptoolkit.Session
-	lastActive time.Time
+	mu          sync.Mutex
+	session     *pptoolkit.Session
+	lastActive  time.Time
+	idempotency map[string]cachedResponse // idempotency_key -> response
 }
+
+// cachedResponse stores a completed execute response for idempotent replay.
+type cachedResponse struct {
+	status int
+	body   gin.H
+}
+
+const idempotencyCacheLimit = 64
 
 var (
 	sessionStore sync.Map // session_id -> *editingSession
@@ -100,8 +109,9 @@ func (s *Server) handleSessionCreate(c *gin.Context) {
 	}
 
 	e := &editingSession{
-		session:    pptoolkit.NewSessionFromPresentation(body.Presentation),
-		lastActive: time.Now(),
+		session:     pptoolkit.NewSessionFromPresentation(body.Presentation),
+		lastActive:  time.Now(),
+		idempotency: map[string]cachedResponse{},
 	}
 	id := uuid.NewString()[:12]
 	sessionStore.Store(id, e)
@@ -142,7 +152,10 @@ func (s *Server) handleSessionExecute(c *gin.Context) {
 		return
 	}
 
-	var req executeRequest
+	var req struct {
+		Calls          []externalToolCall `json:"calls" binding:"required,min=1"`
+		IdempotencyKey string             `json:"idempotency_key"`
+	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -155,13 +168,8 @@ func (s *Server) handleSessionExecute(c *gin.Context) {
 						"text": "Hello world", "font_size": 24,
 					}},
 				},
+				"idempotency_key": "optional-unique-key-per-batch",
 			},
-		})
-		return
-	}
-	if len(req.Calls) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "calls must be a non-empty array of {name, arguments}",
 		})
 		return
 	}
@@ -169,31 +177,59 @@ func (s *Server) handleSessionExecute(c *gin.Context) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	results := make([]pptoolkit.ToolResult, 0, len(req.Calls))
-	for index, call := range req.Calls {
-		if call.Arguments == nil {
-			call.Arguments = map[string]any{}
-		}
-		result := e.session.ExecuteTool(call.Name, call.Arguments)
-		results = append(results, result)
-		if !result.Success {
-			c.JSON(http.StatusUnprocessableEntity, gin.H{
-				"error":             result.Message,
-				"failed_call_index": index,
-				"results":           results,
-				// Session survives — no need to resend state, just fix the call.
-				"hint":              "server-side state is preserved; retry the failed call via POST /api/v1/session/" + c.Param("id") + "/execute",
-			})
+	// Idempotent replay: the same key returns the stored response without
+	// re-executing (safe for client retries after network failures).
+	if req.IdempotencyKey != "" {
+		if cached, hit := e.idempotency[req.IdempotencyKey]; hit {
+			cached.body["idempotent_replay"] = true
+			c.JSON(cached.status, cached.body)
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	calls := make([]pptoolkit.ToolCall, len(req.Calls))
+	for i, call := range req.Calls {
+		calls[i] = pptoolkit.ToolCall{Name: call.Name, Arguments: call.Arguments}
+	}
+
+	// Atomic batch: all calls apply, or none do.
+	batch := e.session.ExecuteBatch(calls)
+
+	respond := func(status int, body gin.H) {
+		if status == http.StatusOK && req.IdempotencyKey != "" {
+			if len(e.idempotency) >= idempotencyCacheLimit {
+				// Drop the oldest entry (map iteration order is random,
+				// which is an acceptable eviction policy at this size).
+				for k := range e.idempotency {
+					delete(e.idempotency, k)
+					break
+				}
+			}
+			e.idempotency[req.IdempotencyKey] = cachedResponse{status: status, body: body}
+		}
+		c.JSON(status, body)
+	}
+
+	if !batch.AllSuccess {
+		respond(http.StatusUnprocessableEntity, gin.H{
+			"error":             batch.Results[batch.FailedIndex].Message,
+			"failed_call_index": batch.FailedIndex,
+			"results":           batch.Results,
+			// Atomic guarantee: earlier calls in this batch were rolled
+			// back — the session is exactly as before the request.
+			"rolled_back": true,
+			"hint":        "batch is atomic: no partial changes were kept. Fix the failed call and resend the whole batch",
+		})
+		return
+	}
+
+	respond(http.StatusOK, gin.H{
 		"session_id":   c.Param("id"),
-		"results":      results,
+		"results":      batch.Results,
 		"presentation": e.session.Presentation(),
 	})
 }
+
 
 // POST /api/v1/session/:id/render — render current session state.
 // Response shape matches stateless /api/v1/render.

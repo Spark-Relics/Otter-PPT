@@ -113,10 +113,18 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 
 	result := s.executeTool(name, args)
 
-	if checkpoint != "" && result.Success {
+	if checkpoint != "" && result.Success && !s.historySuppressed() {
 		s.pushHistory(checkpoint)
 	}
 	return result
+}
+
+// historySuppressed reports whether per-call undo commits are currently
+// disabled (used by ExecuteBatch to collapse a batch into one undo step).
+func (s *Session) historySuppressed() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.suppressHistory
 }
 
 // executeTool dispatches a tool call to the appropriate handler.

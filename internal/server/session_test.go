@@ -58,6 +58,7 @@ func TestSessionLifecycle(t *testing.T) {
 		t.Fatalf("structured data missing slide_id: %s", w.Body.String())
 	}
 
+
 	// add text so undo has something to undo
 	textCall := map[string]any{
 		"calls": []map[string]any{{
@@ -120,8 +121,8 @@ func TestSessionLifecycle(t *testing.T) {
 	if w.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected 422, got %d: %s", w.Code, w.Body.String())
 	}
-	if !strings.Contains(w.Body.String(), "session state is preserved") &&
-		!strings.Contains(w.Body.String(), "retry the failed call") {
+	if !strings.Contains(w.Body.String(), "rolled_back") &&
+		!strings.Contains(w.Body.String(), "Fix the failed call") {
 		t.Fatalf("missing retry hint: %s", w.Body.String())
 	}
 
@@ -183,3 +184,98 @@ func TestSessionBadPayload(t *testing.T) {
 		t.Fatalf("400 response missing example payload: %s", w.Body.String())
 	}
 }
+
+// TestSessionBatchAtomicity verifies that a failed batch leaves zero
+// partial effects on server-side state.
+func TestSessionBatchAtomicity(t *testing.T) {
+	s := New(Config{Port: "0"})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/session", nil)
+	s.router.ServeHTTP(w, req)
+	var created struct {
+		SessionID string `json:"session_id"`
+	}
+	json.Unmarshal(w.Body.Bytes(), &created)
+	id := created.SessionID
+
+	// GET baseline state
+	state := func() int {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/api/v1/session/"+id, nil)
+		s.router.ServeHTTP(w, req)
+		var st struct {
+			SlideCount int `json:"slide_count"`
+		}
+		json.Unmarshal(w.Body.Bytes(), &st)
+		return st.SlideCount
+	}
+	before := state()
+
+	// Batch: ok call + failing call → whole batch must roll back.
+	body := `{"calls":[` +
+		`{"name":"add_slide","arguments":{"layout":"blank"}},` +
+		`{"name":"add_text","arguments":{"slide_id":"nope","text":"x"}}` +
+		`]}`
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/v1/session/"+id+"/execute", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	s.router.ServeHTTP(w, req)
+	if w.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d: %s", w.Code, w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), `"rolled_back":true`) {
+		t.Fatalf("response missing rolled_back flag: %s", w.Body.String())
+	}
+	if got := state(); got != before {
+		t.Fatalf("atomicity violated: slide_count after failed batch = %d, want %d", got, before)
+	}
+}
+
+// TestSessionIdempotency verifies that a retried request with the same
+// idempotency_key is served from cache without re-executing.
+func TestSessionIdempotency(t *testing.T) {
+	s := New(Config{Port: "0"})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/session", nil)
+	s.router.ServeHTTP(w, req)
+	var created struct {
+		SessionID string `json:"session_id"`
+	}
+	json.Unmarshal(w.Body.Bytes(), &created)
+	id := created.SessionID
+
+	exec := func() *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/session/"+id+"/execute",
+			strings.NewReader(`{"idempotency_key":"k1","calls":[{"name":"add_slide","arguments":{"layout":"blank"}}]}`))
+		req.Header.Set("Content-Type", "application/json")
+		s.router.ServeHTTP(w, req)
+		return w
+	}
+
+	if w := exec(); w.Code != http.StatusOK {
+		t.Fatalf("first execute: %d %s", w.Code, w.Body.String())
+	}
+	w = exec() // retry with same key
+	if w.Code != http.StatusOK {
+		t.Fatalf("replayed execute: %d %s", w.Code, w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), `"idempotent_replay":true`) {
+		t.Fatalf("replay response missing idempotent_replay flag: %s", w.Body.String())
+	}
+
+	// State must contain exactly one slide: the retry did not re-execute.
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/v1/session/"+id, nil)
+	s.router.ServeHTTP(w, req)
+	var st struct {
+		SlideCount int `json:"slide_count"`
+	}
+	json.Unmarshal(w.Body.Bytes(), &st)
+	if st.SlideCount != 1 {
+		t.Fatalf("slide_count = %d, want 1 (retry must not re-execute)", st.SlideCount)
+	}
+}
+

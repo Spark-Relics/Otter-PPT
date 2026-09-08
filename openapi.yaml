@@ -149,7 +149,16 @@ paths:
   /api/v1/session/{id}/execute:
     post:
       operationId: executeSessionToolCalls
-      summary: Run tool calls against a server-side session (no state round-trip)
+      summary: Run tool calls against a server-side session (atomic batch, no state round-trip)
+      description: |
+        Calls run as one atomic batch: if any call fails, the session is
+        rolled back to its pre-request state (response carries
+        `rolled_back: true`) — no partial effects survive. On success the
+        whole batch is a single undo step.
+
+        Optional `idempotency_key` (unique per logical batch, e.g. a UUID):
+        retrying a completed request with the same key returns the cached
+        response (`idempotent_replay: true`) without re-executing.
       parameters:
         - name: id
           in: path
@@ -167,6 +176,9 @@ paths:
                   type: array
                   minItems: 1
                   items: { $ref: '#/components/schemas/ToolCall' }
+                idempotency_key:
+                  type: string
+                  description: Unique key per logical batch; safe retries return the cached response
       responses:
         '200':
           description: Tool results and updated presentation
