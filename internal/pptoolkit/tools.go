@@ -411,11 +411,11 @@ func ToolDefinitions() []openai.Tool {
 
 		// ────────── State / Export ──────────
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
-			Name: "get_design_guide",
+			Name:        "get_design_guide",
 			Description: "Fetch the design guidance reference: the style/palette/image-rendering catalogs (selection rules), and — when given specific keys — the full DESIGN LOCK and IMAGE RENDERING LOCK texts for that combination. Call this with style/palette/rendering keys BEFORE building (or before writing image prompts) so every slide and every AI image obeys one locked design system. The image rendering lock contains the paste-ready style paragraph, deck color anchors, fewshot, and prompt discipline rules (prose prompts, no tag soup, NO-text clause) — external AI following the manual workflow should use it verbatim.",
 			Parameters: params(map[string]prop{
-				"style":    {typ: "string", desc: "Optional style preset key (e.g. dark_tech) — returns the full design lock when given"},
-				"palette":  {typ: "string", desc: "Optional palette preset key (e.g. tech_neon) — included in the design lock"},
+				"style":     {typ: "string", desc: "Optional style preset key (e.g. dark_tech) — returns the full design lock when given"},
+				"palette":   {typ: "string", desc: "Optional palette preset key (e.g. tech_neon) — included in the design lock"},
 				"rendering": {typ: "string", desc: "Optional image rendering preset key (e.g. vector-illustration) — returns the full image rendering lock with style paragraph + fewshot + prompt rules"},
 			}),
 		}},
@@ -436,6 +436,16 @@ func ToolDefinitions() []openai.Tool {
 				"output_path": {typ: "string", desc: "Destination .pptx file path", req: true},
 				"strict":      {typ: "boolean", desc: "If true, block export when the quality gate finds errors (recommended for final delivery)"},
 			}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "undo",
+			Description: "Undo the last successful state-changing tool call (add/update/delete slide or element, theme, background, etc.). History depth is 50 steps. Nothing-to-undo is reported as an error.",
+			Parameters:  params(map[string]prop{}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name:        "redo",
+			Description: "Re-apply the most recently undone change. Starting a new edit clears the redo branch.",
+			Parameters:  params(map[string]prop{}),
 		}},
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "done",

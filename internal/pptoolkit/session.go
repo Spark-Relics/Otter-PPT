@@ -31,8 +31,10 @@ import (
 // Session holds the in-progress presentation state.
 // It is the "canvas" that AI tools operate on.
 type Session struct {
-	mu   sync.Mutex
-	pres *model.Presentation
+	mu        sync.Mutex
+	pres      *model.Presentation
+	undoStack []string
+	redoStack []string
 }
 
 // NewSession creates a new empty session.

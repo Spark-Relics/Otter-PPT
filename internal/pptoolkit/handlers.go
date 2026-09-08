@@ -22,6 +22,7 @@ func elementIDs(elems []*model.Element) []string {
 	}
 	return ids
 }
+
 // checkElements runs quality checks on a set of elements as part of a slide.
 // It returns a report scoped to the given elements only.
 func checkElements(pres *model.Presentation, slide *model.Slide, elems []*model.Element) *quality.Report {
@@ -82,6 +83,45 @@ func fail(msg string) ToolResult {
 // ExecuteTool dispatches a tool call to the appropriate handler.
 // name is the tool/function name, args is the parsed JSON arguments.
 func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
+	// History tools are handled first: they must not checkpoint themselves.
+	switch name {
+	case "undo":
+		if err := s.Undo(); err != nil {
+			return fail(err.Error())
+		}
+		u, r := s.HistoryStatus()
+		return ok(fmt.Sprintf("Undone (undo depth=%d, redo depth=%d)", u, r))
+
+	case "redo":
+		if err := s.Redo(); err != nil {
+			return fail(err.Error())
+		}
+		u, r := s.HistoryStatus()
+		return ok(fmt.Sprintf("Redone (undo depth=%d, redo depth=%d)", u, r))
+	}
+
+	// Mutating tools take a checkpoint before running; it is only committed
+	// to the undo stack if the tool succeeds.
+	var checkpoint string
+	if mutatingTools[name] {
+		snap, err := s.snapshot()
+		if err != nil {
+			return fail("history checkpoint failed: " + err.Error())
+		}
+		checkpoint = snap
+	}
+
+	result := s.executeTool(name, args)
+
+	if checkpoint != "" && result.Success {
+		s.pushHistory(checkpoint)
+	}
+	return result
+}
+
+// executeTool dispatches a tool call to the appropriate handler.
+// name is the tool/function name, args is the parsed JSON arguments.
+func (s *Session) executeTool(name string, args map[string]any) ToolResult {
 	switch name {
 
 	// ──────── Presentation ────────
@@ -445,9 +485,9 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 				msg += fmt.Sprintf(" %d warnings: %s", len(res.Warnings), strings.Join(res.Warnings, "; "))
 			}
 			return ok(msg, map[string]any{
-				"slides":    len(res.Presentation.Slides),
-				"theme":     res.Presentation.Theme,
-				"warnings":  res.Warnings,
+				"slides":   len(res.Presentation.Slides),
+				"theme":    res.Presentation.Theme,
+				"warnings": res.Warnings,
 			})
 		}
 		// Theme-only mode (same as load_template apply=true).

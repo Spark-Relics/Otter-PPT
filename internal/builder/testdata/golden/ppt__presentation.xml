@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" saveSubsetFonts="1">
+<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst>
+<p:sldIdLst><p:sldId id="256" r:id="rId2"/><p:sldId id="257" r:id="rId3"/><p:sldId id="258" r:id="rId4"/></p:sldIdLst>
+<p:notesMasterIdLst><p:notesMasterId id="2147483649" r:id="rId5"/></p:notesMasterIdLst>
+<p:sldSz cx="12191695" cy="6858000" type="screen16x9"/>
+<p:notesSz cx="6858000" cy="9144000"/>
+
+<p:defaultTextStyle/>
+</p:presentation>
