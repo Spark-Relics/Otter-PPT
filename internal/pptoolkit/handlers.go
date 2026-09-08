@@ -549,6 +549,43 @@ func (s *Session) ExecuteTool(name string, args map[string]any) ToolResult {
 			"svg":     svg,
 		})
 
+	case "get_design_guide":
+		styleKey, _ := args["style"].(string)
+		paletteKey, _ := args["palette"].(string)
+		renderingKey, _ := args["rendering"].(string)
+
+		var sb strings.Builder
+		if styleKey != "" || paletteKey != "" {
+			if design.GetStyle(styleKey) == nil && design.GetPalette(paletteKey) == nil {
+				return fail(fmt.Sprintf("unknown style %q and palette %q — use keys from the catalogs", styleKey, paletteKey))
+			}
+			sb.WriteString(design.Lock(styleKey, paletteKey))
+			sb.WriteString("\n\n")
+		}
+		if renderingKey != "" {
+			guidance := design.FormatImagePromptGuidance(renderingKey, paletteKey)
+			if guidance == "" {
+				return fail(fmt.Sprintf("unknown image rendering %q — available: %s", renderingKey, strings.Join(design.RenderingKeys(), ", ")))
+			}
+			sb.WriteString(guidance)
+			sb.WriteString("\n\n")
+		}
+		if sb.Len() == 0 {
+			// No specific keys: return the full selection catalogs so the
+			// caller can choose, plus the prompt-discipline rules that apply
+			// deck-wide regardless of preset.
+			sb.WriteString("STYLE presets (shape language / composition):\n")
+			sb.WriteString(design.StyleCatalog())
+			sb.WriteString("\nPALETTE presets (six semantic color roles):\n")
+			sb.WriteString(design.PaletteCatalog())
+			sb.WriteString("\nIMAGE RENDERING presets (AI-image style families):\n")
+			sb.WriteString(design.RenderingCatalog())
+			sb.WriteString("\n")
+			sb.WriteString(design.ImagePromptRules())
+			sb.WriteString("\n\nCall again with style/palette/rendering keys to fetch the full DESIGN LOCK and IMAGE RENDERING LOCK texts.")
+		}
+		return ok(sb.String())
+
 	// ──────── State / Export ────────
 	case "get_state":
 		return ok("Current state", s.Presentation())

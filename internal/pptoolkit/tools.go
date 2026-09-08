@@ -411,6 +411,15 @@ func ToolDefinitions() []openai.Tool {
 
 		// ────────── State / Export ──────────
 		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
+			Name: "get_design_guide",
+			Description: "Fetch the design guidance reference: the style/palette/image-rendering catalogs (selection rules), and — when given specific keys — the full DESIGN LOCK and IMAGE RENDERING LOCK texts for that combination. Call this with style/palette/rendering keys BEFORE building (or before writing image prompts) so every slide and every AI image obeys one locked design system. The image rendering lock contains the paste-ready style paragraph, deck color anchors, fewshot, and prompt discipline rules (prose prompts, no tag soup, NO-text clause) — external AI following the manual workflow should use it verbatim.",
+			Parameters: params(map[string]prop{
+				"style":    {typ: "string", desc: "Optional style preset key (e.g. dark_tech) — returns the full design lock when given"},
+				"palette":  {typ: "string", desc: "Optional palette preset key (e.g. tech_neon) — included in the design lock"},
+				"rendering": {typ: "string", desc: "Optional image rendering preset key (e.g. vector-illustration) — returns the full image rendering lock with style paragraph + fewshot + prompt rules"},
+			}),
+		}},
+		{Type: openai.ToolTypeFunction, Function: &openai.FunctionDefinition{
 			Name:        "get_state",
 			Description: "Get the current presentation state as JSON (for review).",
 			Parameters:  params(map[string]prop{}),
