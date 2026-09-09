@@ -11,7 +11,7 @@
 [![CI](https://github.com/Spark-Relics/Otter-PPT/actions/workflows/ci.yml/badge.svg)](https://github.com/Spark-Relics/Otter-PPT/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.5.0-blue)]()
+[![Version](https://img.shields.io/badge/Version-0.6.0-blue)]()
 
 </div>
 
@@ -368,6 +368,14 @@ export OPENAI_MODEL="moonshot-v1-32k"
 ---
 
 ## 版本日志
+
+### v0.6.0
+
+- **原子批处理**：session `/execute` 中的调用作为一个事务执行，任意调用失败都会完整回滚，不保留部分修改；成功批次只占一个 undo 步骤
+- **可靠幂等重试**：支持 `idempotency_key`，成功和 422 失败响应均可缓存重放；每个 session 保留 64 个 key，采用 FIFO 淘汰
+- **并发去重**：相同幂等 key 的并发请求只执行一次，其余请求等待并重放结果
+- **HTTP Agent 体验增强**：错误响应包含可修复示例和明确的回滚/重试提示
+- **测试与文档**：新增原子性、失败缓存、FIFO 淘汰测试，并同步 OpenAPI 与集成指南
 
 ### v0.5.0
 

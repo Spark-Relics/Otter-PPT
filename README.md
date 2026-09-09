@@ -526,6 +526,14 @@ MIT License
 
 ## 📋 Changelog
 
+### v0.6.0
+
+- **Atomic batch execution**: session `/execute` now runs calls transactionally; any failure rolls back the entire batch, while a successful batch becomes one undo step.
+- **Reliable idempotent retries**: `idempotency_key` caches and replays both successful and rolled-back 422 responses, retaining 64 keys per session with FIFO eviction.
+- **Concurrent duplicate suppression**: concurrent requests using the same idempotency key execute only once; followers wait and replay the completed result.
+- **Agent-friendly HTTP behavior**: error responses include repairable examples and explicit rollback/retry guidance.
+- **Tests and docs**: added atomicity, failure-cache, and FIFO eviction coverage; synchronized OpenAPI and integration documentation.
+
 ### v0.5.1
 
 - **HTTP stateful sessions**: `POST /api/v1/session` + `/execute|render|build|undo|redo` — server-side state with 30-min TTL; undo/redo now works over HTTP and iterative agents stop re-shipping full presentation JSON (see INTEGRATION.md)
