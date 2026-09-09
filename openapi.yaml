@@ -158,7 +158,9 @@ paths:
 
         Optional `idempotency_key` (unique per logical batch, e.g. a UUID):
         retrying a completed request with the same key returns the cached
-        response (`idempotent_replay: true`) without re-executing.
+        response (`idempotent_replay: true`) without re-executing. Both 200
+        and 422 outcomes are cached (a failed batch is rolled back, so the
+        replay is exact); per session up to 64 keys are kept, oldest first.
       parameters:
         - name: id
           in: path
@@ -178,7 +180,7 @@ paths:
                   items: { $ref: '#/components/schemas/ToolCall' }
                 idempotency_key:
                   type: string
-                  description: Unique key per logical batch; safe retries return the cached response
+                  description: Unique key per logical batch; safe retries return the cached response (200 and 422 both cached; FIFO, 64 keys per session)
       responses:
         '200':
           description: Tool results and updated presentation

@@ -135,7 +135,7 @@ curl -s -X POST localhost:8080/api/v1/build -H 'Content-Type: application/json' 
 
 On validation errors, `/execute` (both forms) returns HTTP 400 with a valid `example` payload — agents can self-correct from the error alone. Failed tool calls return 422 with `failed_call_index`, partial `results`, and (in session mode) a hint that server-side state is preserved.
 
-Session-mode `/execute` batches are **atomic**: if any call fails, the session is rolled back to its pre-request state (no partial edits survive) and the response carries `rolled_back: true` — fix the failed call and resend the whole batch. A successful batch counts as a single undo step. Network-retry safety: send an `idempotency_key` (any unique string per logical batch); a retried request with the same key returns the original cached response (`idempotent_replay: true`) without re-executing.
+Session-mode `/execute` batches are **atomic**: if any call fails, the session is rolled back to its pre-request state (no partial edits survive) and the response carries `rolled_back: true` — fix the failed call and resend the whole batch. A successful batch counts as a single undo step. Network-retry safety: send an `idempotency_key` (any unique string per logical batch); a retried request with the same key returns the original cached response (`idempotent_replay: true`) without re-executing — this covers both 200 and 422 outcomes (failures are rolled back, so the replay is exact), and concurrent duplicates with the same key are serialized to a single execution. Each session keeps the newest 64 keys (FIFO).
 
 ## Local service
 

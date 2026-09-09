@@ -34,6 +34,8 @@ type editingSession struct {
 	session     *pptoolkit.Session
 	lastActive  time.Time
 	idempotency map[string]cachedResponse // idempotency_key -> response
+	idemOrder   []string                  // FIFO eviction order for idempotency
+	inflight    map[string]*sync.WaitGroup // idempotency_key -> in-flight execution
 }
 
 // cachedResponse stores a completed execute response for idempotent replay.
@@ -112,6 +114,7 @@ func (s *Server) handleSessionCreate(c *gin.Context) {
 		session:     pptoolkit.NewSessionFromPresentation(body.Presentation),
 		lastActive:  time.Now(),
 		idempotency: map[string]cachedResponse{},
+		inflight:    map[string]*sync.WaitGroup{},
 	}
 	id := uuid.NewString()[:12]
 	sessionStore.Store(id, e)
@@ -178,12 +181,46 @@ func (s *Server) handleSessionExecute(c *gin.Context) {
 	defer e.mu.Unlock()
 
 	// Idempotent replay: the same key returns the stored response without
-	// re-executing (safe for client retries after network failures).
+	// re-executing (safe for client retries after network failures). Both
+	// success and failed batches are cached — a failed batch is rolled back,
+	// so replaying the stored 422 is exact and avoids re-running the calls.
 	if req.IdempotencyKey != "" {
 		if cached, hit := e.idempotency[req.IdempotencyKey]; hit {
-			cached.body["idempotent_replay"] = true
-			c.JSON(cached.status, cached.body)
+			body := gin.H{}
+			for k, v := range cached.body {
+				body[k] = v
+			}
+			body["idempotent_replay"] = true
+			c.JSON(cached.status, body)
 			return
+		}
+		// Concurrent duplicate: wait for the first request to finish, then
+		// serve its cached response instead of executing twice.
+		if wg, flying := e.inflight[req.IdempotencyKey]; flying {
+			e.mu.Unlock()
+			wg.Wait()
+			e.mu.Lock()
+			if cached, hit := e.idempotency[req.IdempotencyKey]; hit {
+				body := gin.H{}
+				for k, v := range cached.body {
+					body[k] = v
+				}
+				body["idempotent_replay"] = true
+				c.JSON(cached.status, body)
+				return
+			}
+			// First request failed before caching (e.g. write error) —
+			// fall through and execute normally.
+		} else {
+			wg := &sync.WaitGroup{}
+			wg.Add(1)
+			e.inflight[req.IdempotencyKey] = wg
+			// Runs before the outer defer e.mu.Unlock(), so the mutex is
+			// still held here — mutate directly without re-locking.
+			defer func() {
+				delete(e.inflight, req.IdempotencyKey)
+				wg.Done()
+			}()
 		}
 	}
 
@@ -196,15 +233,15 @@ func (s *Server) handleSessionExecute(c *gin.Context) {
 	batch := e.session.ExecuteBatch(calls)
 
 	respond := func(status int, body gin.H) {
-		if status == http.StatusOK && req.IdempotencyKey != "" {
-			if len(e.idempotency) >= idempotencyCacheLimit {
-				// Drop the oldest entry (map iteration order is random,
-				// which is an acceptable eviction policy at this size).
-				for k := range e.idempotency {
-					delete(e.idempotency, k)
-					break
-				}
+		if req.IdempotencyKey != "" {
+			if len(e.idemOrder) >= idempotencyCacheLimit {
+				// FIFO eviction: drop the oldest key so a key the agent is
+				// about to retry is never the one evicted.
+				oldest := e.idemOrder[0]
+				e.idemOrder = e.idemOrder[1:]
+				delete(e.idempotency, oldest)
 			}
+			e.idemOrder = append(e.idemOrder, req.IdempotencyKey)
 			e.idempotency[req.IdempotencyKey] = cachedResponse{status: status, body: body}
 		}
 		c.JSON(status, body)

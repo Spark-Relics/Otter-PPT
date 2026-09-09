@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -279,3 +280,77 @@ func TestSessionIdempotency(t *testing.T) {
 	}
 }
 
+// Failed batches (422) are also cached: retrying the same bad batch with the
+// same key returns the stored response instead of re-executing the calls.
+func TestSessionIdempotencyCachesFailure(t *testing.T) {
+	s := New(Config{Port: "0"})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/session", nil)
+	s.router.ServeHTTP(w, req)
+	var created struct {
+		SessionID string `json:"session_id"`
+	}
+	json.Unmarshal(w.Body.Bytes(), &created)
+	id := created.SessionID
+
+	exec := func() *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/session/"+id+"/execute",
+			strings.NewReader(`{"idempotency_key":"bad1","calls":[{"name":"add_text","arguments":{"slide_id":"no-such-slide","text":"x"}}]}`))
+		req.Header.Set("Content-Type", "application/json")
+		s.router.ServeHTTP(w, req)
+		return w
+	}
+
+	if w := exec(); w.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("first execute: %d %s", w.Code, w.Body.String())
+	}
+	w = exec()
+	if w.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("replayed execute: %d, want 422 from cache", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), `"idempotent_replay":true`) {
+		t.Fatalf("replay response missing idempotent_replay flag: %s", w.Body.String())
+	}
+}
+
+// FIFO eviction: with more distinct keys than the cache limit, the oldest
+// key is evicted (not a random one).
+func TestSessionIdempotencyFIFOEviction(t *testing.T) {
+	s := New(Config{Port: "0"})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/session", nil)
+	s.router.ServeHTTP(w, req)
+	var created struct {
+		SessionID string `json:"session_id"`
+	}
+	json.Unmarshal(w.Body.Bytes(), &created)
+	id := created.SessionID
+
+	exec := func(key string) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		body := fmt.Sprintf(`{"idempotency_key":%q,"calls":[{"name":"undo","arguments":{}}]}`, key)
+		req, _ := http.NewRequest("POST", "/api/v1/session/"+id+"/execute", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		s.router.ServeHTTP(w, req)
+		return w
+	}
+
+	exec("k000") // oldest — must be evicted after limit is exceeded
+	for i := 1; i < idempotencyCacheLimit; i++ {
+		exec(fmt.Sprintf("k%03d", i))
+	}
+	exec("new") // exceeds limit -> evicts k000
+	w = exec("k000")
+	if strings.Contains(w.Body.String(), `"idempotent_replay":true`) {
+		t.Fatalf("k000 should have been FIFO-evicted, got replay: %s", w.Body.String())
+	}
+
+	// Sanity: the newest key still replays.
+	w = exec("new")
+	if !strings.Contains(w.Body.String(), `"idempotent_replay":true`) {
+		t.Fatalf("newest key should replay from cache: %s", w.Body.String())
+	}
+}
